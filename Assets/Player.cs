@@ -1,11 +1,26 @@
-using TMPro;
-using Unity.Mathematics;
+using Fusion;
 using UnityEngine;
 
-public class Player : MonoBehaviour
+public class Player : NetworkBehaviour
 {
+    NetworkCharacterController _characterController;
     CharacterController _cc;
     Animator _animator;
+
+    public Camera _playerCamera;
+    public float _walkSpeed = 6f;
+    public float _runSpeed = 12f;
+    public float _jumpPower = 7f;
+    public float _gravity = 10f;
+
+    public float _lookSpeed = 2f;
+    public float _lookXLimit = 45f;
+
+    Vector3 _moveDirection = Vector3.zero;
+    float _rotationX = 0f;
+
+    public bool _canMove = true;
+
 
     [SerializeField] float _speed = 5;
     [SerializeField]Vector3 _relativeVelocity;
@@ -14,44 +29,58 @@ public class Player : MonoBehaviour
     {
         _animator = GetComponentInChildren<Animator>();
         _cc = GetComponent<CharacterController>();
+        _characterController = GetComponent<NetworkCharacterController>();
     }
 
     void Update()
     {
-        float accel = 30;
-        if (Input.GetKey(KeyCode.W))
-            _relativeVelocity += transform.forward * Time.deltaTime* accel;
-        if (Input.GetKey(KeyCode.S))
-            _relativeVelocity -= transform.forward * Time.deltaTime* accel;
-        if (Input.GetKey(KeyCode.A))
-            _relativeVelocity -= transform.right * Time.deltaTime*accel;
-        if (Input.GetKey(KeyCode.D))
-            _relativeVelocity += transform.right * Time.deltaTime*accel;
+        HandleMove();
+    }
 
-        if (_relativeVelocity.magnitude > _speed)
-            _relativeVelocity = _relativeVelocity.normalized * _speed;
+    public override void FixedUpdateNetwork()
+    {
+        HandleMove();
+    }
 
-        _animator.SetFloat("VelocityX", transform.worldToLocalMatrix.MultiplyVector(_relativeVelocity).x);
-        _animator.SetFloat("VelocityZ", transform.worldToLocalMatrix.MultiplyVector(_relativeVelocity).z);
-
-        if (_relativeVelocity != Vector3.zero)
+    void HandleMove()
+    {
+        if (GetInput(out NetworkInputData data))
         {
-            Vector3 look = Camera.main.transform.forward;
-            look.y = 0;
-            transform.rotation = Quaternion.LookRotation(Vector3.Slerp(transform.forward,look, 0.1f));
-            _cc.SimpleMove(_relativeVelocity);
+            Debug.Log(data.direction)
+            Vector3 forward = transform.forward;
+            Vector3 right = transform.right;
+
+            bool isRunning = Input.GetKey(KeyCode.LeftShift);
+
+            float curSpeedX = _canMove ? (isRunning ? _runSpeed : _walkSpeed) * data.direction.x : 0;
+            float curSpeedY = _canMove ? (isRunning ? _runSpeed : _walkSpeed) * data.direction.z : 0;
+            float movementDirectionY = _moveDirection.y;
+            _moveDirection = (forward * curSpeedX) + (right * curSpeedY);
+
+            if (Input.GetKey(KeyCode.Space) && _canMove && _cc.isGrounded)
+            {
+                _moveDirection.y = _jumpPower;
+            }
+            else
+            {
+                _moveDirection.y = movementDirectionY;
+            }
+
+            if (!_cc.isGrounded)
+            {
+                _moveDirection.y -= _gravity * Runner.DeltaTime;
+            }
+
+            _characterController.Move(_moveDirection * Runner.DeltaTime);
+
+            if (_canMove)
+            {
+                _rotationX += -Input.GetAxis("Mouse Y") * _lookSpeed;
+                _rotationX = Mathf.Clamp(_rotationX, -_lookXLimit, _lookXLimit);
+                _playerCamera.transform.localRotation = Quaternion.Euler(_rotationX, 0, 0);
+                transform.rotation *= Quaternion.Euler(0, Input.GetAxis("Mouse X") * _lookSpeed, 0);
+            }
+
         }
-        float breakPower = 20;
-        Vector3 breakDirection = -_relativeVelocity.normalized;
-
-        if(Mathf.Abs(_relativeVelocity.x) < Mathf.Abs(breakDirection.x * breakPower * Time.deltaTime))
-            _relativeVelocity.x = 0;
-        else
-            _relativeVelocity.x += breakDirection.x * breakPower * Time.deltaTime;
-
-        if(Mathf.Abs(_relativeVelocity.z) < Mathf.Abs(breakDirection.z * breakPower * Time.deltaTime))
-                _relativeVelocity.z = 0;
-        else
-            _relativeVelocity.z += breakDirection.z * breakPower * Time.deltaTime;
     }
 }
