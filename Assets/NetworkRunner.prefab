@@ -10,6 +10,8 @@ GameObject:
   m_Component:
   - component: {fileID: 3245140074597271998}
   - component: {fileID: 2523265464488214757}
+  - component: {fileID: 5471284065138001183}
+  - component: {fileID: 7687548348285474125}
   m_Layer: 0
   m_Name: NetworkRunner
   m_TagString: Untagged
@@ -42,5 +44,31 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: -1199893898, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &5471284065138001183
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3160134621507375972}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a0128ac178b69b24cb4f0e92923cc745, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _playerPrefab:
+    RawGuidValue: b6045f90590798a40956b83481757a01
+--- !u!114 &7687548348285474125
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3160134621507375972}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d8b217de464c62a4e8ffe8c1f03f33f3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 

@@ -30,56 +30,69 @@ public class Player : NetworkBehaviour
         _animator = GetComponentInChildren<Animator>();
         _cc = GetComponent<CharacterController>();
         _characterController = GetComponent<NetworkCharacterController>();
-    }
-
-    void Update()
-    {
-        HandleMove();
+        
     }
 
     public override void FixedUpdateNetwork()
     {
+        if (_playerCamera == null && Runner.ProvideInput)
+        {
+            _playerCamera = Camera.main;
+            _playerCamera.transform.SetParent(transform);    
+        }
+        if (_playerCamera)
+        {
+            _playerCamera.transform.localPosition = Vector3.up * 1.4f;
+        }
+
+
         HandleMove();
     }
 
     void HandleMove()
     {
+        if (_characterController == null) return;
+
         if (GetInput(out NetworkInputData data))
         {
-            Debug.Log(data.direction)
-            Vector3 forward = transform.forward;
-            Vector3 right = transform.right;
+            _characterController.Move(data.Direction * Runner.DeltaTime * 5);
+            //Vector3 forward = transform.forward;
+            //Vector3 right = transform.right;
 
-            bool isRunning = Input.GetKey(KeyCode.LeftShift);
+            //bool isRunning = Input.GetKey(KeyCode.LeftShift);
 
-            float curSpeedX = _canMove ? (isRunning ? _runSpeed : _walkSpeed) * data.direction.x : 0;
-            float curSpeedY = _canMove ? (isRunning ? _runSpeed : _walkSpeed) * data.direction.z : 0;
-            float movementDirectionY = _moveDirection.y;
-            _moveDirection = (forward * curSpeedX) + (right * curSpeedY);
+            //float curSpeedX = _canMove ? (isRunning ? _runSpeed : _walkSpeed) * data.direction.x : 0;
+            //float curSpeedY = _canMove ? (isRunning ? _runSpeed : _walkSpeed) * data.direction.z : 0;
+            //float movementDirectionY = _moveDirection.y;
+            //_moveDirection = (forward * curSpeedX) + (right * curSpeedY);
 
-            if (Input.GetKey(KeyCode.Space) && _canMove && _cc.isGrounded)
-            {
-                _moveDirection.y = _jumpPower;
-            }
-            else
-            {
-                _moveDirection.y = movementDirectionY;
-            }
+            ////if (Input.GetKey(KeyCode.Space) && _canMove && _characterController.Grounded)
+            ////{
+            ////    _moveDirection.y = _jumpPower;
+            ////}
+            ////else
+            ////{
+            ////    _moveDirection.y = movementDirectionY;
+            ////}
 
-            if (!_cc.isGrounded)
-            {
-                _moveDirection.y -= _gravity * Runner.DeltaTime;
-            }
+            //Debug.Log(_characterController);
 
-            _characterController.Move(_moveDirection * Runner.DeltaTime);
+            //if (!_characterController.Grounded)
+            //{
+            //    _moveDirection.y -= _gravity * Runner.DeltaTime;
+            //}
 
-            if (_canMove)
-            {
-                _rotationX += -Input.GetAxis("Mouse Y") * _lookSpeed;
-                _rotationX = Mathf.Clamp(_rotationX, -_lookXLimit, _lookXLimit);
-                _playerCamera.transform.localRotation = Quaternion.Euler(_rotationX, 0, 0);
-                transform.rotation *= Quaternion.Euler(0, Input.GetAxis("Mouse X") * _lookSpeed, 0);
-            }
+            //Debug.Log(_moveDirection);
+
+            //_characterController.Move(_moveDirection * Runner.DeltaTime);
+
+            //if (_canMove)
+            //{
+            //    _rotationX += -Input.GetAxis("Mouse Y") * _lookSpeed;
+            //    _rotationX = Mathf.Clamp(_rotationX, -_lookXLimit, _lookXLimit);
+            //    _playerCamera.transform.localRotation = Quaternion.Euler(_rotationX, 0, 0);
+            //    transform.rotation *= Quaternion.Euler(0, Input.GetAxis("Mouse X") * _lookSpeed, 0);
+            //}
 
         }
     }

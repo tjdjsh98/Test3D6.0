@@ -12,12 +12,12 @@ public class Menu : MonoBehaviour
     float _buttonHeight = 100;
     private void OnGUI()
     {
-        if (GUI.Button(new Rect(Screen.width - _buttonWidth / 2, Screen.height / 2 - _buttonHeight / 2, _buttonWidth, _buttonHeight),"Host Game"))
+        if (GUI.Button(new Rect(Screen.width/2 - _buttonWidth / 2, Screen.height / 2 - _buttonHeight / 2, _buttonWidth, _buttonHeight),"Host Game"))
         {
             StartGame(GameMode.AutoHostOrClient);
         }
 
-        if (GUI.Button(new Rect(Screen.width - _buttonWidth / 2, Screen.height / 2 - _buttonHeight / 2 + _buttonHeight + 50, _buttonWidth, _buttonHeight), "Joint Game"))
+        if (GUI.Button(new Rect(Screen.width/2 - _buttonWidth / 2, Screen.height / 2 - _buttonHeight / 2 + _buttonHeight + 50, _buttonWidth, _buttonHeight), "Joint Game"))
         {
             StartGame(GameMode.Client);
         }
