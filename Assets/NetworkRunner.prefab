@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 2523265464488214757}
   - component: {fileID: 5471284065138001183}
   - component: {fileID: 7687548348285474125}
+  - component: {fileID: -7549372749757118789}
   m_Layer: 0
   m_Name: NetworkRunner
   m_TagString: Untagged
@@ -70,5 +71,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d8b217de464c62a4e8ffe8c1f03f33f3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &-7549372749757118789
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3160134621507375972}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b8edbe7108d8a43ab838cf8b8d9453df, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 

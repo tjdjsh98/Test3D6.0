@@ -9,6 +9,13 @@ public class InputManager : SimulationBehaviour, IBeforeUpdate, INetworkRunnerCa
 {
     NetworkInputData _accumulateInputData;
     bool _resetInput;
+    bool _mouseButton0;
+
+
+    private void Update()
+    {
+        _mouseButton0 = _mouseButton0 | Input.GetMouseButtonDown(0);
+    }
 
     public void BeforeUpdate()
     {
@@ -42,6 +49,9 @@ public class InputManager : SimulationBehaviour, IBeforeUpdate, INetworkRunnerCa
             _accumulateInputData.Direction += Vector3.left;
         if (Input.GetKey(KeyCode.D))
             _accumulateInputData.Direction += Vector3.right;
+
+        _accumulateInputData.Buttons.Set(NetworkInputData.MOUSEBUTTON0, _mouseButton0);
+        _mouseButton0 = false;
 
         networkButtons.Set(InputButton.Jump, Input.GetKeyDown(KeyCode.Space));
 
