@@ -49,6 +49,7 @@ public class UnitChanCharacter : MonoBehaviour
 
         if (Physics.Raycast(transform.position + _collider.center, _collider.center + transform.forward , 0.3f, LayerMask.GetMask("Ground")))
         {
+            Debug.Log("Contact Wall");
             _rigidBody.useGravity = false;
             _isContactWall = true;
             _animator.SetBool("ContactWall", true);
@@ -66,6 +67,15 @@ public class UnitChanCharacter : MonoBehaviour
     {
         Vector3 moveDirection = Vector3.zero;
 
+        if(Input.GetMouseButtonDown(0))
+        {
+            UnityEngine.Cursor.lockState = CursorLockMode.Locked;
+        }
+
+        if(Input.GetKeyDown(KeyCode.Escape))
+        {
+            UnityEngine.Cursor.lockState = CursorLockMode.None;
+        }
         if(Input.GetKey(KeyCode.W))
         {
             Vector3 dir = _camera.transform.forward;
@@ -96,6 +106,10 @@ public class UnitChanCharacter : MonoBehaviour
             moveDirection += dir;
         }
 
+       
+
+        _animator.SetFloat("Velocity", Mathf.Abs(_rigidBody.linearVelocity.x) + Mathf.Abs(_rigidBody.linearVelocity.z));
+
         if (_isContactGround)
         {
             if (Input.GetKeyDown(KeyCode.Space))
@@ -103,7 +117,6 @@ public class UnitChanCharacter : MonoBehaviour
                 _rigidBody.AddForce(Vector3.up * 1000f, ForceMode.Impulse);
 
             }
-
             if (moveDirection != Vector3.zero)
             {
                 float moveAngle = Mathf.Atan2(moveDirection.x, moveDirection.z) * Mathf.Rad2Deg;
@@ -111,12 +124,13 @@ public class UnitChanCharacter : MonoBehaviour
 
                 _model.transform.rotation = Quaternion.Euler(0, _model.transform.rotation.eulerAngles.y + deltaAngle, 0);
 
-                _rigidBody.AddForce(moveDirection * 5000);
-            }
+                moveDirection.Normalize();
+                _rigidBody.linearVelocity = new Vector3(moveDirection.x * _maxSpeed, _rigidBody.linearVelocity.y, moveDirection.z * _maxSpeed);
 
-            _animator.SetFloat("Velocity", Mathf.Abs(_rigidBody.linearVelocity.x) + Mathf.Abs(_rigidBody.linearVelocity.z));
-            _animator.SetFloat("VelocityY", _rigidBody.linearVelocity.y);
+            }
         }
+        _animator.SetFloat("VelocityY", _rigidBody.linearVelocity.y);
+
         if(_isContactWall)
         {
             _animator.SetFloat("MoveWall", moveDirection.z);
