@@ -13,6 +13,7 @@ public class UnitChanCharacter : MonoBehaviour
 
     bool _isContactWall;
     bool _isContactGround;
+    bool _isJump = false;
 
     private void Awake()
     {
@@ -20,7 +21,6 @@ public class UnitChanCharacter : MonoBehaviour
         _collider = GetComponent<CapsuleCollider>();
         _rigidBody =GetComponent<Rigidbody>();
         _animator = GetComponentInChildren<Animator>();
-        _rigidBody.maxLinearVelocity = _maxSpeed;
     }
 
     private void OnDrawGizmos()
@@ -49,7 +49,6 @@ public class UnitChanCharacter : MonoBehaviour
 
         if (Physics.Raycast(transform.position + _collider.center, _collider.center + transform.forward , 0.3f, LayerMask.GetMask("Ground")))
         {
-            Debug.Log("Contact Wall");
             _rigidBody.useGravity = false;
             _isContactWall = true;
             _animator.SetBool("ContactWall", true);
@@ -112,34 +111,50 @@ public class UnitChanCharacter : MonoBehaviour
 
         if (_isContactGround)
         {
-            if (Input.GetKeyDown(KeyCode.Space))
+            if (!_isJump)
             {
-                _rigidBody.AddForce(Vector3.up * 1000f, ForceMode.Impulse);
+                if (Input.GetKeyDown(KeyCode.Space))
+                {
+                    Vector3 velocity = _rigidBody.linearVelocity;
+                    velocity.y = 5;
+                    _rigidBody.linearVelocity = velocity;
+                    Debug.Log(_rigidBody.linearVelocity);
+                    _isJump = true;
 
+                }
+                if (moveDirection != Vector3.zero)
+                {
+                    float moveAngle = Mathf.Atan2(moveDirection.x, moveDirection.z) * Mathf.Rad2Deg;
+                    float deltaAngle = Mathf.DeltaAngle(_model.transform.rotation.eulerAngles.y, moveAngle) * 0.2f;
+
+                    _model.transform.rotation = Quaternion.Euler(0, _model.transform.rotation.eulerAngles.y + deltaAngle, 0);
+
+                    moveDirection.Normalize();
+                    _rigidBody.linearVelocity = new Vector3(moveDirection.x * _maxSpeed, _rigidBody.linearVelocity.y, moveDirection.z * _maxSpeed);
+                }
+                
             }
-            if (moveDirection != Vector3.zero)
+            if (_animator.GetCurrentAnimatorStateInfo(0).IsName("Idle"))
             {
-                float moveAngle = Mathf.Atan2(moveDirection.x, moveDirection.z) * Mathf.Rad2Deg;
-                float deltaAngle = Mathf.DeltaAngle(_model.transform.rotation.eulerAngles.y, moveAngle) * 0.2f;
-
-                _model.transform.rotation = Quaternion.Euler(0, _model.transform.rotation.eulerAngles.y + deltaAngle, 0);
-
-                moveDirection.Normalize();
-                _rigidBody.linearVelocity = new Vector3(moveDirection.x * _maxSpeed, _rigidBody.linearVelocity.y, moveDirection.z * _maxSpeed);
-
+                _isJump = false;
+            }
+        }
+        else
+        {
+            if (_isContactWall)
+            {
+                _animator.SetFloat("MoveWall", moveDirection.z);
+                _rigidBody.linearVelocity = Vector3.up * moveDirection.z;
+                if (Input.GetKeyDown(KeyCode.Space))
+                {
+                    Vector3 velocity = _rigidBody.linearVelocity;
+                    velocity.y = 5;
+                    _rigidBody.linearVelocity = velocity;
+                }
             }
         }
         _animator.SetFloat("VelocityY", _rigidBody.linearVelocity.y);
 
-        if(_isContactWall)
-        {
-            _animator.SetFloat("MoveWall", moveDirection.z);
-            _rigidBody.linearVelocity = Vector3.up * moveDirection.z;
-            if (Input.GetKeyDown(KeyCode.Space))
-            {
-                _rigidBody.AddForce(Vector3.up + -_model.transform.forward * 1000f, ForceMode.Impulse);
-
-            }
-        }
+    
     }
 }
