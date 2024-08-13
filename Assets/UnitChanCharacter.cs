@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Debug = UnityEngine.Debug;
 
 public class UnitChanCharacter : MonoBehaviour
 {
@@ -13,7 +15,17 @@ public class UnitChanCharacter : MonoBehaviour
 
     bool _isContactWall;
     bool _isContactGround;
-    bool _isJump = false;
+    bool _isClimbing = false;
+
+    float _landingElasepdTime = 0;
+    float _landingTime = 1;
+
+    Vector3 _climbingStartPos;
+    Vector3 _climbingDestin;
+    float _climbElaspedTime = 0;
+    [SerializeField] float _climbTween = 2f;
+    [SerializeField] AnimationCurve _climbYCurve;
+    [SerializeField] AnimationCurve _climbForwardCurve;
 
     private void Awake()
     {
@@ -30,7 +42,9 @@ public class UnitChanCharacter : MonoBehaviour
 
         if(_collider == null)
             _collider = GetComponent<CapsuleCollider>();
-        Gizmos.DrawLine(gameObject.transform.position + _collider.center, gameObject.transform.position + _collider.center +transform.forward*0.3f);
+        if (_model == null)
+            _model = transform.Find("Model").gameObject;
+        Gizmos.DrawLine(gameObject.transform.position + _collider.center, gameObject.transform.position + _collider.center + _model.transform.forward*0.3f);
 
     }
     void Update()
@@ -46,12 +60,22 @@ public class UnitChanCharacter : MonoBehaviour
             _isContactGround = false;
             _animator.SetBool("ContactGround", false);
         }
-
-        if (Physics.Raycast(transform.position + _collider.center, _collider.center + transform.forward , 0.3f, LayerMask.GetMask("Ground")))
+        Ray ray = new Ray(transform.position + _collider.center, _collider.center + _model.transform.forward);
+        RaycastHit hit;
+        if (Physics.Raycast(ray,out hit, 0.3f, LayerMask.GetMask("Ground")))
         {
+            if (!_isContactWall)
+            {
+                transform.position = hit.point + hit.normal * 0.1f - _collider.center;
+            }
             _rigidBody.useGravity = false;
             _isContactWall = true;
             _animator.SetBool("ContactWall", true);
+            Vector3 normal = -hit.normal;
+            float angle = Mathf.Atan2(normal.x, normal.z) * Mathf.Rad2Deg;
+            _model.transform.rotation = Quaternion.Euler(0, angle, 0);
+
+            
         }
         else
         {
@@ -64,19 +88,37 @@ public class UnitChanCharacter : MonoBehaviour
 
     void ControlMovement()
     {
-        Vector3 moveDirection = Vector3.zero;
+        if(_isClimbing)
+        {
+            _climbElaspedTime += Time.deltaTime;
+            Vector3 pos = _climbingStartPos;
+            pos.y += (_climbingDestin - _climbingStartPos).y * _climbYCurve.Evaluate(_climbElaspedTime / _climbTween);
+            pos.x += (_climbingDestin - _climbingStartPos).x * _climbForwardCurve.Evaluate(_climbElaspedTime / _climbTween);
+            pos.z += (_climbingDestin - _climbingStartPos).z * _climbForwardCurve.Evaluate(_climbElaspedTime / _climbTween);
+            transform.position = pos;
 
+            if (_climbElaspedTime > _climbTween)
+            {
+                _isClimbing = false;
+                _climbElaspedTime = 0;
+                _animator.SetBool("EndClimbing", false);
+            }
+            return;
+        }
+
+        Vector3 moveDirection = Vector3.zero;
+        Vector3 inputDirection = Vector3.zero;
         if(Input.GetMouseButtonDown(0))
         {
             UnityEngine.Cursor.lockState = CursorLockMode.Locked;
         }
-
         if(Input.GetKeyDown(KeyCode.Escape))
         {
             UnityEngine.Cursor.lockState = CursorLockMode.None;
         }
         if(Input.GetKey(KeyCode.W))
         {
+            inputDirection += Vector3.forward;
             Vector3 dir = _camera.transform.forward;
             dir.y = 0;
             dir.Normalize();
@@ -85,6 +127,7 @@ public class UnitChanCharacter : MonoBehaviour
         }
         if (Input.GetKey(KeyCode.S))
         {
+            inputDirection -= Vector3.forward;
             Vector3 dir = _camera.transform.forward;
             dir.y = 0;
             dir.Normalize();
@@ -92,6 +135,7 @@ public class UnitChanCharacter : MonoBehaviour
         }
         if (Input.GetKey(KeyCode.A))
         {
+            inputDirection -= Vector3.right;
             Vector3 dir = _camera.transform.right;
             dir.y = 0;
             dir.Normalize();
@@ -99,56 +143,69 @@ public class UnitChanCharacter : MonoBehaviour
         }
         if (Input.GetKey(KeyCode.D))
         {
+            inputDirection += Vector3.right;
             Vector3 dir = _camera.transform.right;
             dir.y = 0;
             dir.Normalize();
             moveDirection += dir;
         }
 
-       
-
         _animator.SetFloat("Velocity", Mathf.Abs(_rigidBody.linearVelocity.x) + Mathf.Abs(_rigidBody.linearVelocity.z));
 
         if (_isContactGround)
         {
-            if (!_isJump)
-            {
-                if (Input.GetKeyDown(KeyCode.Space))
-                {
-                    Vector3 velocity = _rigidBody.linearVelocity;
-                    velocity.y = 5;
-                    _rigidBody.linearVelocity = velocity;
-                    Debug.Log(_rigidBody.linearVelocity);
-                    _isJump = true;
-
-                }
-                if (moveDirection != Vector3.zero)
-                {
-                    float moveAngle = Mathf.Atan2(moveDirection.x, moveDirection.z) * Mathf.Rad2Deg;
-                    float deltaAngle = Mathf.DeltaAngle(_model.transform.rotation.eulerAngles.y, moveAngle) * 0.2f;
-
-                    _model.transform.rotation = Quaternion.Euler(0, _model.transform.rotation.eulerAngles.y + deltaAngle, 0);
-
-                    moveDirection.Normalize();
-                    _rigidBody.linearVelocity = new Vector3(moveDirection.x * _maxSpeed, _rigidBody.linearVelocity.y, moveDirection.z * _maxSpeed);
-                }
-                
+            if (_landingElasepdTime < _landingTime)
+            { 
+                _landingElasepdTime += Time.deltaTime;
+                return;
             }
-            if (_animator.GetCurrentAnimatorStateInfo(0).IsName("Idle"))
+            if (Input.GetKeyDown(KeyCode.Space))
             {
-                _isJump = false;
+                Vector3 velocity = _rigidBody.linearVelocity;
+                velocity.y = 5;
+                _rigidBody.linearVelocity = velocity;
+                _landingElasepdTime = 0;
+
             }
+            if (moveDirection != Vector3.zero)
+            {
+                float moveAngle = Mathf.Atan2(_rigidBody.linearVelocity.x, _rigidBody.linearVelocity.z) * Mathf.Rad2Deg;
+                float deltaAngle = Mathf.DeltaAngle(_model.transform.rotation.eulerAngles.y, moveAngle) * 0.2f;
+
+
+                _model.transform.rotation = Quaternion.Euler(0, _model.transform.rotation.eulerAngles.y + deltaAngle, 0);
+
+                moveDirection.Normalize();
+                _rigidBody.linearVelocity = new Vector3(moveDirection.x * _maxSpeed, _rigidBody.linearVelocity.y, moveDirection.z * _maxSpeed);
+            }
+          
+         
         }
         else
         {
             if (_isContactWall)
             {
-                _animator.SetFloat("MoveWall", moveDirection.z);
-                _rigidBody.linearVelocity = Vector3.up * moveDirection.z;
+                Vector3 wallMove = _model.transform.up * inputDirection.z + _model.transform.right * inputDirection.x;
+                wallMove.Normalize();
+                _animator.SetFloat("MoveWall", wallMove.magnitude);
+
+                _rigidBody.linearVelocity = wallMove;
+                Ray ray = new Ray(transform.position + _collider.center, _collider.center + _model.transform.forward);
+                RaycastHit hit;
+                if (!Physics.Raycast(ray, out hit, 0.3f, LayerMask.GetMask("Ground")))
+                {
+                    _isClimbing = true;
+                    _animator.SetBool("EndClimbing", true);
+                    _climbingStartPos = transform.position;
+                    _climbingDestin = transform.position + _collider.center + _model.transform.forward * 0.5f;
+                }
+
                 if (Input.GetKeyDown(KeyCode.Space))
                 {
-                    Vector3 velocity = _rigidBody.linearVelocity;
-                    velocity.y = 5;
+                    Vector3 velocity = -_model.transform.forward*5 + _model.transform.up*6;
+                    Debug.Log(_model.transform.rotation.eulerAngles.y);
+                    Debug.Log(_model.transform.rotation.eulerAngles.y + 180);
+                    _model.transform.rotation = Quaternion.Euler(0, 180 + _model.transform.rotation.eulerAngles.y, 0);
                     _rigidBody.linearVelocity = velocity;
                 }
             }
