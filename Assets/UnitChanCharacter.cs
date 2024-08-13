@@ -11,6 +11,8 @@ public class UnitChanCharacter : MonoBehaviour
     Rigidbody _rigidBody;
     Animator _animator;
 
+    Inventory _inventory;
+
     float _maxSpeed = 5f;
 
     bool _isContactWall;
@@ -33,6 +35,7 @@ public class UnitChanCharacter : MonoBehaviour
         _collider = GetComponent<CapsuleCollider>();
         _rigidBody =GetComponent<Rigidbody>();
         _animator = GetComponentInChildren<Animator>();
+        _inventory = GetComponent<Inventory>();
     }
 
     private void OnDrawGizmos()
@@ -46,13 +49,39 @@ public class UnitChanCharacter : MonoBehaviour
             _model = transform.Find("Model").gameObject;
         Gizmos.DrawLine(gameObject.transform.position + _collider.center, gameObject.transform.position + _collider.center + _model.transform.forward*0.3f);
 
+
+        Gizmos.matrix = _camera.transform.localToWorldMatrix;
+
+        Gizmos.DrawWireCube(Vector3.zero + Vector3.forward*50,new Vector3(2, 2, 100));
+
+        Gizmos.matrix = Matrix4x4.identity;
     }
     void Update()
     {
         ControlMovement();
-        if(Physics.Raycast(transform.position, Vector3.down, 0.2f, LayerMask.GetMask("Ground")))
+        CheckGroundWall();
+        CheckItem();
+    }
+
+    void CheckItem()
+    {
+        //if (Input.GetMouseButtonDown(0))
         {
-            _isContactGround= true;
+            RaycastHit hit;
+            if(Physics.BoxCast(_camera.transform.position, new Vector3(1, 1, 50), Vector3.forward, out hit, _camera.transform.rotation,50,LayerMask.GetMask("Item")))
+            {
+                Destroy(hit.collider.gameObject);
+                _inventory.InsertItem(name);
+            }
+          
+        }
+    }
+
+    void CheckGroundWall()
+    {
+        if (Physics.Raycast(transform.position, Vector3.down, 0.2f, LayerMask.GetMask("Ground")))
+        {
+            _isContactGround = true;
             _animator.SetBool("ContactGround", true);
         }
         else
@@ -62,7 +91,7 @@ public class UnitChanCharacter : MonoBehaviour
         }
         Ray ray = new Ray(transform.position + _collider.center, _collider.center + _model.transform.forward);
         RaycastHit hit;
-        if (Physics.Raycast(ray,out hit, 0.3f, LayerMask.GetMask("Ground")))
+        if (Physics.Raycast(ray, out hit, 0.3f, LayerMask.GetMask("Ground")))
         {
             if (!_isContactWall)
             {
@@ -75,7 +104,7 @@ public class UnitChanCharacter : MonoBehaviour
             float angle = Mathf.Atan2(normal.x, normal.z) * Mathf.Rad2Deg;
             _model.transform.rotation = Quaternion.Euler(0, angle, 0);
 
-            
+
         }
         else
         {
@@ -84,8 +113,6 @@ public class UnitChanCharacter : MonoBehaviour
             _animator.SetBool("ContactWall", false);
         }
     }
-
-
     void ControlMovement()
     {
         if(_isClimbing)
