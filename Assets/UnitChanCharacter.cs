@@ -230,8 +230,6 @@ public class UnitChanCharacter : MonoBehaviour
                 if (Input.GetKeyDown(KeyCode.Space))
                 {
                     Vector3 velocity = -_model.transform.forward*5 + _model.transform.up*6;
-                    Debug.Log(_model.transform.rotation.eulerAngles.y);
-                    Debug.Log(_model.transform.rotation.eulerAngles.y + 180);
                     _model.transform.rotation = Quaternion.Euler(0, 180 + _model.transform.rotation.eulerAngles.y, 0);
                     _rigidBody.linearVelocity = velocity;
                 }
