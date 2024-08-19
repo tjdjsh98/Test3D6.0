@@ -159,7 +159,7 @@ Material:
     - _BlurLevelSGM: 0
     - _BumpScale: 0.8
     - _BumpScaleMatcap: 1
-    - _CameraRolling_Stabilizer: 0
+    - _CameraRolling_Stabilizer: 1
     - _ColorShift_Speed: 0
     - _CullMode: 2
     - _Cutoff: 0.5
@@ -181,7 +181,7 @@ Material:
     - _Is_BlendBaseColor: 1
     - _Is_ColorShift: 0
     - _Is_Filter_HiCutPointLightColor: 1
-    - _Is_Filter_LightColor: 0
+    - _Is_Filter_LightColor: 1
     - _Is_LightColor_1st_Shade: 1
     - _Is_LightColor_2nd_Shade: 1
     - _Is_LightColor_Ap_RimLight: 1
