@@ -1,18 +1,18 @@
 // Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
 
-Shader "Study/Study08_CustomOutline"
+Shader "Study/Study08"
 {
 	Properties
 	{
-
+		_Value("Value",Float) = 0
 	}
 	SubShader
 	{
 		Tags
 		{
-			"RenderType" = "Opaque"
+			"RenderType" = "Transparent"
 			"RenderPipeline" = "UniversalPipeline"
-			"Queue" = "Geometry+0"
+			"Queue" = "Transparent"
 		}
 		LOD 200
 
@@ -20,193 +20,163 @@ Shader "Study/Study08_CustomOutline"
 		{
 			Name "CustomOutline"
 			HLSLPROGRAM
-			#pragma target 4.0
+			#pragma target 2.0
 
 			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
 
 			#pragma vertex PassVertex
 			#pragma fragment PassFragment
+
+			#include "Noise.hlsl"
 
 			CBUFFER_START(UnityPerMaterail)
 			Texture2D _MainTex;
 			SAMPLER(sampler_MainTex);
 			float4 _MainTex_ST;
 
+			float _Value;
 			CBUFFER_END
 
 			struct v2f
 			{
 				float4 vertex : SV_POSITION;
+				float3 positionSS : POSITION1;
 				float2 uv : TEXCOORD0;
 			};
 
 			v2f PassVertex(float4 vertex : POSITION, float3 normal : NORMAL, float2 uv : TEXCOORD0)
 			{
-				v2f o;
-				o.vertex = TransformObjectToHClip(vertex);
-				o.uv = uv;
+				
 
+				VertexPositionInputs  vertexInput = GetVertexPositionInputs(vertex.xyz);
+
+				v2f o;
+
+				o.vertex = vertexInput.positionCS;
+				o.positionSS = vertexInput.positionVS;
+				
+				float positionWS = mul(UNITY_MATRIX_M, vertex);
+				
+				
+				
 				return o;
 			}
 
 			half4 PassFragment(v2f i) :SV_TARGET
 			{
-				float4 color = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
+				float2 uv = i.vertex.xy / _ScaledScreenParams.xy;
+				float4 depth = LinearEyeDepth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture,sampler_CameraDepthTexture, uv),_ZBufferParams);
+				
+				float depthMapDepth = depth.x;
+				float myDepth = i.vertex.w;
+				float distance = depthMapDepth - myDepth;
 
-				return color;
+			/*	if (_Value > distance)
+					return float4(0, 0, 0, 0);
+				else
+					return float4(1,1,1,1);*/
+
+
+				return float4(distance,distance,distance,0);
 			}
 
 			ENDHLSL
 		}
-
 		 Pass
 		{
-			Name "CustomOutline"
+			Name "DepthNormalsOnly"
 			Tags
 			{
-				"LightMode" = "ShadowCaster"
+				"LightMode" = "DepthNormalsOnly"
 			}
 
-			// -------------------------------------
-			// Render State Commands
-			ZWrite On
-			ZTest LEqual
-			ColorMask 0
-			Cull[CULL BACK]
+				// -------------------------------------
+				// Render State Commands
+				ZWrite On
+				Cull[_Cull]
 
-			HLSLPROGRAM
-			#pragma target 2.0
+				HLSLPROGRAM
+				#pragma target 2.0
 
-			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+				// -------------------------------------
+				// Shader Stages
+				#pragma vertex DepthNormalsVertex
+				#pragma fragment DepthNormalsFragment
 
+				// -------------------------------------
+				// Material Keywords
+				#pragma shader_feature_local _NORMALMAP
+				#pragma shader_feature_local _PARALLAXMAP
+				#pragma shader_feature_local _ _DETAIL_MULX2 _DETAIL_SCALED
+				#pragma shader_feature_local _ALPHATEST_ON
+				#pragma shader_feature_local_fragment _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
 
-			// -------------------------------------
-			// Shader Stages
-			#pragma vertex ShadowPassVertex
-			#pragma fragment ShadowPassFragment
+				// -------------------------------------
+				// Universal Pipeline keywords
+				#pragma multi_compile_fragment _ _GBUFFER_NORMALS_OCT // forward-only variant
+				#include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/RenderingLayers.hlsl"
 
-			// -------------------------------------
-			// Material Keywords
-			#pragma shader_feature_local _ALPHATEST_ON
-			#pragma shader_feature_local_fragment _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+				// -------------------------------------
+				// Unity defined keywords
+				#pragma multi_compile _ LOD_FADE_CROSSFADE
 
-			//--------------------------------------
-			// GPU Instancing
-			#pragma multi_compile_instancing
-			#include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+				//--------------------------------------
+				// GPU Instancing
+				#pragma multi_compile_instancing
+				#include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
 
-			// -------------------------------------
-			// Universal Pipeline keywords
-
-			// -------------------------------------
-			// Unity defined keywords
-			#pragma multi_compile _ LOD_FADE_CROSSFADE
-
-			// This is used during shadow map generation to differentiate between directional and punctual light shadows, as they use different formulas to apply Normal Bias
-			#pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
-			#include "HLSLSupport.cginc"
-
-			CBUFFER_START(UnityPerMaterial)
-			CBUFFER_END
-
-			struct VertexInput
-			{
-				float4 vertex : POSITION;
-				float4 normal : NORMAL;
-			};
-			struct VertexOutput
-			{
-				float4 vertex : SV_POSITION;
-			};
-
-			VertexOutput ShadowPassVertex(VertexInput v)
-			{
-				VertexOutput o;
-				float3 positionWS = TransformObjectToWorld(v.vertex.xyz);
-				float3 normalWS =	TransformObjectToWorldNormal(v.normal.xyz);
-
-				float4 positionCS = TransformWorldToHClip(ApplyShadowBias(positionWS, normalWS, _MainLightPosition.xyz));
-
-				o.vertex = positionCS;
-
-				return o;
+				// -------------------------------------
+				// Includes
+				#include "Packages/com.unity.render-pipelines.universal/Shaders/LitInput.hlsl"
+				#include "Packages/com.unity.render-pipelines.universal/Shaders/LitDepthNormalsPass.hlsl"
+				ENDHLSL
 			}
 
-			half4 ShadowPassFragment(VertexOutput i) :SV_TARGET
-			{
-				return 0;
-			}
-			ENDHLSL
-		}
+			 Pass
+		 {
+			 Name "DepthOnly"
+			 Tags
+			 {
+				 "LightMode" = "DepthOnly"
+			 }
 
+			 // -------------------------------------
+			 // Render State Commands
+			 ZWrite On
+			 ColorMask R
+			 Cull[_Cull]
 
-		 Pass
-		{
-			Name "DepthOnly"
-			Tags
-			{
-				"LightMode" = "DepthOnly"
-			}
+			 HLSLPROGRAM
+			 #pragma target 2.0
 
-			// -------------------------------------
-			// Render State Commands
-			ZWrite On
-			ColorMask 0
-			Cull[_Cull]
+			 // -------------------------------------
+			 // Shader Stages
+			 #pragma vertex DepthOnlyVertex
+			 #pragma fragment DepthOnlyFragment
 
-			HLSLPROGRAM
-			#pragma target 2.0
+			 // -------------------------------------
+			 // Material Keywords
+			 #pragma shader_feature_local _ALPHATEST_ON
+			 #pragma shader_feature_local_fragment _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
 
-			// -------------------------------------
-			// Shader Stages
-			#pragma vertex DepthOnlyVertex
-			#pragma fragment DepthOnlyFragment
+			 // -------------------------------------
+			 // Unity defined keywords
+			 #pragma multi_compile _ LOD_FADE_CROSSFADE
 
-			// -------------------------------------
-			// Material Keywords
-			#pragma shader_feature_local _ALPHATEST_ON
-			#pragma shader_feature_local_fragment _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+			 //--------------------------------------
+			 // GPU Instancing
+			 #pragma multi_compile_instancing
+			 #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
 
-			// -------------------------------------
-			// Unity defined keywords
-			#pragma multi_compile _ LOD_FADE_CROSSFADE
-
-			//--------------------------------------
-			// GPU Instancing
-			#pragma multi_compile_instancing
-			#include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
-
-			// -------------------------------------
-			// Includes
-			#include "Packages/com.unity.render-pipelines.universal/Shaders/LitInput.hlsl"
-			
-			CBUFFER_START(UnityPerMaterial)
-			CBUFFER_END
-
-			struct VertexInput
-			{
-			float4 vertex : POSITION;
-			};
-			struct VertexOutput
-			{
-				float4 vertex : SV_POSITION;
-			};
-
-			VertexOutput DepthOnlyVertex(VertexInput v)
-			{
-				VertexOutput o;
-				o.vertex = TransformObjectToHClip(v.vertex.xyz);
-
-				return o;
-			}
-
-			half4 DepthOnlyFragment(VertexOutput IN) : SV_TARGET
-			{
-				return 0;
-			}
-
-			ENDHLSL
-		}
+			 // -------------------------------------
+			 // Includes
+			 #include "Packages/com.unity.render-pipelines.universal/Shaders/LitInput.hlsl"
+			 #include "Packages/com.unity.render-pipelines.universal/Shaders/DepthOnlyPass.hlsl"
+			 ENDHLSL
+		 }
 	}
+
 	FallBack "Diffuse"
 }
