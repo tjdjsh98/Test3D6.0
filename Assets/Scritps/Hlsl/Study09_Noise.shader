@@ -98,7 +98,7 @@ Shader "Study/Study09"
 
 			half4 PassFragment(v2f i) :SV_TARGET
 			{
-				float noise = ClassicNoise(i.uv * _NoiseScale);
+				//float noise = ClassicNoise(i.uv * _NoiseScale);
 				float _out = 0;
 				float _cells = 0;
 				Unity_Voronoi_float(i.uv, 12, _NoiseScale, _out, _cells);

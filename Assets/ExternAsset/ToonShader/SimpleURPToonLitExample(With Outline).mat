@@ -49,7 +49,7 @@ Material:
     - _Cutoff: 0
     - _DirectLightMultiplier: 0.931
     - _EmissionMulByBaseColor: 0
-    - _IndirectLightMultiplier: 0.129
+    - _IndirectLightMultiplier: 0.163
     - _IsFace: 0
     - _MainLightIgnoreCelShade: 0.565
     - _OcclusionRemapEnd: 1
@@ -68,9 +68,9 @@ Material:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _EmissionMapChannelMask: {r: 1, g: 1, b: 1, a: 0}
-    - _IndirectLightMinColor: {r: 0.8207547, g: 0, b: 0.08072987, a: 1}
+    - _IndirectLightMinColor: {r: 0.3018868, g: 0.22838618, b: 0.19508722, a: 1}
     - _OcclusionMapChannelMask: {r: 1, g: 0, b: 0, a: 0}
     - _OutlineColor: {r: 0, g: 0, b: 0, a: 1}
-    - _ShadowMapColor: {r: 1, g: 0.20833331, b: 0, a: 1}
+    - _ShadowMapColor: {r: 0.4433962, g: 0.23298396, b: 0.17777678, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

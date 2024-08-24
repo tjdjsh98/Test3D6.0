@@ -1,9 +1,12 @@
 using System.Globalization;
+using System.Linq;
 using UnityEngine;
 
 public class Inventory : MonoBehaviour
 {
     [SerializeField] int _slotCount = 10;
+    public int SlotCount => _slotCount;
+
     private ItemSlot[] _itemSlots;
 
     private void Awake()
@@ -12,6 +15,8 @@ public class Inventory : MonoBehaviour
         for(int i = 0; i < _slotCount; i++)
         {
             _itemSlots[i]  = new ItemSlot();
+            _itemSlots[i].itemName = string.Empty;
+            _itemSlots[i].count = 0;
         }
     }
 
@@ -23,8 +28,11 @@ public class Inventory : MonoBehaviour
             int slotIndex = 0;
             foreach (ItemSlot slot in _itemSlots)
             {
-                if (slot.itemName == "")
+                if (slot.count == 0)
+                {
                     emptySlot = slotIndex;
+                    break;
+                }
                 if (slot.itemName == itemName)
                 {
                     slot.count += count;
@@ -32,6 +40,7 @@ public class Inventory : MonoBehaviour
                 }
                 slotIndex++;
             }
+            Debug.Log(emptySlot);
 
             if (emptySlot == -1) return false;
             _itemSlots[emptySlot].itemName = itemName;
@@ -52,6 +61,13 @@ public class Inventory : MonoBehaviour
         }
 
         return true;
+    }
+
+    public ItemSlot GetSlot(int index)
+    {
+        if (index < 0 || index >= _itemSlots.Length) return null;
+
+        return _itemSlots[index];
     }
 }
 

@@ -46,7 +46,6 @@ Shader "Study/Study02"
 					v2f o;
 					outpos = UnityObjectToClipPos(vertex);
 					o.uv = uv;
-
 					return o;
 				}
 

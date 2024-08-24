@@ -33,8 +33,8 @@ Shader "SyntyStudios/Prototype_Glass_Object"
 		#endif
 		struct Input
 		{
-			float3 worldPos : POSITION;
-			float3 worldNormal : NORMAL;
+			float3 worldPos;
+			float3 worldNormal;
 			INTERNAL_DATA
 		};
 

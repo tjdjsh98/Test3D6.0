@@ -1,11 +1,19 @@
-using System.Diagnostics;
+using System.Collections.Generic;
+using Tripolygon.UModeler.UI.Converters;
+using Unity.Cinemachine;
+using UnityEditor;
 using UnityEngine;
-using UnityEngine.UIElements;
+using UnityEngine.Analytics;
 using Debug = UnityEngine.Debug;
 
 public class UnitChanCharacter : MonoBehaviour
 {
     [SerializeField]Camera _camera;
+    [SerializeField] CinemachineCamera _thirdPersonCamera;
+    [SerializeField] CinemachineCamera _firstPersonCamera;
+
+    [SerializeField] List<SkinnedMeshRenderer> _meshs;
+
     GameObject _model;
     CapsuleCollider _collider;
     Rigidbody _rigidBody;
@@ -29,6 +37,10 @@ public class UnitChanCharacter : MonoBehaviour
     [SerializeField] AnimationCurve _climbYCurve;
     [SerializeField] AnimationCurve _climbForwardCurve;
 
+    [SerializeField] Vector4 _climbContactRay;
+
+    float _inputAngle;
+
     private void Awake()
     {
         _model = transform.Find("Model").gameObject;
@@ -47,36 +59,102 @@ public class UnitChanCharacter : MonoBehaviour
             _collider = GetComponent<CapsuleCollider>();
         if (_model == null)
             _model = transform.Find("Model").gameObject;
-        Gizmos.DrawLine(gameObject.transform.position + _collider.center, gameObject.transform.position + _collider.center + _model.transform.forward*0.3f);
+        Gizmos.DrawLine(gameObject.transform.position + (Vector3)_climbContactRay, gameObject.transform.position + (Vector3)_climbContactRay + _model.transform.forward * _climbContactRay.w); 
 
-
-        Gizmos.matrix = _camera.transform.localToWorldMatrix;
-
-        Gizmos.DrawWireCube(Vector3.zero + Vector3.forward*50,new Vector3(2, 2, 100));
-
-        Gizmos.matrix = Matrix4x4.identity;
+        Gizmos.DrawWireSphere(transform.position, 2);
     }
     void Update()
     {
         ControlMovement();
         CheckGroundWall();
         CheckItem();
-    }
+        ControlInventory();
 
-    void CheckItem()
-    {
-        //if (Input.GetMouseButtonDown(0))
+        if(Input.GetKeyDown(KeyCode.Alpha1))
         {
-            RaycastHit hit;
-            if(Physics.BoxCast(_camera.transform.position, new Vector3(1, 1, 50), Vector3.forward, out hit, _camera.transform.rotation,50,LayerMask.GetMask("Item")))
-            {
-                Destroy(hit.collider.gameObject);
-                _inventory.InsertItem(name);
-            }
-          
+            _thirdPersonCamera.gameObject.SetActive(true);
+            _firstPersonCamera.gameObject.SetActive(false);
+            foreach (var mesh in _meshs)
+                mesh.gameObject.SetActive(true);
+        }
+        if (Input.GetKeyDown(KeyCode.Alpha2))
+        {
+            _thirdPersonCamera.gameObject.SetActive(false);
+            _firstPersonCamera.gameObject.SetActive(true);
+            foreach (var mesh in _meshs)
+                mesh.gameObject.SetActive(false);
         }
     }
 
+    // 캐릭터 주변에 아이템이 있는지 확인합니다.
+    // 아이템이 있다면 UI를 띄웁니다.
+
+    List<GameObject> _aroundItemList = new List<GameObject>();
+    List<UIItemTag> _arountItemUIList = new List<UIItemTag>();
+    void CheckItem()
+    {
+
+        Collider[] hits = Physics.OverlapSphere(transform.position, 2, LayerMask.GetMask("Item"));
+        //RaycastHit[] hits = Physics.BoxCastAll(transform.position, Vector3.one * 10, Vector3.zero, Quaternion.identity, 0,LayerMask.GetMask("Item"));
+
+        if(hits.Length > 0)
+        {
+            for(int i = 0; i < hits.Length; i++)
+            {
+                GameObject gameObject = hits[i].gameObject;
+                if (_aroundItemList.Contains(gameObject)) continue;
+
+                _aroundItemList.Add(gameObject);
+                _arountItemUIList.Add(UIItemShower.Instance.ShowText(gameObject,gameObject.name));
+            }
+        }
+
+        for (int i = _aroundItemList.Count-1; i >= 0; i--)
+        {
+            bool isFar = true;
+            for(int j = 0; j < hits.Length; j++)
+            {
+                if (hits[j].gameObject == _aroundItemList[i])
+                {
+                    isFar = false;
+                    break;
+                }
+            }
+            if(isFar)
+            {
+                _aroundItemList.RemoveAt(i);
+                _arountItemUIList[i].parent.gameObject.SetActive(false);
+                _arountItemUIList.RemoveAt(i);
+            }
+        }
+
+        // 가장 가까운 아이템부터 흭득한다.
+        if(Input.GetKeyDown(KeyCode.E))
+        {
+            int index = -1;
+            float closeDistance = float.MaxValue;
+            for(int i = 0; i <_aroundItemList.Count; i++)
+            {
+                float distance = Vector3.Distance(transform.position, _aroundItemList[i].transform.position);
+                if(distance < closeDistance)
+                {
+                    closeDistance = distance;
+                    index = i;
+                }
+            }
+
+            if(index >= 0)
+            {
+                GameObject item = _aroundItemList[index];
+                _aroundItemList.RemoveAt(index);
+                _arountItemUIList[index].parent.gameObject.SetActive(false);
+                _arountItemUIList.RemoveAt(index);
+
+                _inventory.InsertItem(item.name);
+                Destroy(item);
+            }
+        }
+    }
     void CheckGroundWall()
     {
         if (Physics.Raycast(transform.position, Vector3.down, 0.2f, LayerMask.GetMask("Ground")))
@@ -89,7 +167,7 @@ public class UnitChanCharacter : MonoBehaviour
             _isContactGround = false;
             _animator.SetBool("ContactGround", false);
         }
-        Ray ray = new Ray(transform.position + _collider.center, _collider.center + _model.transform.forward);
+        Ray ray = new Ray(transform.position + (Vector3)_climbContactRay, _model.transform.forward * _climbContactRay.w);
         RaycastHit hit;
         if (Physics.Raycast(ray, out hit, 0.3f, LayerMask.GetMask("Ground")))
         {
@@ -194,19 +272,19 @@ public class UnitChanCharacter : MonoBehaviour
                 _landingElasepdTime = 0;
 
             }
-            if (moveDirection != Vector3.zero)
+          
+            float deltaAngle = Mathf.DeltaAngle(_model.transform.rotation.eulerAngles.y, _inputAngle) * 0.5f;
+
+
+            _model.transform.rotation = Quaternion.Euler(0, _model.transform.rotation.eulerAngles.y + deltaAngle, 0);
+
+
+            if (inputDirection != Vector3.zero)
             {
-                float moveAngle = Mathf.Atan2(_rigidBody.linearVelocity.x, _rigidBody.linearVelocity.z) * Mathf.Rad2Deg;
-                float deltaAngle = Mathf.DeltaAngle(_model.transform.rotation.eulerAngles.y, moveAngle) * 0.2f;
-
-
-                _model.transform.rotation = Quaternion.Euler(0, _model.transform.rotation.eulerAngles.y + deltaAngle, 0);
-
+                _inputAngle = Mathf.Atan2(_rigidBody.linearVelocity.x, _rigidBody.linearVelocity.z) * Mathf.Rad2Deg;
                 moveDirection.Normalize();
                 _rigidBody.linearVelocity = new Vector3(moveDirection.x * _maxSpeed, _rigidBody.linearVelocity.y, moveDirection.z * _maxSpeed);
             }
-          
-         
         }
         else
         {
@@ -221,6 +299,7 @@ public class UnitChanCharacter : MonoBehaviour
                 RaycastHit hit;
                 if (!Physics.Raycast(ray, out hit, 0.3f, LayerMask.GetMask("Ground")))
                 {
+                    Debug.Log("true");
                     _isClimbing = true;
                     _animator.SetBool("EndClimbing", true);
                     _climbingStartPos = transform.position;
@@ -238,5 +317,20 @@ public class UnitChanCharacter : MonoBehaviour
         _animator.SetFloat("VelocityY", _rigidBody.linearVelocity.y);
 
     
+    }
+    void ControlInventory()
+    {
+        if(Input.GetKeyDown(KeyCode.I))
+        {
+            if(UIInventory.Instance.gameObject.activeSelf == false)
+            {
+                UIInventory.Instance.ConnectInventory(_inventory);
+                UIInventory.Instance.Open();
+            }
+            else
+            {
+                UIInventory.Instance.Close();
+            }
+        }
     }
 }
