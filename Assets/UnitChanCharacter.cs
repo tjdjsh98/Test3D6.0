@@ -8,38 +8,55 @@ using Debug = UnityEngine.Debug;
 
 public class UnitChanCharacter : MonoBehaviour
 {
+    [SerializeField] UIInventory _uiInventory;
+
+    [Header("카메라 시점")]
     [SerializeField]Camera _camera;
     [SerializeField] CinemachineCamera _thirdPersonCamera;
     [SerializeField] CinemachineCamera _firstPersonCamera;
-
     [SerializeField] List<SkinnedMeshRenderer> _meshs;
 
-    GameObject _model;
-    CapsuleCollider _collider;
-    Rigidbody _rigidBody;
-    Animator _animator;
 
-    Inventory _inventory;
-
+    [Header("캐릭터 상태")]
     float _maxSpeed = 5f;
 
-    bool _isContactWall;
-    bool _isContactGround;
-    bool _isClimbing = false;
+    // 이동관련
+    float _inputAngle;
 
+    // 올라가는 상태
+    bool _isContactWall;
+    Vector3 _climbingStartPos;
+    Vector3 _climbingDestin;
+    bool _isClimbing = false;
+    float _climbElaspedTime = 0;
+
+    // 착지 상태
+    bool _isContactGround;
     float _landingElasepdTime = 0;
     float _landingTime = 1;
 
-    Vector3 _climbingStartPos;
-    Vector3 _climbingDestin;
-    float _climbElaspedTime = 0;
+    [Header("바닥")]
+    [SerializeField] float _slopeLimit = 45;
+
+
+    [Header("벽")]
+    [SerializeField] Vector4 _climbContactRay;
     [SerializeField] float _climbTween = 2f;
     [SerializeField] AnimationCurve _climbYCurve;
     [SerializeField] AnimationCurve _climbForwardCurve;
 
-    [SerializeField] Vector4 _climbContactRay;
 
-    float _inputAngle;
+    // 컴포넌트
+    GameObject _model;
+    CapsuleCollider _collider;
+    Rigidbody _rigidBody;
+    Animator _animator;
+    Inventory _inventory;
+
+
+    // 상태 제한
+    bool _isEnableMove = true;
+    bool _isEnableAttack = true;
 
     private void Awake()
     {
@@ -48,6 +65,7 @@ public class UnitChanCharacter : MonoBehaviour
         _rigidBody =GetComponent<Rigidbody>();
         _animator = GetComponentInChildren<Animator>();
         _inventory = GetComponent<Inventory>();
+        _rigidBody.maxLinearVelocity = 100;
     }
 
     private void OnDrawGizmos()
@@ -66,11 +84,13 @@ public class UnitChanCharacter : MonoBehaviour
     void Update()
     {
         ControlMovement();
-        CheckGroundWall();
+        AttachGround();
+        AttachWall();
         CheckItem();
         ControlInventory();
+        ControlAttack();
 
-        if(Input.GetKeyDown(KeyCode.Alpha1))
+        if (Input.GetKeyDown(KeyCode.Alpha1))
         {
             _thirdPersonCamera.gameObject.SetActive(true);
             _firstPersonCamera.gameObject.SetActive(false);
@@ -155,18 +175,9 @@ public class UnitChanCharacter : MonoBehaviour
             }
         }
     }
-    void CheckGroundWall()
+
+    void AttachWall()
     {
-        if (Physics.Raycast(transform.position, Vector3.down, 0.2f, LayerMask.GetMask("Ground")))
-        {
-            _isContactGround = true;
-            _animator.SetBool("ContactGround", true);
-        }
-        else
-        {
-            _isContactGround = false;
-            _animator.SetBool("ContactGround", false);
-        }
         Ray ray = new Ray(transform.position + (Vector3)_climbContactRay, _model.transform.forward * _climbContactRay.w);
         RaycastHit hit;
         if (Physics.Raycast(ray, out hit, 0.3f, LayerMask.GetMask("Ground")))
@@ -191,9 +202,40 @@ public class UnitChanCharacter : MonoBehaviour
             _animator.SetBool("ContactWall", false);
         }
     }
+
+    void AttachGround()
+    {
+        RaycastHit hit;
+        if (Physics.Raycast(transform.position, Vector3.down, out hit, 0.2f, LayerMask.GetMask("Ground")))
+        {
+            float dot = Vector3.Dot(Vector3.up, hit.normal);
+            float angle = Mathf.Acos(dot) * Mathf.Rad2Deg;
+
+            if (_rigidBody.linearVelocity.y <= 0 && angle < _slopeLimit)
+            {
+                Vector3 pos = hit.point;
+                transform.position = pos;
+            }
+
+            _isContactGround = true;
+            _animator.SetBool("ContactGround", true);
+        }
+        else
+        {
+            Debug.Log("A");
+            _isContactGround = false;
+            _animator.SetBool("ContactGround", false);
+        }
+    }
+ 
     void ControlMovement()
     {
-        if(_isClimbing)
+        if (_uiInventory.gameObject.activeSelf) return;
+        // A
+        _animator.SetFloat("Velocity", Mathf.Abs(_rigidBody.linearVelocity.x) + Mathf.Abs(_rigidBody.linearVelocity.z));
+
+
+        if (_isClimbing)
         {
             _climbElaspedTime += Time.deltaTime;
             Vector3 pos = _climbingStartPos;
@@ -210,6 +252,8 @@ public class UnitChanCharacter : MonoBehaviour
             }
             return;
         }
+
+        if (!_isEnableMove) return;
 
         Vector3 moveDirection = Vector3.zero;
         Vector3 inputDirection = Vector3.zero;
@@ -255,7 +299,6 @@ public class UnitChanCharacter : MonoBehaviour
             moveDirection += dir;
         }
 
-        _animator.SetFloat("Velocity", Mathf.Abs(_rigidBody.linearVelocity.x) + Mathf.Abs(_rigidBody.linearVelocity.z));
 
         if (_isContactGround)
         {
@@ -322,15 +365,39 @@ public class UnitChanCharacter : MonoBehaviour
     {
         if(Input.GetKeyDown(KeyCode.I))
         {
-            if(UIInventory.Instance.gameObject.activeSelf == false)
+            if(_uiInventory.gameObject.activeSelf == false)
             {
-                UIInventory.Instance.ConnectInventory(_inventory);
-                UIInventory.Instance.Open();
+                _uiInventory.ConnectInventory(_inventory);
+                _uiInventory.Open();
             }
             else
             {
-                UIInventory.Instance.Close();
+                _uiInventory.Close();
             }
         }
+    }
+
+    void ControlAttack()
+    {
+        if (_uiInventory.gameObject.activeSelf) return;
+
+        if (!_isEnableAttack) return;
+
+        if(Input.GetMouseButton(0))
+        {
+            _isEnableAttack = false;
+            _isEnableMove = false;
+            _animator.applyRootMotion = true;
+            _animator.SetTrigger("Attack");
+            StartCoroutine(Utils.WaitAniationAndPlayCoroutine(_animator, "Attack", EndAttack));
+            
+        }
+    }
+
+    void EndAttack()
+    {
+        _isEnableAttack = true;
+        _isEnableMove = true;
+        _animator.applyRootMotion = false;
     }
 }
