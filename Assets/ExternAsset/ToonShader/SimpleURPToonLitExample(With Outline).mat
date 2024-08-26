@@ -13,8 +13,7 @@ Material:
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - _UseAlphaClipping
-  m_InvalidKeywords:
-  - _USEEMISSION_ON
+  m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -43,30 +42,30 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _AdditionalLightIgnoreCelShade: 0.525
-    - _CelShadeMidPoint: -0.27
-    - _CelShadeSoftness: 0.049
-    - _Cutoff: 0
-    - _DirectLightMultiplier: 0.931
-    - _EmissionMulByBaseColor: 0
-    - _IndirectLightMultiplier: 0.163
+    - _AdditionalLightIgnoreCelShade: 0.31
+    - _CelShadeMidPoint: -0.09
+    - _CelShadeSoftness: 0.596
+    - _Cutoff: 0.401
+    - _DirectLightMultiplier: 0.349
+    - _EmissionMulByBaseColor: 0.056
+    - _IndirectLightMultiplier: 0.173
     - _IsFace: 0
-    - _MainLightIgnoreCelShade: 0.565
+    - _MainLightIgnoreCelShade: 0.277
     - _OcclusionRemapEnd: 1
     - _OcclusionRemapStart: 0
-    - _OcclusionStrength: 0.525
-    - _OutlineWidth: 1.5
+    - _OcclusionStrength: 0
+    - _OutlineWidth: 0
     - _OutlineZOffset: 0
     - _OutlineZOffsetMaskRemapEnd: 1
     - _OutlineZOffsetMaskRemapStart: 0
-    - _ReceiveShadowMappingAmount: 1
+    - _ReceiveShadowMappingAmount: 0.271
     - _ReceiveShadowMappingPosOffset: 0
     - _UseAlphaClipping: 1
-    - _UseEmission: 1
+    - _UseEmission: 0
     - _UseOcclusion: 0
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
-    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionMapChannelMask: {r: 1, g: 1, b: 1, a: 0}
     - _IndirectLightMinColor: {r: 0.3018868, g: 0.22838618, b: 0.19508722, a: 1}
     - _OcclusionMapChannelMask: {r: 1, g: 0, b: 0, a: 0}

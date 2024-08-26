@@ -10,7 +10,7 @@ Material:
   m_Name: CartoonShader_UnityChanBody
   m_Shader: {fileID: 4800000, guid: adeb27d4743bd4548b8bd73fd66b836d, type: 3}
   m_Parent: {fileID: 2100000, guid: df5fb05ee79de5049b3fb8428f9e15aa, type: 2}
-  m_ModifiedSerializedProperties: 0
+  m_ModifiedSerializedProperties: 28
   m_ValidKeywords:
   - _UseAlphaClipping
   m_InvalidKeywords: []
@@ -28,14 +28,31 @@ Material:
         m_Texture: {fileID: 2800000, guid: 53532607af79a914bba777ea3a297658, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _EmissionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _OcclusionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _CelShadeMidPoint: -0.34
-    - _CelShadeSoftness: 0.18
+    - _CelShadeMidPoint: -0.02
+    - _CelShadeSoftness: 0
+    - _Cutoff: 0
+    - _DirectLightMultiplier: 0.511
+    - _IndirectLightMultiplier: 0.512
+    - _MainLightIgnoreCelShade: 0
+    - _OcclusionStrength: 0.401
     - _OutlineWidth: 1.5
-    - _ReceiveShadowMappingAmount: 0.668
+    - _OutlineZOffsetMaskRemapStart: 0
+    - _ReceiveShadowMappingAmount: 0.57
+    - _UseAlphaClipping: 1
     - _isFace: 0
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _IndirectLightMinColor: {r: 0.254717, g: 0.14057495, b: 0.14057495, a: 1}
+    - _ShadowMapColor: {r: 0.4528302, g: 0.28089985, b: 0.14311142, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

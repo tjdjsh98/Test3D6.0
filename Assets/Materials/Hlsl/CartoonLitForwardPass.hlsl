@@ -6,12 +6,18 @@
 
 // Nilo의 쉐이더를 참고하여 만들었습니다.
 
+/*
+    UTPUT_LIGHTMAP_UV(input.staticLightmapUV, unity_LightmapST, output.staticLightmapUV);
+    #ifdef DYNAMICLIGHTMAP_ON
+    output.dynamicLightmapUV = input.dynamicLightmapUV.xy * unity_DynamicLightmapST.xy + unity_DynamicLightmapST.zw;
+*/
+
 struct Attributes
 {
-    float4 positionOS : POSITION;
-    float3 normalOS : NORMAL;
-    float4 tangentOS : TANGENT;
-    float2 texcoord : TEXCOORD0;
+    float3 positionOS : POSITION;
+    half3 normalOS : NORMAL;
+    half4 tangentOS : TANGENT;
+    float2 uv : TEXCOORD0;
     float2 staticLightmapUV : TEXCOORD1;
     float2 dynamicLightmapUV : TEXCOORD2;
     UNITY_VERTEX_INPUT_INSTANCE_ID
@@ -19,10 +25,14 @@ struct Attributes
 
 struct Varyings
 {
+    float4 positionCS : SV_Position;
     float2 uv : TEXCOORD0;
     float4 positionWSAndFogFactor : TEXCOORD1;
-    float3 normalWS : TEXCOORD2;
-    float4 positionCS : SV_Position;
+    float2 lightmapUV : TEXCOORD2;
+    float2 dynamicLightmapUV : TEXCOORD3;
+    float3 normalWS : TEXCOORD4;
+    float4 shadowCoord : TEXCOORD5;
+
     
     UNITY_VERTEX_INPUT_INSTANCE_ID
     UNITY_VERTEX_OUTPUT_STEREO
@@ -79,6 +89,7 @@ struct Varyings
     float _OutlineZOffsetMaskRemapEnd;
 
     CBUFFER_END
+float3 _LightDirection;
 
     struct ToonSurfaceData
     {
@@ -94,12 +105,38 @@ struct Varyings
         float3 positionWS;
         half3 viewDirectionWS;
         float4 shadowCoord;
+        half2 staticLightmapUV;
+        
     };
     
     
     // ---------------------------------------
     // VertexShader
     #include "CartoonOutline.hlsl"
+    
+    float4 NiloGetNewClipPosWithZOffset(float4 originalPositionCS, float viewSpaceZOffsetAmount)
+    {
+        if (unity_OrthoParams.w == 0)
+        {
+        ////////////////////////////////
+        //Perspective camera case
+        ////////////////////////////////
+            float2 ProjM_ZRow_ZW = UNITY_MATRIX_P[2].zw;
+            float modifiedPositionVS_Z = -originalPositionCS.w + -viewSpaceZOffsetAmount; // push imaginary vertex
+            float modifiedPositionCS_Z = modifiedPositionVS_Z * ProjM_ZRow_ZW[0] + ProjM_ZRow_ZW[1];
+            originalPositionCS.z = modifiedPositionCS_Z * originalPositionCS.w / (-modifiedPositionVS_Z); // overwrite positionCS.z
+            return originalPositionCS;
+        }
+        else
+        {
+        ////////////////////////////////
+        //Orthographic camera case
+        ////////////////////////////////
+            originalPositionCS.z += -viewSpaceZOffsetAmount / _ProjectionParams.z; // push imaginary vertex and overwrite positionCS.z
+            return originalPositionCS;
+        }
+    }
+
     
     float3 TransformPositionWSToOutlinePositionWS(float3 positionWS, float positionVS_Z, float3 normalWS)
     {
@@ -112,13 +149,14 @@ struct Varyings
     
         return positionWS + normalWS * outlineExpandAmount;
     }
+    
     Varyings VertexShaderWork(Attributes input)
     {
         Varyings output;
         UNITY_SETUP_INSTANCE_ID(input); 
         UNITY_TRANSFER_INSTANCE_ID(input, output); 
         UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output); 
-    
+        
         VertexPositionInputs vertexInputs = GetVertexPositionInputs(input.positionOS);
         VertexNormalInputs vertexNormalInputs = GetVertexNormalInputs(input.normalOS, input.tangentOS);
     
@@ -129,12 +167,46 @@ struct Varyings
     #endif
 
         float fogFactor = ComputeFogFactor(vertexInputs.positionCS.z);
-        output.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
+        output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
+        output.lightmapUV = input.staticLightmapUV;
+        output.dynamicLightmapUV = input.dynamicLightmapUV;
         
+        output.positionWSAndFogFactor = float4(positionWS, fogFactor);
         output.normalWS = vertexNormalInputs.normalWS;
         output.positionCS = TransformWorldToHClip(positionWS);
-    
+        output.shadowCoord = TransformWorldToShadowCoord(positionWS);
       
+        #ifdef ToonShaderIsOutline
+    // [Read ZOffset mask texture]
+    // we can't use tex2D() in vertex shader because ddx & ddy is unknown before rasterization, 
+    // so use tex2Dlod() with an explict mip level 0, put explict mip level 0 inside the 4th component of param uv)
+    float outlineZOffsetMaskTexExplictMipLevel = 0;
+    float outlineZOffsetMask = tex2Dlod(_OutlineZOffsetMaskTex, float4(input.uv,0,outlineZOffsetMaskTexExplictMipLevel)).r; //we assume it is a Black/White texture
+
+    // [Remap ZOffset texture value]
+    // flip texture read value so default black area = apply ZOffset, because usually outline mask texture are using this format(black = hide outline)
+    outlineZOffsetMask = 1-outlineZOffsetMask;
+    outlineZOffsetMask = invLerpClamp(_OutlineZOffsetMaskRemapStart,_OutlineZOffsetMaskRemapEnd,outlineZOffsetMask);// allow user to flip value or remap
+
+    // [Apply ZOffset, Use remapped value as ZOffset mask]
+    output.positionCS = NiloGetNewClipPosWithZOffset(output.positionCS, _OutlineZOffset * outlineZOffsetMask + 0.03 * _IsFace);
+#endif
+
+    // ShadowCaster pass needs special process to positionCS, else shadow artifact will appear
+    //--------------------------------------------------------------------------------------
+#ifdef ToonShaderApplyShadowBiasFix
+    // see GetShadowPositionHClip() in URP/Shaders/ShadowCasterPass.hlsl
+    // https://github.com/Unity-Technologies/Graphics/blob/master/com.unity.render-pipelines.universal/Shaders/ShadowCasterPass.hlsl
+    float4 positionCS = TransformWorldToHClip(ApplyShadowBias(positionWS, output.normalWS, _LightDirection));
+
+    #if UNITY_REVERSED_Z
+    positionCS.z = min(positionCS.z, positionCS.w * UNITY_NEAR_CLIP_VALUE); 
+    #else
+    positionCS.z = max(positionCS.z, positionCS.w * UNITY_NEAR_CLIP_VALUE);
+    #endif
+    output.positionCS = positionCS;
+#endif
+        
         return output;
     }
     
@@ -202,6 +274,8 @@ struct Varyings
         output.occlusion = GetFinalOcculsion(input);
         
         
+        
+        
         return output;
     }
     
@@ -211,7 +285,7 @@ struct Varyings
         lightingData.positionWS = input.positionWSAndFogFactor.xyz;
         lightingData.viewDirectionWS = SafeNormalize(GetCameraPositionWS() - lightingData.positionWS);
         lightingData.normalWS = normalize(input.normalWS); //interpolated normal is NOT unit vector, we need to normalize it
-
+        lightingData.staticLightmapUV = input.lightmapUV;
         return lightingData;
     }
     
@@ -243,6 +317,7 @@ struct Varyings
     #ifdef _MAIN_LIGHT_SHADOWS
         float4 shadowCoord = TransformWorldToShadowCoord(shadowTestPosWS);
         mainLight.shadowAttenuation = MainLightRealtimeShadow(shadowCoord);
+        //return mainLight.shadowAttenuation;
     #endif
         // Main Light
         half3 mainLightResult = ShadeSingleLight(surfaceData, lightingData, mainLight, false);
@@ -256,15 +331,32 @@ struct Varyings
         // Returns the amount of lights affecting the object being renderer.
         // These lights are culled per-object in the forward renderer of URP.
         int additionalLightsCount = GetAdditionalLightsCount();
+        
+        
         for (int i = 0; i < additionalLightsCount; ++i)
         {
             // Similar to GetMainLight(), but it takes a for-loop index. This figures out the
             // per-object light index and samples the light buffer accordingly to initialized the
             // Light struct. If ADDITIONAL_LIGHT_CALCULATE_SHADOWS is defined it will also compute shadows.
+        
             int perObjectLightIndex = GetPerObjectLightIndex(i);
             Light light = GetAdditionalPerObjectLight(perObjectLightIndex, lightingData.positionWS); // use original positionWS for lighting
-            light.shadowAttenuation = AdditionalLightRealtimeShadow(perObjectLightIndex, shadowTestPosWS); // use offseted positionWS for shadow test
-
+        
+            ShadowSamplingData shadowSamplingData = GetAdditionalLightShadowSamplingData(perObjectLightIndex);
+                
+            float4 shadowCoord = TransformWorldToShadowCoord(lightingData.positionWS);
+            //half4 shadowMask = CalculateShadowMask()
+            real shadow = SampleShadowmapFiltered(_AdditionalLightsShadowmapTexture,sampler_AdditionalLightsShadowmapTexture,shadowCoord,shadowSamplingData );
+        
+        
+            return shadow;
+        
+        
+        
+            // 마지막에 Lightdirection을 넣어 줘야함
+            // 넣지 않으면 (0,1,0) 방향으로 고정된다.
+            light.shadowAttenuation = AdditionalLightRealtimeShadow(perObjectLightIndex, lightingData.positionWS, light.direction); // use offseted positionWS for shadow test
+        
             // Different function used to shade additional lights.
             additionalLightSumResult += ShadeSingleLight(surfaceData, lightingData, light, true);
         }
@@ -296,13 +388,16 @@ struct Varyings
     {
         UNITY_SETUP_INSTANCE_ID(input); 
         UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-        
+        half3 color;
+
         
         ToonSurfaceData surfaceData = InitializeSurfaceData(input);
         
         ToonLightingData lightingData = InitializeLightingData(input);
 
-        half3 color = ShadeAllLights(surfaceData, lightingData);
+        color = ShadeAllLights(surfaceData, lightingData);
+
+        
         
         #ifdef ToonShaderIsOutline
             color = ConvertSurfaceColorToOutlineColor(color);

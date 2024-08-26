@@ -352,6 +352,7 @@ half3 ShadeAllLights(ToonSurfaceData surfaceData, ToonLightingData lightingData)
     // Main light
     half3 mainLightResult = ShadeSingleLight(surfaceData, lightingData, mainLight, false);
 
+        
     //==============================================================================================
     // All additional lights
 
@@ -361,6 +362,7 @@ half3 ShadeAllLights(ToonSurfaceData surfaceData, ToonLightingData lightingData)
     // Returns the amount of lights affecting the object being renderer.
     // These lights are culled per-object in the forward renderer of URP.
     int additionalLightsCount = GetAdditionalLightsCount();
+        
     for (int i = 0; i < additionalLightsCount; ++i)
     {
         // Similar to GetMainLight(), but it takes a for-loop index. This figures out the
@@ -369,7 +371,9 @@ half3 ShadeAllLights(ToonSurfaceData surfaceData, ToonLightingData lightingData)
         int perObjectLightIndex = GetPerObjectLightIndex(i);
         Light light = GetAdditionalPerObjectLight(perObjectLightIndex, lightingData.positionWS); // use original positionWS for lighting
         light.shadowAttenuation = AdditionalLightRealtimeShadow(perObjectLightIndex, shadowTestPosWS); // use offseted positionWS for shadow test
-
+        
+        //return light.shadowAttenuation;
+        
         // Different function used to shade additional lights.
         additionalLightSumResult += ShadeSingleLight(surfaceData, lightingData, light, true);
     }

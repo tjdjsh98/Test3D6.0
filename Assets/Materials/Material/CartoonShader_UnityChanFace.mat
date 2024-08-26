@@ -31,18 +31,26 @@ Material:
         m_Texture: {fileID: 2800000, guid: e124ee241267f2d4a9ebdedbd7a49ab2, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _OcclusionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _CelShadeMidPoint: -0.37
-    - _CelShadeSoftness: 0.139
+    - _CelShadeMidPoint: -0.16
+    - _CelShadeSoftness: 0.42
     - _Cutoff: 0
-    - _DirectLightMultiplier: 0.534
-    - _MainLightIgnoreCelShade: 0.494
+    - _DirectLightMultiplier: 0.384
+    - _IndirectLightMultiplier: 0.961
+    - _MainLightIgnoreCelShade: 0.499
+    - _OcclusionStrength: 0.648
     - _OutlineWidth: 1.5
     - _UseAlphaClipping: 0
     - _UseEmission: 0
     - _isFace: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _IndirectLightMinColor: {r: 0.3207547, g: 0.11650052, b: 0.11650052, a: 1}
+    - _ShadowMapColor: {r: 0.5, g: 0.330852, b: 0.2995283, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
