@@ -9,7 +9,7 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: CartoonShader_UnityChanFace
   m_Shader: {fileID: 4800000, guid: adeb27d4743bd4548b8bd73fd66b836d, type: 3}
-  m_Parent: {fileID: 2100000, guid: df5fb05ee79de5049b3fb8428f9e15aa, type: 2}
+  m_Parent: {fileID: 2100000, guid: 7cd1463c081addb47aaaa5e6403871dc, type: 2}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords: []
@@ -37,10 +37,10 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _CelShadeMidPoint: -0.16
-    - _CelShadeSoftness: 0.42
+    - _CelShadeMidPoint: -0.49
+    - _CelShadeSoftness: 0
     - _Cutoff: 0
-    - _DirectLightMultiplier: 0.384
+    - _DirectLightMultiplier: 0.25
     - _IndirectLightMultiplier: 0.961
     - _MainLightIgnoreCelShade: 0.499
     - _OcclusionStrength: 0.648

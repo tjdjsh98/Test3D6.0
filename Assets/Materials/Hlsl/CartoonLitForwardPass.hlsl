@@ -330,8 +330,8 @@ float3 _LightDirection;
     #ifdef _ADDITIONAL_LIGHTS
         // Returns the amount of lights affecting the object being renderer.
         // These lights are culled per-object in the forward renderer of URP.
-        int additionalLightsCount = GetAdditionalLightsCount();
         
+        int additionalLightsCount = GetAdditionalLightsCount();
         
         for (int i = 0; i < additionalLightsCount; ++i)
         {
@@ -342,20 +342,18 @@ float3 _LightDirection;
             int perObjectLightIndex = GetPerObjectLightIndex(i);
             Light light = GetAdditionalPerObjectLight(perObjectLightIndex, lightingData.positionWS); // use original positionWS for lighting
         
-            ShadowSamplingData shadowSamplingData = GetAdditionalLightShadowSamplingData(perObjectLightIndex);
-                
-            float4 shadowCoord = TransformWorldToShadowCoord(lightingData.positionWS);
-            //half4 shadowMask = CalculateShadowMask()
-            real shadow = SampleShadowmapFiltered(_AdditionalLightsShadowmapTexture,sampler_AdditionalLightsShadowmapTexture,shadowCoord,shadowSamplingData );
         
-        
-            return shadow;
-        
+            // Baked Shadowmap에 사용
+            //ShadowSamplingData shadowSamplingData = GetAdditionalLightShadowSamplingData(perObjectLightIndex);
+            //float4 shadowCoord = TransformWorldToShadowCoord(lightingData.positionWS);
+            //light.shadowAttenuation = SampleShadowmapFiltered(_AdditionalLightsShadowmapTexture,sampler_AdditionalLightsShadowmapTexture,shadowCoord,shadowSamplingData );
         
         
             // 마지막에 Lightdirection을 넣어 줘야함
             // 넣지 않으면 (0,1,0) 방향으로 고정된다.
             light.shadowAttenuation = AdditionalLightRealtimeShadow(perObjectLightIndex, lightingData.positionWS, light.direction); // use offseted positionWS for shadow test
+        
+            //return light.shadowAttenuation;
         
             // Different function used to shade additional lights.
             additionalLightSumResult += ShadeSingleLight(surfaceData, lightingData, light, true);

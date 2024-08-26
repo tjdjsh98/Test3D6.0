@@ -17,8 +17,8 @@ half3 ShadeSingleLight(ToonSurfaceData surfaceData, ToonLightingData lightingDat
     half NoL = dot(N, L);
 
     half lightAttenuation = 1;
-    
-        #ifdef LIGHTMAP_ON
+
+     #ifdef LIGHTMAP_ON
         float2 lightmapUV = lightingData.staticLightmapUV * unity_LightmapST.xy + unity_LightmapST.zw;
         lightAttenuation *= min(1,SampleLightmap(lightmapUV,lightingData.normalWS));
         
