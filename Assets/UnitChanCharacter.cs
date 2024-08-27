@@ -198,8 +198,10 @@ public class UnitChanCharacter : MonoBehaviour
             _isContactWall = true;
             _animator.SetBool("ContactWall", true);
             Vector3 normal = -hit.normal;
-            float angle = Mathf.Atan2(normal.x, normal.z) * Mathf.Rad2Deg;
-            _model.transform.rotation = Quaternion.Euler(0, angle, 0);
+            float yangle = Mathf.Atan2(normal.x, normal.z) * Mathf.Rad2Deg;
+            float xangle = Mathf.Atan2(normal.z, normal.x) * Mathf.Rad2Deg;
+            float zangle = Mathf.Atan2(normal.x, normal.y) * Mathf.Rad2Deg;
+            _model.transform.LookAt(transform.position + normal);
 
         }
         else
@@ -331,7 +333,6 @@ public class UnitChanCharacter : MonoBehaviour
           
             float deltaAngle = Mathf.DeltaAngle(_model.transform.rotation.eulerAngles.y, _inputAngle) * 0.5f;
 
-
             _model.transform.rotation = Quaternion.Euler(0, _model.transform.rotation.eulerAngles.y + deltaAngle, 0);
 
 
@@ -358,13 +359,13 @@ public class UnitChanCharacter : MonoBehaviour
                 _rigidBody.linearVelocity = wallMove;
                 Ray ray = new Ray(transform.position + _collider.center, _collider.center + _model.transform.forward);
                 RaycastHit hit;
-                if (!Physics.Raycast(ray, out hit, 0.3f, LayerMask.GetMask("Ground")))
-                {
-                    _isClimbing = true;
-                    _animator.SetBool("EndClimbing", true);
-                    _climbingStartPos = transform.position;
-                    _climbingDestin = transform.position + _collider.center + _model.transform.forward * 0.5f;
-                }
+                //if (!Physics.Raycast(ray, out hit, 0.3f, LayerMask.GetMask("Ground")))
+                //{
+                //    _isClimbing = true;
+                //    _animator.SetBool("EndClimbing", true);
+                //    _climbingStartPos = transform.position;
+                //    _climbingDestin = transform.position + _collider.center + _model.transform.forward * 0.5f;
+                //}
 
                 if (Input.GetKeyDown(KeyCode.Space))
                 {
