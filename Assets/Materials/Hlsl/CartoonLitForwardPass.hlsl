@@ -31,7 +31,9 @@ struct Varyings
     float2 lightmapUV : TEXCOORD2;
     float2 dynamicLightmapUV : TEXCOORD3;
     float3 normalWS : TEXCOORD4;
-    float4 shadowCoord : TEXCOORD5;
+    float3 tangentWS : TEXCOORD5;
+    float3 bitangentWS : TEXCOORD6;
+    float4 shadowCoord : TEXCOORD7;
 
     
     UNITY_VERTEX_INPUT_INSTANCE_ID
@@ -42,6 +44,7 @@ struct Varyings
 // CUBFFER
     
     sampler2D _BaseMap;
+    sampler2D _NormalMap;
     sampler2D _EmissionMap;
     sampler2D _OcclusionMap;
     sampler2D _OutlineZOffsetMaskTex;
@@ -57,6 +60,10 @@ struct Varyings
 
         // alpha
     half _Cutoff;
+    
+    // Normal
+    half _UseNormalMap;
+    half4 _NormalMap_ST;
 
         // emission
     float _UseEmission;
@@ -173,6 +180,8 @@ float3 _LightDirection;
         
         output.positionWSAndFogFactor = float4(positionWS, fogFactor);
         output.normalWS = vertexNormalInputs.normalWS;
+        output.tangentWS = vertexNormalInputs.tangentWS;
+        output.bitangentWS = vertexNormalInputs.bitangentWS;
         output.positionCS = TransformWorldToHClip(positionWS);
         output.shadowCoord = TransformWorldToShadowCoord(positionWS);
       
@@ -284,7 +293,18 @@ float3 _LightDirection;
         ToonLightingData lightingData;
         lightingData.positionWS = input.positionWSAndFogFactor.xyz;
         lightingData.viewDirectionWS = SafeNormalize(GetCameraPositionWS() - lightingData.positionWS);
-        lightingData.normalWS = normalize(input.normalWS); //interpolated normal is NOT unit vector, we need to normalize it
+        
+        if (_UseNormalMap > 1)
+        {
+            float2 normalUV = input.uv * _NormalMap_ST.xy + _NormalMap_ST.zw;
+            half3 bump = UnpackNormal(tex2D(_NormalMap, normalUV));
+            float3x3 TBN = float3x3(input.tangentWS, input.bitangentWS, input.normalWS);
+            lightingData.normalWS = mul(bump, TBN);
+        }
+        else
+        {
+            lightingData.normalWS = normalize(input.normalWS); //interpolated normal is NOT unit vector, we need to normalize it
+        }
         lightingData.staticLightmapUV = input.lightmapUV;
         return lightingData;
     }
@@ -393,6 +413,7 @@ float3 _LightDirection;
         
         ToonLightingData lightingData = InitializeLightingData(input);
 
+        
         color = ShadeAllLights(surfaceData, lightingData);
 
         

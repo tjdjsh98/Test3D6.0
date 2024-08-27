@@ -9,6 +9,10 @@ Shader "Custom/CartoonShader"
         [MainTexture] _BaseMap("Base Map", 2D) = "white" {}
         [HDR][MainColor]_BaseColor("BaseColor", Color) = (1,1,1,1)
 
+        [Header(Normal map)]
+        [Toggle]_UseNormalMap("Enable?", Float) = 0
+        _NormalMap("    NormalMap", 2D) = "white"{}
+
         [Header(Alpha Clipping)]
         [Toggle(_UseAlphaClipping)]_UseAlphaClipping("Enable?", Float) = 0
         _Cutoff("    Cutoff", Range(0.0, 1.0)) = 0.5

@@ -38,12 +38,12 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _CelShadeMidPoint: -0.02
-    - _CelShadeSoftness: 0
+    - _CelShadeMidPoint: -0.32
+    - _CelShadeSoftness: 0.29
     - _Cutoff: 0
     - _DirectLightMultiplier: 0.511
-    - _IndirectLightMultiplier: 0.512
-    - _MainLightIgnoreCelShade: 0
+    - _IndirectLightMultiplier: 0.303
+    - _MainLightIgnoreCelShade: 0.57
     - _OcclusionStrength: 0.401
     - _OutlineWidth: 1.5
     - _OutlineZOffsetMaskRemapStart: 0

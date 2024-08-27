@@ -52,7 +52,7 @@ public class UnitChanCharacter : MonoBehaviour
     Rigidbody _rigidBody;
     Animator _animator;
     Inventory _inventory;
-
+    CharacterEquipment _characterEquipment;
 
     // 상태 제한
     bool _isEnableMove = true;
@@ -65,6 +65,7 @@ public class UnitChanCharacter : MonoBehaviour
         _rigidBody =GetComponent<Rigidbody>();
         _animator = GetComponentInChildren<Animator>();
         _inventory = GetComponent<Inventory>();
+        _characterEquipment = GetComponent<CharacterEquipment>();
         _rigidBody.maxLinearVelocity = 100;
     }
 
@@ -166,21 +167,28 @@ public class UnitChanCharacter : MonoBehaviour
             if(index >= 0)
             {
                 GameObject item = _aroundItemList[index];
+
                 _aroundItemList.RemoveAt(index);
                 _arountItemUIList[index].parent.gameObject.SetActive(false);
                 _arountItemUIList.RemoveAt(index);
 
-                _inventory.InsertItem(item.name);
-                Destroy(item);
+                Item itemComp = item.GetComponent<Item>();
+
+                if (itemComp.ItemType == ItemType.Equipment)
+                    GetComponent<CharacterEquipment>().EquipItem(item);
+                else
+                {
+                    _inventory.InsertItem(item);
+                }
             }
         }
     }
 
     void AttachWall()
     {
-        Ray ray = new Ray(transform.position + (Vector3)_climbContactRay, _model.transform.forward * _climbContactRay.w);
+        Ray ray = new Ray(transform.position + (Vector3)_climbContactRay, _model.transform.forward);
         RaycastHit hit;
-        if (Physics.Raycast(ray, out hit, 0.3f, LayerMask.GetMask("Ground")))
+        if (Physics.Raycast(ray, out hit, _climbContactRay.w, LayerMask.GetMask("Ground")))
         {
             if (!_isContactWall)
             {
@@ -193,10 +201,9 @@ public class UnitChanCharacter : MonoBehaviour
             float angle = Mathf.Atan2(normal.x, normal.z) * Mathf.Rad2Deg;
             _model.transform.rotation = Quaternion.Euler(0, angle, 0);
 
-
         }
         else
-        {
+        { 
             _rigidBody.useGravity = true;
             _isContactWall = false;
             _animator.SetBool("ContactWall", false);
@@ -206,14 +213,15 @@ public class UnitChanCharacter : MonoBehaviour
     void AttachGround()
     {
         RaycastHit hit;
-        if (Physics.Raycast(transform.position, Vector3.down, out hit, 0.2f, LayerMask.GetMask("Ground")))
+        if (Physics.BoxCast(transform.position+Vector3.up*0.15f,new Vector3(0.1f,0.1f,0.1f), Vector3.down,out hit,Quaternion.identity, 0.2f, LayerMask.GetMask("Ground")))
         {
             float dot = Vector3.Dot(Vector3.up, hit.normal);
             float angle = Mathf.Acos(dot) * Mathf.Rad2Deg;
 
             if (_rigidBody.linearVelocity.y <= 0 && angle < _slopeLimit)
             {
-                Vector3 pos = hit.point;
+                Vector3 pos = transform.position;
+                pos.y = hit.point.y;
                 transform.position = pos;
             }
 
@@ -222,7 +230,6 @@ public class UnitChanCharacter : MonoBehaviour
         }
         else
         {
-            Debug.Log("A");
             _isContactGround = false;
             _animator.SetBool("ContactGround", false);
         }
@@ -265,6 +272,7 @@ public class UnitChanCharacter : MonoBehaviour
         {
             UnityEngine.Cursor.lockState = CursorLockMode.None;
         }
+
         if(Input.GetKey(KeyCode.W))
         {
             inputDirection += Vector3.forward;
@@ -299,6 +307,11 @@ public class UnitChanCharacter : MonoBehaviour
             moveDirection += dir;
         }
 
+        if (inputDirection != Vector3.zero)
+            _animator.SetBool("InputMove", true);
+        else
+            _animator.SetBool("InputMove", false);
+
 
         if (_isContactGround)
         {
@@ -328,6 +341,11 @@ public class UnitChanCharacter : MonoBehaviour
                 moveDirection.Normalize();
                 _rigidBody.linearVelocity = new Vector3(moveDirection.x * _maxSpeed, _rigidBody.linearVelocity.y, moveDirection.z * _maxSpeed);
             }
+            else
+            {
+                _rigidBody.linearVelocity = Vector3.zero;
+            }
+            
         }
         else
         {
@@ -342,7 +360,6 @@ public class UnitChanCharacter : MonoBehaviour
                 RaycastHit hit;
                 if (!Physics.Raycast(ray, out hit, 0.3f, LayerMask.GetMask("Ground")))
                 {
-                    Debug.Log("true");
                     _isClimbing = true;
                     _animator.SetBool("EndClimbing", true);
                     _climbingStartPos = transform.position;
@@ -368,6 +385,7 @@ public class UnitChanCharacter : MonoBehaviour
             if(_uiInventory.gameObject.activeSelf == false)
             {
                 _uiInventory.ConnectInventory(_inventory);
+                _uiInventory.ConnecteCharacterEquipment(_characterEquipment);
                 _uiInventory.Open();
             }
             else

@@ -3,7 +3,7 @@ using UnityEngine;
 public enum ItemType
 {
     Mics = 0,
-    Equipemnt,
+    Equipment,
     End,
 }
 

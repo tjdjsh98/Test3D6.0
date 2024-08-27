@@ -1,5 +1,5 @@
-using System.Globalization;
-using System.Linq;
+using System.Collections.Generic;
+using UnityEditor.Rendering.Universal.ShaderGUI;
 using UnityEngine;
 
 public class Inventory : MonoBehaviour
@@ -16,43 +16,55 @@ public class Inventory : MonoBehaviour
         {
             _itemSlots[i]  = new ItemSlot();
             _itemSlots[i].itemName = string.Empty;
-            _itemSlots[i].count = 0;
+            _itemSlots[i].item = null;
         }
     }
 
-    public bool InsertItem(string itemName, int count = 1, int index = -1)
+    public bool InsertItem(GameObject gameObject, int count = 1, int index = -1)
     {
+        Item item = gameObject.GetComponent<Item>();
+        if (item == null) return false;
+        string itemName = gameObject.name;
+        
         if (index == -1)
         {
             int emptySlot = -1;
             int slotIndex = 0;
             foreach (ItemSlot slot in _itemSlots)
             {
-                if (slot.count == 0)
+                if (slot.item == null)
                 {
                     emptySlot = slotIndex;
                     break;
                 }
                 if (slot.itemName == itemName)
                 {
-                    slot.count += count;
+                    slot.item.Count += count;
+                    Destroy(item.gameObject);
                     return true;
                 }
                 slotIndex++;
             }
-            Debug.Log(emptySlot);
 
             if (emptySlot == -1) return false;
             _itemSlots[emptySlot].itemName = itemName;
-            _itemSlots[emptySlot].count = count;
-
+            _itemSlots[emptySlot].item = item;
+            _itemSlots[emptySlot].item.Count = count;
+            item.gameObject.SetActive(false);
         }
         else
         {
-            if (_itemSlots[index].itemName == itemName || _itemSlots[index].itemName =="")
+            if (_itemSlots[index].itemName == itemName )
+            {
+                _itemSlots[index].item.Count += count;
+                Destroy(item.gameObject);
+            }
+            else if(_itemSlots[index].item = null)
             {
                 _itemSlots[index].itemName = itemName;
-                _itemSlots[index].count += count;
+                _itemSlots[index].item = item;
+                _itemSlots[index].item.Count = count;
+                item.gameObject.SetActive(false);
             }
             else
             {
@@ -62,7 +74,26 @@ public class Inventory : MonoBehaviour
 
         return true;
     }
+    // 자신의 앞으로 아이템을 버린다.
+    public bool DropItem(int index)
+    {
+        if(index < 0 || index >= _itemSlots.Length) return false;
 
+        Item item = _itemSlots[index].item;
+        item.gameObject.SetActive(true);
+        item.transform.position = transform.position + transform.forward;
+        RemoveItem(index);
+        return true;
+    }
+    public bool RemoveItem(int index)
+    {
+        if(index < 0 || index >= _itemSlots.Length) return false;
+
+        _itemSlots[index].item = null;
+        _itemSlots[index].itemName = "";
+
+        return true;
+    }
     public ItemSlot GetSlot(int index)
     {
         if (index < 0 || index >= _itemSlots.Length) return null;
@@ -74,5 +105,5 @@ public class Inventory : MonoBehaviour
 public class ItemSlot
 {
     public string itemName;
-    public int count;
+    public Item item;
 }

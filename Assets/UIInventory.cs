@@ -12,20 +12,27 @@ public class UIInventory : MonoBehaviour
     PointerEventData _pointerEnterEvent;
     List<RaycastResult> _results = new List<RaycastResult>();
 
+    Inventory _connectedInventory;
+    CharacterEquipment _connectedCharacterEquipment;
 
     [SerializeField] GameObject _itemSlotParent;
     List<UIInventorySlot> _uiInventorySlotList = new List<UIInventorySlot>();
 
+    [Header("Equipment")]
 
-    [SerializeField] Image _hatImage;
-    [SerializeField] Image _bodyImage;
-    [SerializeField] Image _weaponImage;
-    [SerializeField] Image _shoeImage;
+    [SerializeField] GameObject _equipmentParent;
+    UIInventorySlot _heatSlot;
+    UIInventorySlot _bodySlot;
+    UIInventorySlot _weaponSlot;
+    UIInventorySlot _shoesSlot;
 
-    ItemSlot _dragItemData;
+    [SerializeField] GameObject _trash;
+
+    // 아이템 드래그 드롭
+    int _dragItemSlotIndex;
+    EquipmentType _dragedEquipmentType;
     Image _dragItemImage;
 
-    Inventory _connectedInventory;
 
     private void Awake()
     {
@@ -48,23 +55,39 @@ public class UIInventory : MonoBehaviour
             _uiInventorySlotList.Add(slot);
 
         }
+        FillInventorySlot(out _heatSlot, _equipmentParent.transform.Find("HeadSlot"));
+        FillInventorySlot(out _bodySlot, _equipmentParent.transform.Find("BodySlot"));
+        FillInventorySlot(out _weaponSlot, _equipmentParent.transform.Find("WeaponSlot"));
+        FillInventorySlot(out _shoesSlot, _equipmentParent.transform.Find("ShoesSlot"));
+
         Refresh();
         gameObject.SetActive(false);
     }
     private void Update()
     {
         ControlMouse();
-        if(_dragItemData!= null)
+        if(_dragItemImage.gameObject.activeSelf)
         {
             _dragItemImage.transform.position = Input.mousePosition;
         }
+    }
+
+    void FillInventorySlot(out UIInventorySlot slot, Transform parent)
+    {
+        slot = new UIInventorySlot();
+        slot.parent = parent.gameObject;
+        slot.itemImage = slot.parent.transform.Find("ItemImage").GetComponent<Image>();
+        slot.itemTextmesh = slot.parent.transform.Find("ItemTextMesh").GetComponent<TextMeshProUGUI>();
     }
 
     public void ConnectInventory(Inventory inventory)
     {
         _connectedInventory = inventory;
     }
-
+    public void ConnecteCharacterEquipment(CharacterEquipment characterEquipment)
+    {
+        _connectedCharacterEquipment = characterEquipment;
+    }
     public void Open()
     {
         UnityEngine.Cursor.lockState = CursorLockMode.None;
@@ -84,24 +107,35 @@ public class UIInventory : MonoBehaviour
             _results.Clear();
             _raycaster.Raycast(_pointerEnterEvent, _results);
 
-            // 인벤토리 레이캐스트 확인
             // 아이템이 존재한다면 드래그
             for (int i = 0; i < _results.Count; i++)
             {
                 GameObject ui = _results[i].gameObject;
 
+                // 인벤토리
                 for (int j = 0; j < _uiInventorySlotList.Count; j++)
                 {
                     if(ui == _uiInventorySlotList[j].itemImage.gameObject)
                     {
                         ItemSlot slot = _connectedInventory.GetSlot(j);
-                        if (slot.count == 0) return;
+                        if (slot.item == null) return;
 
-                        DragIItem(slot, _uiInventorySlotList[i].itemImage);
+                        _dragItemSlotIndex = j;
+                        DragIItem(_uiInventorySlotList[i]);
                         return;
                     }
                 }
-    
+
+                // 장비창
+                // TODO
+                if (_heatSlot.itemImage.gameObject == ui) { }
+                if (_weaponSlot.itemImage.gameObject == ui) 
+                {
+                    _dragedEquipmentType = EquipmentType.RightWeapon;
+                    DragIItem(_weaponSlot);
+                }
+                if (_bodySlot.itemImage.gameObject == ui) { }
+                if (_shoesSlot.itemImage.gameObject == ui) { }
             }
         }
 
@@ -111,16 +145,15 @@ public class UIInventory : MonoBehaviour
         }
     }
 
-    void DragIItem(ItemSlot itemSlot, Image image)
+    void DragIItem(UIInventorySlot slot)
     {
-        _dragItemImage.sprite = image.sprite;
-        _dragItemData = itemSlot;
+        _dragItemImage.sprite = slot.itemImage.sprite;
         _dragItemImage.gameObject.SetActive(true);
     }
 
     void ReleaseItem()
     {
-        if (_dragItemData == null) return;
+        if (!_dragItemImage.gameObject.activeSelf) return;
 
 
         _pointerEnterEvent.position = Input.mousePosition;
@@ -133,32 +166,48 @@ public class UIInventory : MonoBehaviour
         {
             GameObject ui = _results[i].gameObject;
 
-            for (int j = 0; j < _uiInventorySlotList.Count; j++)
-            {
-                if (ui == _uiInventorySlotList[j].itemImage.gameObject)
-                {
-                    ItemSlot slot = _connectedInventory.GetSlot(j);
-                    if (slot.count == 0) return;
+            // 인벤토리 호가인
 
-                    DragIItem(slot, _uiInventorySlotList[i].itemImage);
-                    return;
-                }
-            }
+
             // 장착 가능한 아이템인지 확인
 
+
+            // 아이템 버리기
+            if (ui == _trash)
+            {
+                // 인벤토리에서 버리기
+                if (_dragItemSlotIndex >= 0)
+                {
+                    _connectedInventory.DropItem(_dragItemSlotIndex);
+                    Refresh();
+                }
+
+                // 장비아이템에서 버리기
+                if(_dragedEquipmentType == EquipmentType.RightWeapon)
+                {
+                    _connectedCharacterEquipment.Unequip(EquipmentType.RightWeapon);
+                    Refresh();
+                }
+            }
         }
 
+        _dragItemSlotIndex = -1;
+        _dragedEquipmentType = EquipmentType.LeftWeapon;
         _dragItemImage.gameObject.SetActive(false);
-        _dragItemData = null;
     }
 
     void Refresh()
     {
-        if(_connectedInventory)
+        RefreshInventory();
+        RefreshEquipment();
+    }
+    void RefreshInventory()
+    {
+        if (_connectedInventory)
         {
             int slotCount = _connectedInventory.SlotCount;
 
-            for(int i = 0; i < _uiInventorySlotList.Count;i++)
+            for (int i = 0; i < _uiInventorySlotList.Count; i++)
             {
                 if (i >= slotCount)
                 {
@@ -168,13 +217,12 @@ public class UIInventory : MonoBehaviour
                 }
 
                 ItemSlot itemSlot = _connectedInventory.GetSlot(i);
-
                 if (itemSlot != null)
                 {
-                    if (itemSlot.count > 0)
+                    if (itemSlot.item != null)
                     {
                         _uiInventorySlotList[i].itemImage.color = Color.white;
-                        _uiInventorySlotList[i].itemTextmesh.text = $"{itemSlot.itemName} x {itemSlot.count}";
+                        _uiInventorySlotList[i].itemTextmesh.text = $"{itemSlot.itemName} x {itemSlot.item.Count}";
                     }
                     else
                     {
@@ -193,6 +241,46 @@ public class UIInventory : MonoBehaviour
                 _uiInventorySlotList[i].itemTextmesh.text = "";
             }
 
+        }
+    }
+
+    void RefreshEquipment()
+    {
+        if (_connectedCharacterEquipment)
+        {
+            GameObject hat = _connectedCharacterEquipment.GetEquipment(EquipmentType.Hat);
+            if (hat) {
+                _heatSlot.itemTextmesh.text = hat.name;
+                _heatSlot.itemImage.color = Color.white;
+            }
+            else
+            {
+                _heatSlot.itemTextmesh.text = "";
+                _heatSlot.itemImage.color = Color.red;
+            }
+
+            GameObject weapon = _connectedCharacterEquipment.GetEquipment(EquipmentType.RightWeapon);
+            if (weapon)
+            {
+                _weaponSlot.itemTextmesh.text = weapon.name;
+                _weaponSlot.itemImage.color = Color.white;
+            }
+            else
+            {
+                _weaponSlot.itemTextmesh.text = "";
+                _weaponSlot.itemImage.color = Color.red;
+            }
+        }
+        else
+        {
+            _heatSlot.itemTextmesh.text = "";
+            _heatSlot.itemImage.color = Color.red;
+            _bodySlot.itemTextmesh.text = "";
+            _bodySlot.itemImage.color = Color.red;
+            _weaponSlot.itemTextmesh.text = "";
+            _weaponSlot.itemImage.color = Color.red;
+            _shoesSlot.itemTextmesh.text = "";
+            _shoesSlot.itemImage.color = Color.red;
         }
     }
 }
