@@ -1,14 +1,24 @@
 using System.Collections.Generic;
-using Tripolygon.UModeler.UI.Converters;
 using Unity.Cinemachine;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.Analytics;
+using UnityEngine.UIElements;
 using Debug = UnityEngine.Debug;
 
-public class UnitChanCharacter : MonoBehaviour
+public class PlayerController : MonoBehaviour
 {
     [SerializeField] UIInventory _uiInventory;
+    [SerializeField] UICharacter _uiCharacter;
+
+    // 컴포넌트
+    GameObject _model;
+    CapsuleCollider _collider;
+    Rigidbody _rigidBody;
+    Animator _animator;
+    Inventory _inventory;
+    CharacterEquipment _characterEquipment;
+    Character _character;
+
 
     [Header("카메라 시점")]
     [SerializeField]Camera _camera;
@@ -40,23 +50,16 @@ public class UnitChanCharacter : MonoBehaviour
 
 
     [Header("벽")]
-    [SerializeField] Vector4 _climbContactRay;
+    [SerializeField] Range _wallRange;
     [SerializeField] float _climbTween = 2f;
     [SerializeField] AnimationCurve _climbYCurve;
     [SerializeField] AnimationCurve _climbForwardCurve;
 
-
-    // 컴포넌트
-    GameObject _model;
-    CapsuleCollider _collider;
-    Rigidbody _rigidBody;
-    Animator _animator;
-    Inventory _inventory;
-    CharacterEquipment _characterEquipment;
+    [Header("공격")]
+    [SerializeField] Range _attackRange;
 
     // 상태 제한
     bool _isEnableMove = true;
-    bool _isEnableAttack = true;
 
     private void Awake()
     {
@@ -66,24 +69,23 @@ public class UnitChanCharacter : MonoBehaviour
         _animator = GetComponentInChildren<Animator>();
         _inventory = GetComponent<Inventory>();
         _characterEquipment = GetComponent<CharacterEquipment>();
+        _character = GetComponentInChildren<Character>();
+        _uiCharacter.ConnectCharacter(_character);
         _rigidBody.maxLinearVelocity = 100;
     }
 
     private void OnDrawGizmos()
     {
+
         Gizmos.color = Color.green;
         Gizmos.DrawLine(gameObject.transform.position, gameObject.transform.position + Vector3.down*0.2f);
 
-        if(_collider == null)
-            _collider = GetComponent<CapsuleCollider>();
-        if (_model == null)
-            _model = transform.Find("Model").gameObject;
-        Gizmos.DrawLine(gameObject.transform.position + (Vector3)_climbContactRay, gameObject.transform.position + (Vector3)_climbContactRay + _model.transform.forward * _climbContactRay.w); 
-
-        Gizmos.DrawWireSphere(transform.position, 2);
+        Utils.DrawRange(gameObject, _wallRange,Color.yellow);
+        Utils.DrawRange(gameObject, _attackRange, Color.red);
     }
     void Update()
     {
+       
         ControlMovement();
         AttachGround();
         AttachWall();
@@ -186,9 +188,9 @@ public class UnitChanCharacter : MonoBehaviour
 
     void AttachWall()
     {
-        Ray ray = new Ray(transform.position + (Vector3)_climbContactRay, _model.transform.forward);
-        RaycastHit hit;
-        if (Physics.Raycast(ray, out hit, _climbContactRay.w, LayerMask.GetMask("Ground")))
+
+        RaycastHit hit = Utils.RangeCast(gameObject, _wallRange, LayerMask.GetMask("Ground"));
+        if(hit.collider != null)
         {
             if (!_isContactWall)
             {
@@ -198,10 +200,8 @@ public class UnitChanCharacter : MonoBehaviour
             _isContactWall = true;
             _animator.SetBool("ContactWall", true);
             Vector3 normal = -hit.normal;
-            float yangle = Mathf.Atan2(normal.x, normal.z) * Mathf.Rad2Deg;
-            float xangle = Mathf.Atan2(normal.z, normal.x) * Mathf.Rad2Deg;
-            float zangle = Mathf.Atan2(normal.x, normal.y) * Mathf.Rad2Deg;
-            _model.transform.LookAt(transform.position + normal);
+          
+            transform.LookAt(transform.position + normal);
 
         }
         else
@@ -215,8 +215,9 @@ public class UnitChanCharacter : MonoBehaviour
     void AttachGround()
     {
         RaycastHit hit;
-        if (Physics.BoxCast(transform.position+Vector3.up*0.15f,new Vector3(0.1f,0.1f,0.1f), Vector3.down,out hit,Quaternion.identity, 0.2f, LayerMask.GetMask("Ground")))
+        if (Physics.BoxCast(transform.position + Vector3.up,new Vector3(0.1f,0.1f,0.1f), Vector3.down,out hit,Quaternion.identity, 1f, LayerMask.GetMask("Ground")))
         {
+            Debug.Log(hit.collider);
             float dot = Vector3.Dot(Vector3.up, hit.normal);
             float angle = Mathf.Acos(dot) * Mathf.Rad2Deg;
 
@@ -236,7 +237,6 @@ public class UnitChanCharacter : MonoBehaviour
             _animator.SetBool("ContactGround", false);
         }
     }
- 
     void ControlMovement()
     {
         if (_uiInventory.gameObject.activeSelf) return;
@@ -331,9 +331,9 @@ public class UnitChanCharacter : MonoBehaviour
 
             }
           
-            float deltaAngle = Mathf.DeltaAngle(_model.transform.rotation.eulerAngles.y, _inputAngle) * 0.5f;
+            float deltaAngle = Mathf.DeltaAngle(transform.rotation.eulerAngles.y, _inputAngle) * 0.5f;
 
-            _model.transform.rotation = Quaternion.Euler(0, _model.transform.rotation.eulerAngles.y + deltaAngle, 0);
+            transform.rotation = Quaternion.Euler(0, transform.rotation.eulerAngles.y + deltaAngle, 0);
 
 
             if (inputDirection != Vector3.zero)
@@ -342,22 +342,18 @@ public class UnitChanCharacter : MonoBehaviour
                 moveDirection.Normalize();
                 _rigidBody.linearVelocity = new Vector3(moveDirection.x * _maxSpeed, _rigidBody.linearVelocity.y, moveDirection.z * _maxSpeed);
             }
-            else
-            {
-                _rigidBody.linearVelocity = Vector3.zero;
-            }
             
         }
         else
         {
             if (_isContactWall)
             {
-                Vector3 wallMove = _model.transform.up * inputDirection.z + _model.transform.right * inputDirection.x;
+                Vector3 wallMove = transform.up * inputDirection.z + transform.right * inputDirection.x;
                 wallMove.Normalize();
                 _animator.SetFloat("MoveWall", wallMove.magnitude);
 
                 _rigidBody.linearVelocity = wallMove;
-                Ray ray = new Ray(transform.position + _collider.center, _collider.center + _model.transform.forward);
+                Ray ray = new Ray(transform.position + _collider.center, _collider.center + transform.forward);
                 RaycastHit hit;
                 //if (!Physics.Raycast(ray, out hit, 0.3f, LayerMask.GetMask("Ground")))
                 //{
@@ -369,8 +365,8 @@ public class UnitChanCharacter : MonoBehaviour
 
                 if (Input.GetKeyDown(KeyCode.Space))
                 {
-                    Vector3 velocity = -_model.transform.forward*5 + _model.transform.up*6;
-                    _model.transform.rotation = Quaternion.Euler(0, 180 + _model.transform.rotation.eulerAngles.y, 0);
+                    Vector3 velocity = -transform.forward*5 + transform.up*6;
+                    transform.rotation = Quaternion.Euler(0, 180 + transform.rotation.eulerAngles.y, 0);
                     _rigidBody.linearVelocity = velocity;
                 }
             }
@@ -400,11 +396,12 @@ public class UnitChanCharacter : MonoBehaviour
     {
         if (_uiInventory.gameObject.activeSelf) return;
 
-        if (!_isEnableAttack) return;
+        if (_character.IsAttack) return;
 
         if(Input.GetMouseButton(0))
         {
-            _isEnableAttack = false;
+            _character.IsAttack = true;
+            _character.Attacked = OnAttacked;
             _isEnableMove = false;
             _animator.applyRootMotion = true;
             _animator.SetTrigger("Attack");
@@ -413,9 +410,29 @@ public class UnitChanCharacter : MonoBehaviour
         }
     }
 
+    void OnAttacked()
+    {
+        Collider[] colliders = Utils.RangeOverlapAll(gameObject, _attackRange, Define.ENEMY_LAYERMASK);
+
+        foreach(var collider in colliders)
+        {
+            Character character = collider.gameObject.GetComponent<Character>();
+            if(character != null)
+            {
+                DamageInfo info = new DamageInfo();
+                info.attacker = _character;
+                info.target = character;
+                info.knockbackPower = 50;
+                info.knockbackDirection = transform.forward;
+                info.damage = 2;
+                character.Damaged(info);
+            }
+        }
+    }
+
     void EndAttack()
     {
-        _isEnableAttack = true;
+        _character.IsAttack = false;
         _isEnableMove = true;
         _animator.applyRootMotion = false;
     }
