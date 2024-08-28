@@ -217,7 +217,6 @@ public class PlayerController : MonoBehaviour
         RaycastHit hit;
         if (Physics.BoxCast(transform.position + Vector3.up,new Vector3(0.1f,0.1f,0.1f), Vector3.down,out hit,Quaternion.identity, 1f, LayerMask.GetMask("Ground")))
         {
-            Debug.Log(hit.collider);
             float dot = Vector3.Dot(Vector3.up, hit.normal);
             float angle = Mathf.Acos(dot) * Mathf.Rad2Deg;
 
@@ -332,7 +331,6 @@ public class PlayerController : MonoBehaviour
             }
           
             float deltaAngle = Mathf.DeltaAngle(transform.rotation.eulerAngles.y, _inputAngle) * 0.5f;
-
             transform.rotation = Quaternion.Euler(0, transform.rotation.eulerAngles.y + deltaAngle, 0);
 
 
@@ -413,6 +411,8 @@ public class PlayerController : MonoBehaviour
     void OnAttacked()
     {
         Collider[] colliders = Utils.RangeOverlapAll(gameObject, _attackRange, Define.ENEMY_LAYERMASK);
+
+        if (colliders == null) return;
 
         foreach(var collider in colliders)
         {

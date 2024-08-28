@@ -8,8 +8,8 @@ TextScriptImporter:
   assetBundleVariant: 
 AssetOrigin:
   serializedVersion: 1
-  productId: 95986
-  packageName: UMotion Community - Animation Editor
-  packageVersion: 1.29p02
-  assetPath: Assets/UMotionEditor/Plugins/Windows/Editor/x64/AutodeskFbxSdkLicense.txt
-  uploadId: 654441
+  productId: 95991
+  packageName: UMotion Pro - Animation Editor
+  packageVersion: 1.29p03
+  assetPath: Assets/ExternAsset/UMotionEditor/Plugins/Windows/Editor/x64/AutodeskFbxSdkLicense.txt
+  uploadId: 654442
