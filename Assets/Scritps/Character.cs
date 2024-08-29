@@ -8,21 +8,24 @@ public class Character: MonoBehaviour
     CapsuleCollider _collider;
     Animator _animator;
     AnimatorHelper _animatorHelper;
-    GameObject _model;
-
     public Animator Animator => _animator;
     [Header("Status")]
     [SerializeField] protected int _maxHp;
     [SerializeField] protected int _hp;
     [SerializeField] protected float _speed;
     [SerializeField] protected int _power;
+    [SerializeField] protected int _maxHunger;
+    [SerializeField] protected int _hunger;
+        
 
     [Header("ActionState")]
     [field: ReadOnly][field: SerializeField] public bool IsAttack { get; set; }
     [field:ReadOnly][field: SerializeField] public bool IsWalking { get; set; }
 
     public int MaxHp => _maxHp;
-    public int HP => _hp;   
+    public int HP => _hp;
+    public int MaxHunger => _maxHunger;
+    public int Hunger => _hunger;
     public float Speed => _speed;
 
     public Action Attacked { get; set; }
@@ -35,7 +38,6 @@ public class Character: MonoBehaviour
         _collider = GetComponent<CapsuleCollider>();    
         _animator = GetComponentInChildren<Animator>();
         _animatorHelper = GetComponentInChildren<AnimatorHelper>();
-        _model = transform.Find("Model").gameObject;
 
         _animatorHelper.Attacked += OnAttacked;
     }
@@ -59,11 +61,6 @@ public class Character: MonoBehaviour
             Destroy(gameObject);
         }
     }
-    public GameObject GetModel()
-    {
-        return _model;
-    }
-
     public Vector3 GetCenterWS()
     {
         return transform.position  + _collider.center;

@@ -222,7 +222,7 @@ public class UIInventory : MonoBehaviour
                     if (itemSlot.item != null)
                     {
                         _uiInventorySlotList[i].itemImage.color = Color.white;
-                        _uiInventorySlotList[i].itemTextmesh.text = $"{itemSlot.itemName} x {itemSlot.item.Count}";
+                        _uiInventorySlotList[i].itemTextmesh.text = $"{itemSlot.itemName} x {itemSlot.count}";
                     }
                     else
                     {

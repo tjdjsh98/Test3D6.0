@@ -2,16 +2,17 @@ using System.Collections.Generic;
 using Unity.Cinemachine;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UIElements;
 using Debug = UnityEngine.Debug;
 
 public class PlayerController : MonoBehaviour
 {
     [SerializeField] UIInventory _uiInventory;
+    [SerializeField] UITwoInventory _uiTwoInventory;
     [SerializeField] UICharacter _uiCharacter;
 
     // 컴포넌트
-    GameObject _model;
     CapsuleCollider _collider;
     Rigidbody _rigidBody;
     Animator _animator;
@@ -21,7 +22,7 @@ public class PlayerController : MonoBehaviour
 
 
     [Header("카메라 시점")]
-    [SerializeField]Camera _camera;
+    [SerializeField] Camera _camera;
     [SerializeField] CinemachineCamera _thirdPersonCamera;
     [SerializeField] CinemachineCamera _firstPersonCamera;
     [SerializeField] List<SkinnedMeshRenderer> _meshs;
@@ -63,9 +64,8 @@ public class PlayerController : MonoBehaviour
 
     private void Awake()
     {
-        _model = transform.Find("Model").gameObject;
         _collider = GetComponent<CapsuleCollider>();
-        _rigidBody =GetComponent<Rigidbody>();
+        _rigidBody = GetComponent<Rigidbody>();
         _animator = GetComponentInChildren<Animator>();
         _inventory = GetComponent<Inventory>();
         _characterEquipment = GetComponent<CharacterEquipment>();
@@ -78,18 +78,27 @@ public class PlayerController : MonoBehaviour
     {
 
         Gizmos.color = Color.green;
-        Gizmos.DrawLine(gameObject.transform.position, gameObject.transform.position + Vector3.down*0.2f);
+        Gizmos.DrawLine(gameObject.transform.position, gameObject.transform.position + Vector3.down * 0.2f);
 
-        Utils.DrawRange(gameObject, _wallRange,Color.yellow);
+        Utils.DrawRange(gameObject, _wallRange, Color.yellow);
         Utils.DrawRange(gameObject, _attackRange, Color.red);
     }
     void Update()
     {
-       
+        if (_uiInventory.gameObject.activeSelf || _uiTwoInventory.gameObject.activeSelf)
+        {
+            _thirdPersonCamera.GetComponent<CinemachineInputAxisController>().enabled = false;
+        }
+        else
+        {
+            _thirdPersonCamera.GetComponent<CinemachineInputAxisController>().enabled = true;
+        }
+
+
         ControlMovement();
         AttachGround();
         AttachWall();
-        CheckItem();
+        InteractOther();
         ControlInventory();
         ControlAttack();
 
@@ -109,16 +118,15 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    // 캐릭터 주변에 아이템이 있는지 확인합니다.
-    // 아이템이 있다면 UI를 띄웁니다.
+    // 캐릭터 주변에 상호작용할 수 있는 물체가 있는지 확인합니다.
+    // 물체가 있다면 UI를 띄웁니다.
 
     List<GameObject> _aroundItemList = new List<GameObject>();
     List<UIItemTag> _arountItemUIList = new List<UIItemTag>();
-    void CheckItem()
+    void InteractOther()
     {
 
         Collider[] hits = Physics.OverlapSphere(transform.position, 2, LayerMask.GetMask("Item"));
-        //RaycastHit[] hits = Physics.BoxCastAll(transform.position, Vector3.one * 10, Vector3.zero, Quaternion.identity, 0,LayerMask.GetMask("Item"));
 
         if(hits.Length > 0)
         {
@@ -134,16 +142,7 @@ public class PlayerController : MonoBehaviour
 
         for (int i = _aroundItemList.Count-1; i >= 0; i--)
         {
-            bool isFar = true;
-            for(int j = 0; j < hits.Length; j++)
-            {
-                if (hits[j].gameObject == _aroundItemList[i])
-                {
-                    isFar = false;
-                    break;
-                }
-            }
-            if(isFar)
+             if (Vector3.Distance(_aroundItemList[i].gameObject.transform.position, gameObject.transform.position) > 2)
             {
                 _aroundItemList.RemoveAt(i);
                 _arountItemUIList[i].parent.gameObject.SetActive(false);
@@ -170,18 +169,14 @@ public class PlayerController : MonoBehaviour
             {
                 GameObject item = _aroundItemList[index];
 
+                
+
+                IInteractable interact = item.GetComponent<IInteractable>();
+                interact.Interact(gameObject);
+
                 _aroundItemList.RemoveAt(index);
                 _arountItemUIList[index].parent.gameObject.SetActive(false);
                 _arountItemUIList.RemoveAt(index);
-
-                Item itemComp = item.GetComponent<Item>();
-
-                if (itemComp.ItemType == ItemType.Equipment)
-                    GetComponent<CharacterEquipment>().EquipItem(item);
-                else
-                {
-                    _inventory.InsertItem(item);
-                }
             }
         }
     }
@@ -239,9 +234,9 @@ public class PlayerController : MonoBehaviour
     void ControlMovement()
     {
         if (_uiInventory.gameObject.activeSelf) return;
-        // A
-        _animator.SetFloat("Velocity", Mathf.Abs(_rigidBody.linearVelocity.x) + Mathf.Abs(_rigidBody.linearVelocity.z));
+        if (_uiTwoInventory.gameObject.activeSelf) return;
 
+        _animator.SetFloat("Velocity", Mathf.Abs(_rigidBody.linearVelocity.x) + Mathf.Abs(_rigidBody.linearVelocity.z));
 
         if (_isClimbing)
         {
@@ -273,7 +268,6 @@ public class PlayerController : MonoBehaviour
         {
             UnityEngine.Cursor.lockState = CursorLockMode.None;
         }
-
         if(Input.GetKey(KeyCode.W))
         {
             inputDirection += Vector3.forward;
@@ -313,11 +307,22 @@ public class PlayerController : MonoBehaviour
         else
             _animator.SetBool("InputMove", false);
 
+        MoveOnGround(moveDirection);
+        MoveOnWall(inputDirection);
+     
+        _animator.SetFloat("VelocityY", _rigidBody.linearVelocity.y);
+
+    
+    }
+
+    void MoveOnGround(Vector3 moveDirection)
+    {
+        if (_character.IsAttack) return;
 
         if (_isContactGround)
         {
             if (_landingElasepdTime < _landingTime)
-            { 
+            {
                 _landingElasepdTime += Time.deltaTime;
                 return;
             }
@@ -329,49 +334,58 @@ public class PlayerController : MonoBehaviour
                 _landingElasepdTime = 0;
 
             }
-          
+
             float deltaAngle = Mathf.DeltaAngle(transform.rotation.eulerAngles.y, _inputAngle) * 0.5f;
             transform.rotation = Quaternion.Euler(0, transform.rotation.eulerAngles.y + deltaAngle, 0);
 
 
-            if (inputDirection != Vector3.zero)
+            if (moveDirection != Vector3.zero)
             {
-                _inputAngle = Mathf.Atan2(_rigidBody.linearVelocity.x, _rigidBody.linearVelocity.z) * Mathf.Rad2Deg;
+                _inputAngle = Mathf.Atan2(moveDirection.x, moveDirection.z) * Mathf.Rad2Deg;
+
                 moveDirection.Normalize();
+
+                //_rigidBody.MovePosition(_rigidBody.position + new Vector3(moveDirection.x * _maxSpeed * Time.deltaTime, 0, moveDirection.z * _maxSpeed * Time.deltaTime));
+
                 _rigidBody.linearVelocity = new Vector3(moveDirection.x * _maxSpeed, _rigidBody.linearVelocity.y, moveDirection.z * _maxSpeed);
             }
-            
-        }
-        else
-        {
-            if (_isContactWall)
+            else
             {
-                Vector3 wallMove = transform.up * inputDirection.z + transform.right * inputDirection.x;
-                wallMove.Normalize();
-                _animator.SetFloat("MoveWall", wallMove.magnitude);
-
-                _rigidBody.linearVelocity = wallMove;
-                Ray ray = new Ray(transform.position + _collider.center, _collider.center + transform.forward);
-                RaycastHit hit;
-                //if (!Physics.Raycast(ray, out hit, 0.3f, LayerMask.GetMask("Ground")))
-                //{
-                //    _isClimbing = true;
-                //    _animator.SetBool("EndClimbing", true);
-                //    _climbingStartPos = transform.position;
-                //    _climbingDestin = transform.position + _collider.center + _model.transform.forward * 0.5f;
-                //}
-
-                if (Input.GetKeyDown(KeyCode.Space))
-                {
-                    Vector3 velocity = -transform.forward*5 + transform.up*6;
-                    transform.rotation = Quaternion.Euler(0, 180 + transform.rotation.eulerAngles.y, 0);
-                    _rigidBody.linearVelocity = velocity;
-                }
+                Vector3 goalVelocity = Vector3.zero;
+                goalVelocity.y = _rigidBody.linearVelocity.y;
+                _rigidBody.linearVelocity = Vector3.Lerp(_rigidBody.linearVelocity, goalVelocity, 0.3f);
             }
         }
-        _animator.SetFloat("VelocityY", _rigidBody.linearVelocity.y);
+    }
 
-    
+    void MoveOnWall(Vector3 inputDirection)
+    {
+        if (_isContactGround) return;
+
+        if (_isContactWall)
+        {
+            Vector3 wallMove = transform.up * inputDirection.z + transform.right * inputDirection.x;
+            wallMove.Normalize();
+            _animator.SetFloat("MoveWall", wallMove.magnitude);
+
+            _rigidBody.linearVelocity = wallMove;
+            Ray ray = new Ray(transform.position + _collider.center, _collider.center + transform.forward);
+            RaycastHit hit;
+            //if (!Physics.Raycast(ray, out hit, 0.3f, LayerMask.GetMask("Ground")))
+            //{
+            //    _isClimbing = true;
+            //    _animator.SetBool("EndClimbing", true);
+            //    _climbingStartPos = transform.position;
+            //    _climbingDestin = transform.position + _collider.center + _model.transform.forward * 0.5f;
+            //}
+
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+                Vector3 velocity = -transform.forward * 5 + transform.up * 6;
+                transform.rotation = Quaternion.Euler(0, 180 + transform.rotation.eulerAngles.y, 0);
+                _rigidBody.linearVelocity = velocity;
+            }
+        }
     }
     void ControlInventory()
     {

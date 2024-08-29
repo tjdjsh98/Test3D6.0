@@ -39,7 +39,7 @@ public class Inventory : MonoBehaviour
                 }
                 if (slot.itemName == itemName)
                 {
-                    slot.item.Count += count;
+                    slot.count += count;
                     Destroy(item.gameObject);
                     return true;
                 }
@@ -49,21 +49,23 @@ public class Inventory : MonoBehaviour
             if (emptySlot == -1) return false;
             _itemSlots[emptySlot].itemName = itemName;
             _itemSlots[emptySlot].item = item;
-            _itemSlots[emptySlot].item.Count = count;
+            _itemSlots[emptySlot].count = count;
+            Destroy(item.gameObject);
             item.gameObject.SetActive(false);
         }
         else
         {
             if (_itemSlots[index].itemName == itemName )
             {
-                _itemSlots[index].item.Count += count;
+                _itemSlots[index].count += count;
                 Destroy(item.gameObject);
             }
             else if(_itemSlots[index].item = null)
             {
                 _itemSlots[index].itemName = itemName;
                 _itemSlots[index].item = item;
-                _itemSlots[index].item.Count = count;
+                _itemSlots[index].count = count;
+                Destroy(item.gameObject);
                 item.gameObject.SetActive(false);
             }
             else
@@ -75,11 +77,19 @@ public class Inventory : MonoBehaviour
         return true;
     }
     // 자신의 앞으로 아이템을 버린다.
+
+    public bool SetSlot(ItemSlot slot, int index)
+    {
+        if(index < 0 || index >= _itemSlots.Length) return false;
+
+        _itemSlots[index] = slot;
+        return true;
+    }
     public bool DropItem(int index)
     {
         if(index < 0 || index >= _itemSlots.Length) return false;
 
-        Item item = _itemSlots[index].item;
+        Item item = Instantiate(_itemSlots[index].item);
         item.gameObject.SetActive(true);
         item.transform.position = transform.position + transform.forward;
         RemoveItem(index);
@@ -106,4 +116,5 @@ public class ItemSlot
 {
     public string itemName;
     public Item item;
+    public int count;
 }

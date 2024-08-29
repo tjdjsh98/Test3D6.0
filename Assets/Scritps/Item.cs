@@ -1,14 +1,12 @@
 using UnityEngine;
 
-public class Item : MonoBehaviour
+public class Item : MonoBehaviour, IInteractable
 {
     BoxCollider _collider;
     Rigidbody _rigidbody;
 
     [field: SerializeField] public ItemType ItemType { get; set; }
     [field: SerializeField]public EquipmentType EquipmentType { get; set; }
-
-    [field:SerializeField]public int Count;
 
 private void Awake()
     {
@@ -31,4 +29,16 @@ private void Awake()
         _rigidbody.useGravity = true;
         _collider.isTrigger = false;
     }
+
+    public void Interact(GameObject interactor)
+    {
+        Inventory inventory = interactor.GetComponent<Inventory>();
+        inventory.InsertItem(gameObject);
+
+    }
+}
+
+public interface IInteractable
+{
+    public void Interact(GameObject interactor);
 }
