@@ -73,7 +73,7 @@ public class EnemyAI : MonoBehaviour
         {
             Target = null;
             _navAgent.SetDestination(_initPosition);
-            _character.IsWalking = true;
+            _character.IsMove = true;
             return;
         }
 
@@ -113,7 +113,7 @@ public class EnemyAI : MonoBehaviour
         _navAgent.isStopped = true;
     }
     public void ResumeNav()
-    {
+    {   
         _navAgent.isStopped = false;
     }
 
@@ -124,8 +124,6 @@ public class EnemyAI : MonoBehaviour
         foreach(Collider collider in colliders)
         {
             Character character = collider.GetComponent<Character>();
-
-            Debug.Log(character);
             if (character == null) continue;
 
             DamageInfo info = new DamageInfo();

@@ -96,7 +96,7 @@ public class PlayerController : MonoBehaviour
 
 
         ControlMovement();
-        AttachGround();
+         AttachGround();
         AttachWall();
         InteractOther();
         ControlInventory();
@@ -317,6 +317,7 @@ public class PlayerController : MonoBehaviour
 
     void MoveOnGround(Vector3 moveDirection)
     {
+        _character.IsMove = false;
         if (_character.IsAttack) return;
 
         if (_isContactGround)
@@ -345,9 +346,8 @@ public class PlayerController : MonoBehaviour
 
                 moveDirection.Normalize();
 
-                //_rigidBody.MovePosition(_rigidBody.position + new Vector3(moveDirection.x * _maxSpeed * Time.deltaTime, 0, moveDirection.z * _maxSpeed * Time.deltaTime));
-
                 _rigidBody.linearVelocity = new Vector3(moveDirection.x * _maxSpeed, _rigidBody.linearVelocity.y, moveDirection.z * _maxSpeed);
+                _character.IsMove = true;
             }
             else
             {
@@ -431,6 +431,7 @@ public class PlayerController : MonoBehaviour
         foreach(var collider in colliders)
         {
             Character character = collider.gameObject.GetComponent<Character>();
+            Debug.Log(character);
             if(character != null)
             {
                 DamageInfo info = new DamageInfo();

@@ -1,13 +1,15 @@
 using System;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.VFX;
 
-public class Character: MonoBehaviour
+public class Character : MonoBehaviour
 {
     Rigidbody _rigidBody;
     CapsuleCollider _collider;
     Animator _animator;
-    AnimatorHelper _animatorHelper;
+    NavMeshAgent _navAgent;
+
     public Animator Animator => _animator;
     [Header("Status")]
     [SerializeField] protected int _maxHp;
@@ -16,11 +18,13 @@ public class Character: MonoBehaviour
     [SerializeField] protected int _power;
     [SerializeField] protected int _maxHunger;
     [SerializeField] protected int _hunger;
-        
+
 
     [Header("ActionState")]
     [field: ReadOnly][field: SerializeField] public bool IsAttack { get; set; }
-    [field:ReadOnly][field: SerializeField] public bool IsWalking { get; set; }
+    [field: ReadOnly][field: SerializeField] public bool IsMove { get; set; }
+    [field: ReadOnly][field: SerializeField] public bool IsKnockback { get; set; }
+
 
     public int MaxHp => _maxHp;
     public int HP => _hp;
@@ -35,23 +39,44 @@ public class Character: MonoBehaviour
     private void Awake()
     {
         _rigidBody = GetComponent<Rigidbody>();
-        _collider = GetComponent<CapsuleCollider>();    
+        _collider = GetComponent<CapsuleCollider>();
         _animator = GetComponentInChildren<Animator>();
-        _animatorHelper = GetComponentInChildren<AnimatorHelper>();
-
-        _animatorHelper.Attacked += OnAttacked;
+        _navAgent = GetComponent<NavMeshAgent>();
     }
 
-    public void OnAttacked()
+    public void Attack()
     {
         Attacked?.Invoke();
     }
 
+    private void Update()
+    {
+        HandleGroundFriction();
+    }
+    // 캐릭터끼리 밀리지 않게 방지해준다.
+    void HandleGroundFriction()
+    {
+        if (IsKnockback || IsMove)
+        {
+            _rigidBody.mass = 10;
+        }
+        else
+        {
+            _rigidBody.mass = float.MaxValue;
+        }
+    }
+
     public void Damaged(DamageInfo info)
     {
-        if(info.knockbackDirection != Vector3.zero)
         {
-            _rigidBody.AddForce(info.knockbackDirection *info.knockbackPower, ForceMode.Impulse);
+            IsKnockback = true;
+            Invoke("OffKnockback", 1f);
+            _rigidBody.mass = 10;
+            _navAgent.enabled = false;  
+        }
+        if (info.knockbackDirection != Vector3.zero)
+        {
+            _rigidBody.AddForce(info.knockbackDirection.normalized *info.knockbackPower, ForceMode.Impulse);
         }
 
         _hp -= info.damage;
@@ -60,7 +85,16 @@ public class Character: MonoBehaviour
         {
             Destroy(gameObject);
         }
+
+       
     }
+
+    void OffKnockback()
+    {
+        IsKnockback = false;
+        _navAgent.enabled = true;
+    }
+
     public Vector3 GetCenterWS()
     {
         return transform.position  + _collider.center;
