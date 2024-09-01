@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public static class Utils
 {
@@ -143,5 +144,17 @@ public static class Utils
                 break;
         }
         return colliders;
+    }
+    public static Vector3 GetRandomSpawnPoint()
+    {
+        return new Vector3(Random.Range(-20, 20), 4, Random.Range(-20, 20));
+    }
+
+    public static void SetRenderLayerInChildren(Transform transform, int layerNumber)
+    {
+        foreach(Transform trans in transform.GetComponentInChildren<Transform>(true))
+        {
+            trans.gameObject.layer = layerNumber;
+        }
     }
 }

@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using UnityEditor.Rendering.Universal.ShaderGUI;
 using UnityEngine;
 
 public class Inventory : MonoBehaviour

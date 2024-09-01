@@ -94,6 +94,6 @@ AssetOrigin:
   serializedVersion: 1
   productId: 267958
   packageName: Photon Fusion
-  packageVersion: 2.0.1
-  assetPath: Assets/Photon/Fusion/Plugins/NanoSockets/Windows/nanosockets.dll
-  uploadId: 665658
+  packageVersion: 2.0.2
+  assetPath: Assets/ExternAsset/Photon/Fusion/Plugins/NanoSockets/Windows/nanosockets.dll
+  uploadId: 686127

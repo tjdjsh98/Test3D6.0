@@ -7,7 +7,7 @@ using UnityEngine;
 
 public class InputManager : SimulationBehaviour, IBeforeUpdate, INetworkRunnerCallbacks
 {
-    NetworkInputData _accumulateInputData;
+    NetworkInputData2 _accumulateInputData;
     bool _resetInput;
     bool _mouseButton0;
 
@@ -50,7 +50,7 @@ public class InputManager : SimulationBehaviour, IBeforeUpdate, INetworkRunnerCa
         if (Input.GetKey(KeyCode.D))
             _accumulateInputData.Direction += Vector3.right;
 
-        _accumulateInputData.Buttons.Set(NetworkInputData.MOUSEBUTTON0, _mouseButton0);
+        _accumulateInputData.Buttons.Set(NetworkInputData2.MOUSEBUTTON0, _mouseButton0);
         _mouseButton0 = false;
 
         networkButtons.Set(InputButton.Jump, Input.GetKeyDown(KeyCode.Space));

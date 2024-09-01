@@ -1,5 +1,3 @@
-using TMPro;
-using TMPro.EditorUtilities;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Rendering;

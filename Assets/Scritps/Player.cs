@@ -1,6 +1,3 @@
-using Fusion;
-using Fusion.Addons.KCC;
-using TMPro.EditorUtilities;
 using UnityEngine;
 
 public class Player : MonoBehaviour
