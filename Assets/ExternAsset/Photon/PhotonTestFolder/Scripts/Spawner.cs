@@ -10,9 +10,11 @@ public class Spawner : MonoBehaviour, INetworkRunnerCallbacks
     private Dictionary<PlayerRef, NetworkObject> _spawnedCharacters = new Dictionary<PlayerRef, NetworkObject>();
 
     CharacterInputHandler _characterInputHandler;
+    UISessionListHandler _uiSessionListHandler;
+
     void Start()
     {
-
+        _uiSessionListHandler = FindAnyObjectByType<UISessionListHandler>(FindObjectsInactive.Include);
     }
     public void OnPlayerJoined(NetworkRunner runner, PlayerRef player) 
     {
@@ -58,7 +60,24 @@ public class Spawner : MonoBehaviour, INetworkRunnerCallbacks
     public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token) { Debug.Log("OnConnectReqest"); }
     public void OnConnectFailed(NetworkRunner runner, NetAddress remoteAddress, NetConnectFailedReason reason) { Debug.Log("OnConnectFailed"); }
     public void OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message) { }
-    public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList) { }
+    public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList)
+    {
+        if (_uiSessionListHandler == null) return;
+
+        if (sessionList.Count == 0)
+        {
+            _uiSessionListHandler.OnNoSessionFound();
+        }
+        else
+        {
+            _uiSessionListHandler.ClearList();
+            foreach (SessionInfo sessionInfo in sessionList)
+            {
+                _uiSessionListHandler.AddToList(sessionInfo);
+            }
+
+        }
+    }
     public void OnCustomAuthenticationResponse(NetworkRunner runner, Dictionary<string, object> data) { }
     public void OnHostMigration(NetworkRunner runner, HostMigrationToken hostMigrationToken) { }
     public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ArraySegment<byte> data) { }

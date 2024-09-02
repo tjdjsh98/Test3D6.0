@@ -11,8 +11,7 @@ public class NetworkPlayer : NetworkBehaviour, IPlayerLeft
     public Action PlayerSpawned { get; set; }
 
     private void Awake()
-    {
-
+    { 
     }
 
     public override void Spawned()

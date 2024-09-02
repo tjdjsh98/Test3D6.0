@@ -4944,6 +4944,58 @@ CapsuleCollider:
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &729123393307743328
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3108249788751680512}
+  - component: {fileID: 7647443369691597390}
+  m_Layer: 12
+  m_Name: HitBox
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3108249788751680512
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 729123393307743328}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2397117176809099874}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7647443369691597390
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 729123393307743328}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1014831617, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Type: 1
+  SphereRadius: 0
+  CapsuleRadius: 0
+  BoxExtents: {x: 0.5, y: 1, z: 0.5}
+  CapsuleExtents: 0
+  Offset: {x: 0, y: 0, z: 0}
+  Root: {fileID: 0}
+  GizmosColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
 --- !u!1 &2621034787157393854
 GameObject:
   m_ObjectHideFlags: 0
@@ -4959,6 +5011,8 @@ GameObject:
   - component: {fileID: -8106802301731421872}
   - component: {fileID: 7444486290602375666}
   - component: {fileID: -5312877584337930135}
+  - component: {fileID: 2081640035140372989}
+  - component: {fileID: -9116245590319015229}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -4983,6 +5037,7 @@ Transform:
   - {fileID: 1309860744810823871}
   - {fileID: 4172489814027700986}
   - {fileID: 4357285599777949100}
+  - {fileID: 3108249788751680512}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!143 &7709679864787537069
@@ -5043,6 +5098,8 @@ MonoBehaviour:
   - {fileID: 5460990976155189186}
   - {fileID: -8106802301731421872}
   - {fileID: -5312877584337930135}
+  - {fileID: 2081640035140372989}
+  - {fileID: -9116245590319015229}
   - {fileID: 5721716500305558451}
 --- !u!114 &-8106802301731421872
 MonoBehaviour:
@@ -5087,6 +5144,37 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6c0e7a73c63f1a340bb055f010879588, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &2081640035140372989
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2621034787157393854}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1039544458, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Config: 3
+  BroadRadius: 0
+  Offset: {x: 0, y: 0, z: 0}
+  GizmosColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  Hitboxes: []
+--- !u!114 &-9116245590319015229
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2621034787157393854}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 64d05176c2e1ca240ba41c1f3640245c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _IsDead:
+    _value: 0
 --- !u!1 &7718069876949011337
 GameObject:
   m_ObjectHideFlags: 0
@@ -5218,7 +5306,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6839d72d84a3adc40921a727a9169dfd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _isFiring: 0
+  _isFiring:
+    _value: 0
+  aimPoint: {fileID: 7718069876949011337}
+  collisionLayer:
+    serializedVersion: 2
+    m_Bits: 4097
   _networkPlayer: {fileID: 5460990976155189186}
   fireParticleSystem: {fileID: 3368081525980979667}
 --- !u!1 &8138810516533059199
