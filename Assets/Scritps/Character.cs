@@ -1,9 +1,8 @@
 using System;
 using UnityEngine;
 using UnityEngine.AI;
-using UnityEngine.VFX;
 
-public class Character : MonoBehaviour
+public class Character : MonoBehaviour,IDamageable
 {
     Rigidbody _rigidBody;
     CapsuleCollider _collider;
@@ -12,8 +11,8 @@ public class Character : MonoBehaviour
 
     public Animator Animator => _animator;
     [Header("Status")]
-    [SerializeField] protected int _maxHp;
-    [SerializeField] protected int _hp;
+    [field: SerializeField] public int MaxHp { get; set; }
+    [field: SerializeField] public int Hp { get; set; }
     [SerializeField] protected float _speed;
     [SerializeField] protected int _power;
     [SerializeField] protected int _maxHunger;
@@ -25,9 +24,6 @@ public class Character : MonoBehaviour
     [field: ReadOnly][field: SerializeField] public bool IsMove { get; set; }
     [field: ReadOnly][field: SerializeField] public bool IsKnockback { get; set; }
 
-
-    public int MaxHp => _maxHp;
-    public int HP => _hp;
     public int MaxHunger => _maxHunger;
     public int Hunger => _hunger;
     public float Speed => _speed;
@@ -66,7 +62,7 @@ public class Character : MonoBehaviour
         }
     }
 
-    public void Damaged(DamageInfo info)
+    public int Damaged(DamageInfo info)
     {
         {
             IsKnockback = true;
@@ -79,14 +75,14 @@ public class Character : MonoBehaviour
             _rigidBody.AddForce(info.knockbackDirection.normalized *info.knockbackPower, ForceMode.Impulse);
         }
 
-        _hp -= info.damage;
+        Hp -= info.damage;
 
-        if(_hp <= 0)
+        if(Hp <= 0)
         {
             Destroy(gameObject);
         }
 
-       
+        return info.damage;
     }
 
     void OffKnockback()

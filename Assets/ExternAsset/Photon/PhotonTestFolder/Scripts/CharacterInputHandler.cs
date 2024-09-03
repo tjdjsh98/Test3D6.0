@@ -9,10 +9,8 @@ public class CharacterInputHandler : MonoBehaviour
     bool _isFireButtonPressed = false;
 
     CharacterMovementHandler _characterMovementHandler;
-    LocalCameraHandler _localCameraHandler;
     private void Awake()
     {
-        _localCameraHandler = GetComponentInChildren<LocalCameraHandler>();
         _characterMovementHandler= GetComponent<CharacterMovementHandler>();
     }
 
@@ -44,7 +42,7 @@ public class CharacterInputHandler : MonoBehaviour
              _isFireButtonPressed = true;
 
         //Set View
-        _localCameraHandler.SetViewInputVector(_viewInputVector);
+        //_localCameraHandler.SetViewInputVector(_viewInputVector);
     }
 
     public NetworkInputData GetNetworkInput()
@@ -52,7 +50,7 @@ public class CharacterInputHandler : MonoBehaviour
         NetworkInputData networkInputData = new NetworkInputData();
 
         // aim Data
-        networkInputData.aimForwardVector = _localCameraHandler.transform.forward;
+        networkInputData.aimForwardVector = transform.forward;
 
         // move Data
         networkInputData.movementInput = _moveInputVector;

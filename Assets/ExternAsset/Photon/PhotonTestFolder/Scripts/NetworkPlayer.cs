@@ -19,24 +19,9 @@ public class NetworkPlayer : NetworkBehaviour, IPlayerLeft
         if (Object.HasInputAuthority)
         {
             Local = this;
-            
-            Utils.SetRenderLayerInChildren(playerModel, LayerMask.NameToLayer("LocalPlayerModel"));
-
-            GameObject.Find("Camera").gameObject.SetActive(false);
-            
-            Debug.Log("Spawned local Player");
+           
         }
-        else
-        {
-            Camera localCamera = GetComponentInChildren<Camera>();
-            localCamera.enabled = false;
-
-            AudioListener audioListener = GetComponentInChildren<AudioListener>();
-            audioListener.enabled = false;
-
-            Debug.Log("Spawned remote plater");
-        }
-
+     
         name = $"P_{Object.Id}";
         PlayerSpawned?.Invoke();
     }

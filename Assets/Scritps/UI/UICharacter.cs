@@ -25,9 +25,9 @@ public class UICharacter : MonoBehaviour
     {
         if (_character == null) return;
 
-        float ratio = (float)_character.HP / _character.MaxHp;
+        float ratio = (float)_character.Hp / _character.MaxHp;
 
         _hpBarTr.sizeDelta = new Vector2(_initHpbarSize.x * ratio, _initHpbarSize.y);
-        _hpTextMesh.text = _character.HP.ToString();
+        _hpTextMesh.text = _character.Hp.ToString();
     }
 }
