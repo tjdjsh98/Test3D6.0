@@ -1,9 +1,6 @@
 using System.Collections.Generic;
 using Unity.Cinemachine;
-using UnityEditor;
 using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.UIElements;
 using Debug = UnityEngine.Debug;
 
 public class PlayerController : MonoBehaviour

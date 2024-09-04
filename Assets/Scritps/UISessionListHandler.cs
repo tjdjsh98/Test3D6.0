@@ -35,7 +35,7 @@ public class UISessionListHandler : MonoBehaviour
 
     private void AddedUISessionItem_OnJoinSession(SessionInfo sessionInfo)
     {
-        NetworkRunnerHandler networkHandler = FindAnyObjectByType<NetworkRunnerHandler>();
+        NetworkManager networkHandler = FindAnyObjectByType<NetworkManager>();
 
         networkHandler.JoinGame(sessionInfo);
 

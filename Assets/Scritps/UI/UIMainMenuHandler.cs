@@ -28,7 +28,7 @@ public class UIMainMenuHandler : MonoBehaviour
         PlayerPrefs.SetString("PlayerNickname", _nicknameText.text);
         PlayerPrefs.Save();
 
-        NetworkRunnerHandler networkRunnerHandler = FindFirstObjectByType<NetworkRunnerHandler>();
+        NetworkManager networkRunnerHandler = FindFirstObjectByType<NetworkManager>();
 
         networkRunnerHandler.OnJoinLobby();
 
@@ -47,7 +47,7 @@ public class UIMainMenuHandler : MonoBehaviour
 
     public void OnStartNewSessionClicked()
     {
-        NetworkRunnerHandler networkRunnerHandler = FindFirstObjectByType<NetworkRunnerHandler>();
+        NetworkManager networkRunnerHandler = FindFirstObjectByType<NetworkManager>();
 
         networkRunnerHandler.CreateGame(_sessionNameInputField.text, "InGame");
 

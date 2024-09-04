@@ -1,12 +1,17 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class AnimatorHelper : MonoBehaviour
 {
-    public Action Attacked { get; set; }
+    public List<UnityEvent> events;
 
-    public void Attack()
+    public void EventInvoke(int index)
     {
-        Attacked?.Invoke();
+        if(index < 0 || index >= events.Count) return;
+
+        events[index]?.Invoke();
     }
+
 }
