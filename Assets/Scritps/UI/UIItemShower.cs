@@ -34,6 +34,8 @@ public class UIItemShower : MonoBehaviour
         {
             if(itemTag.parent.gameObject.activeSelf)
             {
+                if (itemTag.item == null) continue;
+
                 Vector3 positionSC = Camera.main.WorldToScreenPoint(itemTag.item.transform.position);
                 itemTag.parent.transform.position = positionSC;
             }

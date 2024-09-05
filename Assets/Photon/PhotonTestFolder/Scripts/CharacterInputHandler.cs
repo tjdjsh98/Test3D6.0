@@ -4,10 +4,8 @@ using UnityEngine;
 
 public class CharacterInputHandler : MonoBehaviour
 {
-    Vector2 _moveInputVector = Vector2.zero;
-    Vector2 _viewInputVector = Vector2.zero;
-    bool _isJumpButtonPressed = false;
-    bool _isFireButtonPressed = false;
+    NetworkInputData accumulatedInput;
+    bool isReset;
 
     NetworkPlayerController _characterMovementHandler;
     CinemachineCamera _camera;
@@ -24,26 +22,39 @@ public class CharacterInputHandler : MonoBehaviour
         Cursor.visible = false;
     }
 
-    private void Update()
+    public void Update()
     {
         if (!_characterMovementHandler.Object.HasInputAuthority) return;
 
-        // View Input
-        _viewInputVector.x = Input.GetAxis("Mouse X");
-        _viewInputVector.y = Input.GetAxis("Mouse Y") * -1; // Invert the mouse look
+        if (isReset)
+            accumulatedInput = default;
 
+
+        // View Input
 
         // Move Input
-        _moveInputVector.x = Input.GetAxisRaw("Horizontal");
-        _moveInputVector.y = Input.GetAxisRaw("Vertical");
+        accumulatedInput.movementInput += new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+
+        NetworkButtons buttons = default;
 
         // Jump
         if (Input.GetButtonDown("Jump"))
-            _isJumpButtonPressed = true;
+            buttons.Set(InputButton.Jump, true);
 
         // Fire
         if (Input.GetButtonDown("Fire1"))
-             _isFireButtonPressed = true;
+            buttons.Set(InputButton.MouseButton0, true);
+
+        // Interact
+        if (Input.GetKeyDown(KeyCode.E))
+            buttons.Set(InputButton.Interact, true);
+
+        // aimForward
+        accumulatedInput.aimForwardVector = _camera.transform.forward;
+        accumulatedInput.aimForwardVector.y = 0;
+        accumulatedInput.aimForwardVector.Normalize();
+
+        accumulatedInput.buttons = new NetworkButtons(accumulatedInput.buttons.Bits | buttons.Bits);
 
         //Set View
         //_localCameraHandler.SetViewInputVector(_viewInputVector);
@@ -51,23 +62,8 @@ public class CharacterInputHandler : MonoBehaviour
 
     public NetworkInputData GetNetworkInput()
     {
-        NetworkInputData networkInputData = new NetworkInputData();
-
-        // aim Data
-        networkInputData.aimForwardVector = _camera.transform.forward;
-
-        // move Data
-        networkInputData.movementInput = _moveInputVector;
-
-        // jump Data
-        networkInputData.isJumpPressed = _isJumpButtonPressed;
-        _isJumpButtonPressed = false;
-
-        // fire Data
-        networkInputData.isFireButtonPressed = _isFireButtonPressed;
-        _isFireButtonPressed = false;
-
-        return networkInputData;
+        isReset = true;
+        return accumulatedInput;
     }
-
+ 
 }

@@ -118,7 +118,7 @@ public class UIInventory : MonoBehaviour
                     if(ui == _uiInventorySlotList[j].itemImage.gameObject)
                     {
                         ItemSlot slot = _connectedInventory.GetSlot(j);
-                        if (slot.item == null) return;
+                        if (slot.itemName == "") return;
 
                         _dragItemSlotIndex = j;
                         DragIItem(_uiInventorySlotList[i]);
@@ -217,20 +217,17 @@ public class UIInventory : MonoBehaviour
                 }
 
                 ItemSlot itemSlot = _connectedInventory.GetSlot(i);
-                if (itemSlot != null)
+                
+                if (itemSlot.itemName != "")
                 {
-                    if (itemSlot.item != null)
-                    {
-                        _uiInventorySlotList[i].itemImage.color = Color.white;
-                        _uiInventorySlotList[i].itemTextmesh.text = $"{itemSlot.itemName} x {itemSlot.count}";
-                    }
-                    else
-                    {
-                        _uiInventorySlotList[i].itemImage.color = Color.red;
-                        _uiInventorySlotList[i].itemTextmesh.text = "";
-                    }
+                    _uiInventorySlotList[i].itemImage.color = Color.white;
+                    _uiInventorySlotList[i].itemTextmesh.text = $"{itemSlot.itemName} x {itemSlot.count}";
                 }
-
+                else
+                {
+                    _uiInventorySlotList[i].itemImage.color = Color.red;
+                    _uiInventorySlotList[i].itemTextmesh.text = "";
+                }
             }
         }
         else

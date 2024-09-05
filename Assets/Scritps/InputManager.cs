@@ -7,7 +7,7 @@ using UnityEngine;
 
 public class InputManager : SimulationBehaviour, IBeforeUpdate, INetworkRunnerCallbacks
 {
-    NetworkInputData2 _accumulateInputData;
+    NetworkInputData _accumulateInputData;
     bool _resetInput;
     bool _mouseButton0;
 
@@ -39,36 +39,36 @@ public class InputManager : SimulationBehaviour, IBeforeUpdate, INetworkRunnerCa
             }
         }
 
-        NetworkButtons networkButtons = default;
+        //NetworkButtons networkButtons = default;
 
-        if (Input.GetKey(KeyCode.W))
-            _accumulateInputData.Direction += Vector3.forward;
-        if (Input.GetKey(KeyCode.S))
-            _accumulateInputData.Direction += Vector3.back;
-        if (Input.GetKey(KeyCode.A))
-            _accumulateInputData.Direction += Vector3.left;
-        if (Input.GetKey(KeyCode.D))
-            _accumulateInputData.Direction += Vector3.right;
+        //if (Input.GetKey(KeyCode.W))
+        //    _accumulateInputData.Direction += Vector3.forward;
+        //if (Input.GetKey(KeyCode.S))
+        //    _accumulateInputData.Direction += Vector3.back;
+        //if (Input.GetKey(KeyCode.A))
+        //    _accumulateInputData.Direction += Vector3.left;
+        //if (Input.GetKey(KeyCode.D))
+        //    _accumulateInputData.Direction += Vector3.right;
 
-        _accumulateInputData.Buttons.Set(NetworkInputData2.MOUSEBUTTON0, _mouseButton0);
-        _mouseButton0 = false;
+        //_accumulateInputData.Buttons.Set(NetworkInputData2.MOUSEBUTTON0, _mouseButton0);
+        //_mouseButton0 = false;
 
-        networkButtons.Set(InputButton.Jump, Input.GetKeyDown(KeyCode.Space));
+        //networkButtons.Set(InputButton.Jump, Input.GetKeyDown(KeyCode.Space));
 
-        Vector3 mouseDelta = Input.mousePositionDelta;
-        mouseDelta = new Vector3(-mouseDelta.y, mouseDelta.x);
+        //Vector3 mouseDelta = Input.mousePositionDelta;
+        //mouseDelta = new Vector3(-mouseDelta.y, mouseDelta.x);
 
-        _accumulateInputData.MouseDelta += mouseDelta;
+        //_accumulateInputData.MouseDelta += mouseDelta;
 
-        _accumulateInputData.Buttons =  new NetworkButtons(_accumulateInputData.Buttons.Bits | networkButtons.Bits);
+        //_accumulateInputData.Buttons =  new NetworkButtons(_accumulateInputData.Buttons.Bits | networkButtons.Bits);
     }
     public void OnInput(NetworkRunner runner, NetworkInput input)
     {
-        _accumulateInputData.Direction.Normalize();
-        input.Set(_accumulateInputData);
-        _resetInput = true;
+        //_accumulateInputData.Direction.Normalize();
+        //input.Set(_accumulateInputData);
+        //_resetInput = true;
 
-        _accumulateInputData.MouseDelta = default;
+        //_accumulateInputData.MouseDelta = default;
     }
 
 

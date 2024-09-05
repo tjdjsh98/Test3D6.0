@@ -27,12 +27,22 @@ public class NetworkWeapon : NetworkBehaviour
         Utils.DrawRange(gameObject, AttackRange, Color.red);
     }
 
-    public void StartAttack()
+    public virtual void OnAttackAnimationStarted()
+    {
+        _playerController.GetComponent<NetworkCharacter>().IsEnableMove = false;
+    }
+
+    public virtual void OnAttackAnimationEnded()
+    {
+        _playerController.GetComponent<NetworkCharacter>().IsEnableMove = true;
+    }
+
+    public virtual void StartAttack()
     {
         _isAttack = true;
     }
 
-    public void EndAttack()
+    public virtual void EndAttack()
     {
         _isAttack = false;
         _attackedList.Clear();

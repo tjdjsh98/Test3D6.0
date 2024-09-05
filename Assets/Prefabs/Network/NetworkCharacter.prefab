@@ -128,6 +128,37 @@ Transform:
   - {fileID: 2647254869600519464}
   m_Father: {fileID: 2259410133749988546}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &704372024944634594
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3423459352108528431}
+  m_Layer: 7
+  m_Name: CameraTarget
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3423459352108528431
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 704372024944634594}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.7, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6479165268536376976}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &743152617157728327
 GameObject:
   m_ObjectHideFlags: 0
@@ -7086,6 +7117,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6479165268536376976}
   - component: {fileID: 6776548010667736953}
+  - component: {fileID: 2328541957476000356}
   - component: {fileID: 7995709878370216984}
   - component: {fileID: 4692784895134128221}
   - component: {fileID: -7662520128971833511}
@@ -7096,7 +7128,7 @@ GameObject:
   - component: {fileID: 1213486309819916731}
   - component: {fileID: -698082193561193714}
   - component: {fileID: 4629767289049234195}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: NetworkCharacter
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7117,6 +7149,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 949536231906418275}
+  - {fileID: 3423459352108528431}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!54 &6776548010667736953
@@ -7146,6 +7179,29 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 112
   m_CollisionDetection: 0
+--- !u!136 &2328541957476000356
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7285040776154914501}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.2
+  m_Height: 1
+  m_Direction: 1
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!114 &7995709878370216984
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7166,6 +7222,7 @@ MonoBehaviour:
   - {fileID: 4692784895134128221}
   - {fileID: -7662520128971833511}
   - {fileID: -2171357065945110279}
+  - {fileID: 8671323881149011929}
   - {fileID: 1213486309819916731}
   - {fileID: -698082193561193714}
   - {fileID: 4629767289049234195}
@@ -7184,6 +7241,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerModel: {fileID: 0}
   _thirdPersonCamera: {fileID: 0}
+  _cameraTarget: {fileID: 3423459352108528431}
 --- !u!114 &-7662520128971833511
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7205,6 +7263,7 @@ MonoBehaviour:
   _IsAttack: 0
   _IsRun: 0
   _IsDamaged: 0
+  _IsEnableMove: 1
 --- !u!114 &7760771318190442498
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -9,6 +9,7 @@ public class Spawner : MonoBehaviour, INetworkRunnerCallbacks
     public NetworkObject playerPrefabs;
     private Dictionary<PlayerRef, NetworkObject> _spawnedCharacters = new Dictionary<PlayerRef, NetworkObject>();
 
+
     CharacterInputHandler _characterInputHandler;
     UISessionListHandler _uiSessionListHandler;
 
@@ -18,7 +19,6 @@ public class Spawner : MonoBehaviour, INetworkRunnerCallbacks
     }
     public void OnPlayerJoined(NetworkRunner runner, PlayerRef player) 
     {
-        Debug.Log(runner.IsServer + " " + player.PlayerId);
         if (runner.IsServer)
         {
             Debug.Log("OnPlayerJoinedJoined we are server. Spawning player");
@@ -46,7 +46,8 @@ public class Spawner : MonoBehaviour, INetworkRunnerCallbacks
 
         if (_characterInputHandler != null)
         {
-            input.Set(_characterInputHandler.GetNetworkInput());
+            NetworkInputData data = _characterInputHandler.GetNetworkInput();
+            input.Set(data);
         }
     }
 

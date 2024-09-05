@@ -1,27 +1,27 @@
 using Fusion;
 using Fusion.Addons.SimpleKCC;
+using System.Collections.Generic;
 using Unity.Cinemachine;
 using UnityEngine;
 
 public class NetworkPlayerController : NetworkBehaviour
 {
-    // Rotation
+    // Input
     float _inputAngle;
+    NetworkButtons _previousButtons;
 
     // Other Component
     SimpleKCC _kcc;
-    CinemachineCamera _thirdPersionCamera;
     NetworkCharacter _character;
-
-    //NetworkCharacterControllerCustom _networkdCharacterControllerCustom;
+    NetworkPlayer _player;
 
     public NetworkWeapon Weapon;
 
     void Awake()
     {
         _kcc = GetComponent<SimpleKCC>();
-        _thirdPersionCamera = GameObject.Find("ThirdPersonCamera").GetComponent<CinemachineCamera>();
         _character = GetComponent<NetworkCharacter>();
+        _player = GetComponent<NetworkPlayer>();
     }
 
 
@@ -30,11 +30,27 @@ public class NetworkPlayerController : NetworkBehaviour
         
     }
 
+    private void Update()
+    {
+        if(Object.HasInputAuthority && Input.GetKeyDown(KeyCode.I))
+        {
+            UIInventory inventory = FindAnyObjectByType<UIInventory>(FindObjectsInactive.Include);
+
+            if (inventory.gameObject.activeSelf)
+            {
+                inventory.Close();
+            }
+            else
+            {
+                inventory.ConnectInventory(GetComponent<Inventory>());
+                inventory.Open();
+            }
+        }
+    }
     public override void Render()
     {
-        
+        DetectInteractableObject();
     }
-
     public override void FixedUpdateNetwork()
     {
         if (GetInput(out NetworkInputData networkInputData) && Runner.IsForward)
@@ -61,34 +77,58 @@ public class NetworkPlayerController : NetworkBehaviour
             }
 
             // Rotate
-            if (networkInputData.movementInput != Vector2.zero)
+            if (_character.IsEnableMove)
             {
-                _inputAngle = Mathf.Atan2(moveDirection.x, moveDirection.z) * Mathf.Rad2Deg;
-            }
-            float deltaAngle = Mathf.DeltaAngle(transform.rotation.eulerAngles.y, _inputAngle) * 0.5f;
-            transform.rotation = Quaternion.Euler(0, transform.rotation.eulerAngles.y + deltaAngle, 0);
+                if (networkInputData.movementInput != Vector2.zero)
+                {
+                    _inputAngle = Mathf.Atan2(moveDirection.x, moveDirection.z) * Mathf.Rad2Deg;
+                }
+                float deltaAngle = Mathf.DeltaAngle(transform.rotation.eulerAngles.y, _inputAngle) * 0.5f;
+                transform.rotation = Quaternion.Euler(0, transform.rotation.eulerAngles.y + deltaAngle, 0);
 
-            _kcc.AddLookRotation(0, deltaAngle);
+                _kcc.AddLookRotation(0, deltaAngle);
+            }
 
 
             // Jump
-            if (networkInputData.isJumpPressed)
+            if (_kcc.IsGrounded && networkInputData.buttons.WasPressed(_previousButtons, InputButton.Jump))
             {
                 _character.Jump(5);
             }
 
             // Attack
-            if(networkInputData.isFireButtonPressed)
+            if (!_character.IsAttack && networkInputData.buttons.WasPressed(_previousButtons, InputButton.MouseButton0))
             {
-                _character.Attacked = OnAttackStarted;
-                _character.AttackEnded = OnAttackEnded;
-                _character.SetAnimatorTrigger("Attack");
+                OnAttackAnimationStarted();
             }
-            
+            // Interact
+            if (networkInputData.buttons.WasPressed(_previousButtons, InputButton.Interact))
+            {
+                Debug.Log("INteract");
+                InteractOther();
+            }
+
+            _previousButtons = networkInputData.buttons;
             CheckFallRespawn();
         }
     }
 
+    void OnAttackAnimationStarted()
+    {
+        _character.IsAttack = true;
+        _character.Attacked = OnAttackStarted;
+        _character.AttackEnded = OnAttackEnded;
+        Weapon?.OnAttackAnimationStarted();
+        _character.SetAnimatorTrigger("Attack");
+
+        StartCoroutine(Utils.WaitAniationAndPlayCoroutine(GetComponentInChildren<Animator>(), "Attack", OnAttackAnimationEnded));
+    }
+
+    void OnAttackAnimationEnded()
+    {
+        Weapon?.OnAttackAnimationEnded();
+        _character.IsAttack = false;
+    }
     void OnAttackStarted()
     {
         if (Weapon)
@@ -100,6 +140,67 @@ public class NetworkPlayerController : NetworkBehaviour
             Weapon.EndAttack();
     }
 
+    // 캐릭터 주변에 상호작용할 수 있는 물체가 있는지 확인합니다.
+    // 물체가 있고 로컬캐릭터라면 UI를 띄웁니다.
+    
+    List<GameObject> _aroundItemList = new List<GameObject>();
+    List<UIItemTag> _arountItemUIList = new List<UIItemTag>();
+
+    void DetectInteractableObject()
+    {
+        Collider[] hits = Physics.OverlapSphere(transform.position, 2, LayerMask.GetMask("Item"));
+
+        if (hits.Length > 0)
+        {
+            for (int i = 0; i < hits.Length; i++)
+            {
+                GameObject gameObject = hits[i].gameObject;
+                if (_aroundItemList.Contains(gameObject)) continue;
+
+                _aroundItemList.Add(gameObject);
+                if(NetworkPlayer.Local == _player)
+                    _arountItemUIList.Add(UIItemShower.Instance.ShowText(gameObject, gameObject.name));
+            }
+        }
+
+        for (int i = _aroundItemList.Count - 1; i >= 0; i--)
+        {
+            if (_aroundItemList[i] == null || Vector3.Distance(_aroundItemList[i].gameObject.transform.position, gameObject.transform.position) > 2)
+            {
+                _aroundItemList.RemoveAt(i);
+                if (NetworkPlayer.Local == _player)
+                {
+                    _arountItemUIList[i].parent.gameObject.SetActive(false);
+                    _arountItemUIList.RemoveAt(i);
+                }
+            }
+        }
+    }
+    void InteractOther()
+    {
+        if (!Object.HasStateAuthority) return;
+
+        // 가장 가까운 아이템부터 흭득한다.
+
+        int index = -1;
+        float closeDistance = float.MaxValue;
+        for (int i = 0; i < _aroundItemList.Count; i++)
+        {
+            float distance = Vector3.Distance(transform.position, _aroundItemList[i].transform.position);
+            if (distance < closeDistance)
+            {
+                index = i;
+                closeDistance = distance;
+            }
+        }
+        Debug.Log(_aroundItemList.Count);
+
+        if (index != -1)
+        {
+            _aroundItemList[index].GetComponentInParent<IInteractable>().Interact(gameObject);
+            Debug.Log(_aroundItemList[index]);
+        }
+    }
     void CheckFallRespawn()
     {
         if(transform.position.y < -12)

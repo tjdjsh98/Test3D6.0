@@ -1,25 +1,18 @@
+using Fusion;
 using UnityEngine;
-
-public class Inventory : MonoBehaviour
+public class Inventory : NetworkBehaviour
 {
     [SerializeField] int _slotCount = 10;
     public int SlotCount => _slotCount;
 
-    private ItemSlot[] _itemSlots;
+    [Networked, OnChangedRender(nameof(OnInventoryChanged))]
+    [Capacity(16)]
+    NetworkArray<ItemSlot> _slots => MakeInitializer<ItemSlot>(new ItemSlot[10]);
 
-    private void Awake()
-    {
-        _itemSlots = new ItemSlot[_slotCount];
-        for(int i = 0; i < _slotCount; i++)
-        {
-            _itemSlots[i]  = new ItemSlot();
-            _itemSlots[i].itemName = string.Empty;
-            _itemSlots[i].item = null;
-        }
-    }
 
     public bool InsertItem(GameObject gameObject, int count = 1, int index = -1)
     {
+        var networkRunner =  FindAnyObjectByType<NetworkRunner>();
         Item item = gameObject.GetComponent<Item>();
         if (item == null) return false;
         string itemName = gameObject.name;
@@ -27,48 +20,49 @@ public class Inventory : MonoBehaviour
         if (index == -1)
         {
             int emptySlot = -1;
-            int slotIndex = 0;
-            foreach (ItemSlot slot in _itemSlots)
+            for(int i = 0; i < _slots.Length; i++)  
             {
-                if (slot.item == null)
+                if (_slots[i].itemName == "")
                 {
-                    emptySlot = slotIndex;
+                    emptySlot = i;
                     break;
                 }
-                if (slot.itemName == itemName)
+                if (_slots[i].itemName == itemName)
                 {
-                    slot.count += count;
-                    Destroy(item.gameObject);
+                    ItemSlot tempSlot = _slots[i];
+                    tempSlot.count += count;
+                    _slots.Set(i, tempSlot);
+
+                    networkRunner.Despawn(item.Object);
                     return true;
                 }
-                slotIndex++;
             }
 
             if (emptySlot == -1) return false;
-            _itemSlots[emptySlot].itemName = itemName;
-            _itemSlots[emptySlot].item = item;
-            _itemSlots[emptySlot].count = count;
-            Destroy(item.gameObject);
-            item.gameObject.SetActive(false);
+            {
+                ItemSlot tempSlot = _slots[emptySlot];
+                tempSlot.itemName = itemName;
+                tempSlot.count = count;
+                _slots.Set(emptySlot, tempSlot);
+                networkRunner.Despawn(item.Object);
+            }
         }
         else
         {
-            if (_itemSlots[index].itemName == itemName )
+            if (_slots[index].itemName == itemName )
             {
-                _itemSlots[index].count += count;
-                Destroy(item.gameObject);
+                ItemSlot tempSlot = _slots[index];
+                tempSlot.count += count;
+                _slots.Set(index, tempSlot);
+                networkRunner.Despawn(item.Object);
             }
-            else if(_itemSlots[index].item = null)
+            else 
             {
-                _itemSlots[index].itemName = itemName;
-                _itemSlots[index].item = item;
-                _itemSlots[index].count = count;
-                Destroy(item.gameObject);
-                item.gameObject.SetActive(false);
-            }
-            else
-            {
-                return false;
+                ItemSlot tempSlot = _slots[index];
+                tempSlot.itemName = itemName;
+                tempSlot.count = count;
+                _slots.Set(index, tempSlot);
+                networkRunner.Despawn(item.Object);
             }
         }
 
@@ -76,43 +70,69 @@ public class Inventory : MonoBehaviour
     }
     // 자신의 앞으로 아이템을 버린다.
 
+    public void Awake()
+    {
+        name = name.Split('(')[0];
+    }
     public bool SetSlot(ItemSlot slot, int index)
     {
-        if(index < 0 || index >= _itemSlots.Length) return false;
+        if(index < 0 || index >= _slots.Length) return false;
 
-        _itemSlots[index] = slot;
+
+        _slots.Set(index, slot);
         return true;
     }
     public bool DropItem(int index)
     {
-        if(index < 0 || index >= _itemSlots.Length) return false;
+        if(index < 0 || index >= _slots.Length) return false;
 
-        Item item = Instantiate(_itemSlots[index].item);
-        item.gameObject.SetActive(true);
-        item.transform.position = transform.position + transform.forward;
+        Item itemPrefab = Resources.Load<Item>($"Prefabs/Item/{_slots[index].itemName}");
+        var networkRunner = FindAnyObjectByType<NetworkRunner>();
+
+        Item time = networkRunner.Spawn(itemPrefab, transform.position + transform.forward);
         RemoveItem(index);
         return true;
     }
     public bool RemoveItem(int index)
     {
-        if(index < 0 || index >= _itemSlots.Length) return false;
+        if(index < 0 || index >= _slots.Length) return false;
 
-        _itemSlots[index].item = null;
-        _itemSlots[index].itemName = "";
-
+        _slots.Set(index, new ItemSlot());
         return true;
     }
     public ItemSlot GetSlot(int index)
     {
-        if (index < 0 || index >= _itemSlots.Length) return null;
+        if (index < 0 || index >= _slots.Length) return default;
 
-        return _itemSlots[index];
+        return _slots[index];
+    }
+
+    void OnInventoryChanged(NetworkBehaviourBuffer previous)
+    {
+
+        string d = "";
+        Debug.Log(_slots.Length);
+
+        for (int i = 0; i < _slots.Length; i++)
+        {
+            d += $"{i} : {_slots[i].itemName} {_slots[i].count}\n";
+        }
+        Debug.Log(d);
+
+
+        //var preValue = GetArrayReader<NetworkArray<ItemSlot2>>(nameof(slots)).Read(previous);
+       
+        //d = "";
+        //for (int i = 0; i < preValue.Length; i++)
+        //{
+        //    d += $"{i} : {preValue[0].Get(i).count}\n";
+        //}
+        //Debug.Log(d);
     }
 }
 
-public class ItemSlot
+public struct ItemSlot : INetworkStruct
 {
-    public string itemName;
-    public Item item;
+    public NetworkString<_64> itemName;
     public int count;
 }

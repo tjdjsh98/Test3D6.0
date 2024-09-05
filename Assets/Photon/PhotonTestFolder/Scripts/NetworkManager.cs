@@ -9,17 +9,6 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using static Fusion.NetworkBehaviour;
 
-class ValueChangeDectector
-{
-    public ValueChangeDectector(NetworkBehaviour networkBehaviour)
-    {
-        changeDetector = networkBehaviour.GetChangeDetector(ChangeDetector.Source.SimulationState);
-    }
-    public ChangeDetector changeDetector;
-    public Dictionary<string, Action<NetworkBool, NetworkBool>> booleanChangeDictionary = new Dictionary<string, Action<NetworkBool, NetworkBool>>();
-    public Dictionary<string, Action<int, int>> intChangeDictionary = new Dictionary<string, Action<int, int>>();
-    public Dictionary<string, Action<float, float>> floatChangeDictionary = new Dictionary<string, Action<float, float>>();
-}
 
 public class NetworkManager : NetworkBehaviour
 {
@@ -27,10 +16,6 @@ public class NetworkManager : NetworkBehaviour
     NetworkRunner _networkRunnter;
 
     [SerializeField] string _lobbyName;
-
-    Dictionary<NetworkBehaviour, ValueChangeDectector> _valueChangedDic = new Dictionary<NetworkBehaviour, ValueChangeDectector>();
-
-   
 
 
     private void Awake()
@@ -55,60 +40,58 @@ public class NetworkManager : NetworkBehaviour
         Debug.Log($"Server NetworkRunner started");
     }
 
-    public override void Render()
-    {
-        foreach(var key in _valueChangedDic.Keys)
-        {
-            foreach (var change in _valueChangedDic[key].changeDetector.DetectChanges(key, out var previous, out var current))
-            {
-                OnChangedValue(change,key,previous,current, _valueChangedDic[key].intChangeDictionary);
-                OnChangedValue(change,key, previous, current, _valueChangedDic[key].floatChangeDictionary);
-                OnChangedValue(change,key, previous, current, _valueChangedDic[key].booleanChangeDictionary);
-            }
-        }
-    }
+    //public override void Render()
+    //{
+    //    foreach(var key in _valueChangedDic.Keys)
+    //    {
+    //        foreach (var change in _valueChangedDic[key].changeDetector.DetectChanges(key, out var previous, out var current))
+    //        {
+    //            OnChangedValue(change,key,previous,current, _valueChangedDic[key].intChangeDictionary);
+    //            OnChangedValue(change,key, previous, current, _valueChangedDic[key].floatChangeDictionary);
+    //            OnChangedValue(change,key, previous, current, _valueChangedDic[key].booleanChangeDictionary);
+    //            //OnChangedValue(change,key, previous, current, _valueChangedDic[key].itemSlotArrayChangeDictionary);
+    //        }
+    //    }
+    //}
 
-    void OnChangedValue<T>(string name,NetworkBehaviour networkBehaviour, NetworkBehaviourBuffer previous, NetworkBehaviourBuffer current, Dictionary<string, Action<T,T> > actionDic) where T : unmanaged
-    {
-        if (!actionDic.ContainsKey(name)) return;
+    //void OnChangedValue<T>(string name,NetworkBehaviour networkBehaviour, NetworkBehaviourBuffer previous, NetworkBehaviourBuffer current, Dictionary<string, Action<T,T> > actionDic) where T : unmanaged
+    //{
+    //    if (!actionDic.ContainsKey(name)) return;
 
-        PropertyReader<T> reader = GetPropertyReader<T>(networkBehaviour.GetType(), name);
-        var (p,c) = reader.Read(previous, current);
-        Action<T, T> action = actionDic[name];
-        action?.Invoke(p , c);
-    }
+    //    PropertyReader<T> reader = GetPropertyReader<T>(networkBehaviour.GetType(), name);
+    //    var (p,c) = reader.Read(previous, current);
+    //    Action<T, T> action = actionDic[name];
+    //    action?.Invoke(p , c);
+    //}
+    //// Awake나 Start에는 사용하면 안됨.
+    //// Spawn될 때 선언
+    //public void AddValueChanged<T>(NetworkBehaviour networkBehaviour, string name , Action<T,T> action) where T : struct
+    //{
+    //    if(!_valueChangedDic.ContainsKey(networkBehaviour))
+    //    {
+    //        _valueChangedDic.Add(networkBehaviour ,new ValueChangeDectector(networkBehaviour));
+    //    }
 
-    // Awake나 Start에는 사용하면 안됨.
-    // Spawn될 때 선언
-    public void AddValueChanged<T>(NetworkBehaviour networkBehaviour, string name , Action<T,T> action) where T : struct
-    {
-        if(!_valueChangedDic.ContainsKey(networkBehaviour))
-        {
-            _valueChangedDic.Add(networkBehaviour ,new ValueChangeDectector(networkBehaviour));
-        }
+    //    ValueChangeDectector valueChangeDectector = _valueChangedDic[networkBehaviour];
 
-        ValueChangeDectector valueChangeDectector = _valueChangedDic[networkBehaviour];
+    //    Type type = typeof(T);
+    //    if (type == typeof(NetworkBool))
+    //    {
+    //        Action<NetworkBool, NetworkBool> a = action as Action<NetworkBool, NetworkBool>;
+    //        valueChangeDectector.booleanChangeDictionary.Add(name, a);
+    //    }
+    //    else if (type == typeof(int))
+    //    {
+    //        Action<int, int> a = action as Action<int, int>;
+    //        valueChangeDectector.intChangeDictionary.Add(name, a);
+    //    }
+    //    else if (type == typeof(float))
+    //    {
+    //        Action<float, float> a = action as Action<float, float>;
+    //        valueChangeDectector.floatChangeDictionary.Add(name, a);
+    //    }
 
-        Type type = typeof(T);
-        if (type == typeof(NetworkBool))
-        {
-            Action<NetworkBool, NetworkBool> a = action as Action<NetworkBool, NetworkBool>;
-            valueChangeDectector.booleanChangeDictionary.Add(name, a);
-        }
-        else if (type == typeof(int))
-        {
-            Action<int, int> a = action as Action<int, int>;
-            valueChangeDectector.intChangeDictionary.Add(name, a);
-
-            Debug.Log(_valueChangedDic[networkBehaviour].intChangeDictionary.Count);
-        }
-        else if (type == typeof(float))
-        {
-            Action<float, float> a = action as Action<float, float>;
-            valueChangeDectector.floatChangeDictionary.Add(name, a);
-        }
-
-    }
+    //}
 
     protected virtual Task InitializeNetworkRunner(NetworkRunner runner, GameMode gameMode, NetAddress address,string sessionName ,int sceneIndex, Action<NetworkRunner> initialized)
     {

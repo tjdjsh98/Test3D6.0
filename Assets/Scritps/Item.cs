@@ -1,6 +1,7 @@
+using Fusion;
 using UnityEngine;
 
-public class Item : MonoBehaviour, IInteractable
+public class Item : NetworkBehaviour, IInteractable
 {
     BoxCollider _collider;
     Rigidbody _rigidbody;

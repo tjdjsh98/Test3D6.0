@@ -117,7 +117,7 @@ public class UITwoInventory : MonoBehaviour
                     if (ui == _uicharacterInventorySlotList[j].itemImage.gameObject)
                     {
                         ItemSlot slot = _characterInventory.GetSlot(j);
-                        if (slot.item == null) return;
+                        if (slot.itemName == "") return;
 
                         _dragItemSlotIndex = j;
                         DragIItem(_uicharacterInventorySlotList[i]);
@@ -132,7 +132,7 @@ public class UITwoInventory : MonoBehaviour
                     if (ui == _uiChestInventorySlotList[j].itemImage.gameObject)
                     {
                         ItemSlot slot = _chestInventory.GetSlot(j);
-                        if (slot.item == null) return;
+                        if (slot.itemName == "") return;
 
                         _dragItemSlotIndex = j;
                         DragIItem(_uiChestInventorySlotList[i]);
@@ -238,20 +238,16 @@ public class UITwoInventory : MonoBehaviour
                 }
 
                 ItemSlot itemSlot = inventory.GetSlot(i);
-                if (itemSlot != null)
+                if (itemSlot.itemName != "")
                 {
-                    if (itemSlot.item != null)
-                    {
-                        uiSlotList[i].itemImage.color = Color.white;
-                        uiSlotList[i].itemTextmesh.text = $"{itemSlot.itemName} x {itemSlot.count}";
-                    }
-                    else
-                    {
-                        uiSlotList[i].itemImage.color = Color.red;
-                        uiSlotList[i].itemTextmesh.text = "";
-                    }
+                    uiSlotList[i].itemImage.color = Color.white;
+                    uiSlotList[i].itemTextmesh.text = $"{itemSlot.itemName} x {itemSlot.count}";
                 }
-
+                else
+                {
+                    uiSlotList[i].itemImage.color = Color.red;
+                    uiSlotList[i].itemTextmesh.text = "";
+                }
             }
         }
         else

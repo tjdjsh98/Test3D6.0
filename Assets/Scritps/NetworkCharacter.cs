@@ -10,7 +10,7 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable,IRigidbody
 {
     [Header("Status")]
     [Networked][field:SerializeField] public int MaxHp { get; set; }
-    [Networked][field: SerializeField] public int Hp { get; set; }
+    [Networked, OnChangedRender(nameof(OnHpChanged))][field: SerializeField] public int Hp { get; set; }
     [Networked][field: SerializeField] public float Speed { get; set; }
     [Networked][field: SerializeField] public int Power { get; set; }
     [Networked][field: SerializeField] public int MaxHunger{ get; set; }
@@ -20,6 +20,7 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable,IRigidbody
     [Networked][field:SerializeField] public bool IsAttack { get; set; }
     [Networked][field:SerializeField] public bool IsRun { get; set; }
     [Networked][field:SerializeField] public bool IsDamaged { get; set; }
+    [Networked][field: SerializeField] public bool IsEnableMove { get; set; } = true;
 
 
     // Velocity
@@ -57,14 +58,14 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable,IRigidbody
 
     public override void Spawned()
     {
-        _networkManager = FindAnyObjectByType<NetworkManager>(FindObjectsInactive.Include);
+        //_networkManager = FindAnyObjectByType<NetworkManager>(FindObjectsInactive.Include);
 
-        _networkManager.AddValueChanged<int>(this, nameof(Hp), OnHpChanged);
+        //_networkManager.AddValueChanged<int>(this, nameof(Hp), OnHpChanged);
     }
     public void HandleVelocity()
     {
-        SetAnimatorBoolean("ContactGround", _kcc.IsGrounded);
-        _kcc.Move(_velocity, _jumpImpulse);
+        SetAnimatorBoolean("ContactGround", _kcc== null?true: _kcc.IsGrounded);
+        _kcc?.Move(_velocity, _jumpImpulse);
 
         if (_velocity != Vector3.zero)
         {
@@ -84,12 +85,16 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable,IRigidbody
     }
     public void Move(Vector3 direction, float ratio = 1)
     {
+        if (!IsEnableMove) return;
+
         ratio = Mathf.Clamp01(ratio);
 
         _velocity = direction * Speed * ratio;
     }
     public void Jump(float power)
     {
+        if (!IsEnableMove) return;
+
         _jumpImpulse = power;
     }
 
@@ -123,9 +128,10 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable,IRigidbody
     {
 
     }
-    void OnHpChanged(int old, int current)
+    void OnHpChanged(NetworkBehaviourBuffer previous)
     {
-        Debug.Log($"Hp Changed {old} -> {current}");
+        var preValue = GetPropertyReader<int>(nameof(Hp)).Read(previous);
+        Debug.Log($"Hp Changed {preValue} -> {Hp}");
     }
 
     public void OnAttacked()

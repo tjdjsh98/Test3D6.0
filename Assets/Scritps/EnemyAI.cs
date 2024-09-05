@@ -1,10 +1,11 @@
+using Fusion;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Rendering;
 
-public class EnemyAI : MonoBehaviour
+public class EnemyAI : NetworkBehaviour
 {
-    Character _character;
+    NetworkCharacter _character;
 
     [SerializeField] bool _debug;
 
@@ -21,14 +22,10 @@ public class EnemyAI : MonoBehaviour
     [SerializeField]AttackModule _attackModule;
     private void Awake()
     {
-        _character = GetComponent<Character>();
+        _character = GetComponent<NetworkCharacter>();
         _navAgent = GetComponent<NavMeshAgent>();
 
-        if (_navAgent)
-        {
-            _navAgent.speed = _character.Speed;
-        }
-        _initPosition = transform.position;
+       
     }
 
     private void OnDrawGizmos()
@@ -38,7 +35,16 @@ public class EnemyAI : MonoBehaviour
         Utils.DrawRange(gameObject, _attackRange, Color.red);
     }
 
-    private void Update()
+    public override void Spawned()
+    {
+        if (_navAgent)
+        {
+            _navAgent.speed = _character.Speed;
+        }
+        _initPosition = transform.position;
+    }
+
+    public override void Render()
     {
         _character.SetAnimatorBoolean("Walk", (_navAgent.velocity != Vector3.zero));
 
@@ -46,7 +52,6 @@ public class EnemyAI : MonoBehaviour
         ChaseTarget();
         HandleAttack();
     }
-
 
     void DetectCharacter()
     {
@@ -71,7 +76,7 @@ public class EnemyAI : MonoBehaviour
         {
             Target = null;
             _navAgent.SetDestination(_initPosition);
-            _character.IsMove = true;
+            _character.IsEnableMove= true;
             return;
         }
 
@@ -102,7 +107,7 @@ public class EnemyAI : MonoBehaviour
             _character.IsAttack = true;
             _character.Attacked = OnAttack;
             _character.SetAnimatorTrigger("Attack");
-            StartCoroutine(Utils.WaitAniationAndPlayCoroutine(_character.Animator, "Attack", EndAttack));
+            StartCoroutine(Utils.WaitAniationAndPlayCoroutine(GetComponentInChildren<Animator>(), "Attack", EndAttack));
         }
     }
 
@@ -125,7 +130,7 @@ public class EnemyAI : MonoBehaviour
             if (character == null) continue;
 
             DamageInfo info = new DamageInfo();
-            info.attacker = _character;
+            //info.attacker = _character;
             info.target = character;
             info.knockbackPower = 100;
             info.knockbackDirection =  transform.forward ;
