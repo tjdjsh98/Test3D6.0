@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.UIElements;
 
 public class Character : MonoBehaviour,IDamageable
 {
@@ -29,8 +30,8 @@ public class Character : MonoBehaviour,IDamageable
     public float Speed => _speed;
 
     public Action Attacked { get; set; }
-
-
+    public Action<DamageInfo> Died { get; set; }
+    
 
     private void Awake()
     {
@@ -79,11 +80,13 @@ public class Character : MonoBehaviour,IDamageable
 
         if(Hp <= 0)
         {
+            Died?.Invoke(info);
             Destroy(gameObject);
         }
 
         return info.damage;
     }
+
 
     void OffKnockback()
     {
@@ -109,4 +112,5 @@ public class Character : MonoBehaviour,IDamageable
     {
         _animator.SetFloat(name, value);
     }
+
 }

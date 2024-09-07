@@ -1,9 +1,13 @@
+using System;
 using UnityEngine;
 
 public interface IDamageable
 {
     public int MaxHp { get; set; }
     public int Hp { get; set; }
+
+    public Action<DamageInfo> Died { get; set; }
+
     // 최종적으로 받아들인 데미지 반환
     public int Damaged(DamageInfo damageInfo);
 }
