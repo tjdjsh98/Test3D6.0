@@ -7364,10 +7364,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Animator: {fileID: 6040762123115772070}
-  TotalWords: 5
+  TotalWords: 6
   ApplyTiming: 0
   SyncSettings: 79
-  StateHashes: 000000002b1a167c7940695528a981077af3fe2e20e23b685928a8cec0b4b54f1e1ff42c89f787200dd451cf48d3833bccf055d46dacfe3e773dc4d40d286c404e865f43c54502ee2b72afa238eb9eb2976bb92126f6a670897681e368d1fe786adb23f2a3b74ab697db95ee31bed5bf
+  StateHashes: 0000000028a981077af3fe2ec0b4b54f1e1ff42c89f787200dd451cf48d3833bccf055d46dacfe3e773dc4d40d286c404e865f43c54502ee2b72afa238eb9eb2976bb92126f6a670897681e346980c4f14c2736668d1fe786adb23f22b1a167ca3b74ab697db95ee31bed5bf
   TriggerHashes: 000000000d286c40
 --- !u!114 &4629767289049234195
 MonoBehaviour:
@@ -8059,6 +8059,20 @@ MonoBehaviour:
       - m_Target: {fileID: -7662520128971833511}
         m_TargetAssemblyTypeName: NetworkCharacter, Assembly-CSharp
         m_MethodName: OnAttackEnded
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: -2171357065945110279}
+        m_TargetAssemblyTypeName: NetworkPlayerController, Assembly-CSharp
+        m_MethodName: OnAttackAnimationEnded
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

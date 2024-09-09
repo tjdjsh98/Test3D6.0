@@ -5,7 +5,7 @@ using Random = UnityEngine.Random;
 
 public static class Utils
 {
-    public static IEnumerator WaitAniationAndPlayCoroutine(Animator animator, string animation, Action action)
+    public static IEnumerator WaitAniationAndPlayCoroutine(Animator animator, string animation, Action action,float endRatio = 1)
     {
         bool isOncePlay = false;
 
@@ -13,7 +13,12 @@ public static class Utils
         {
             if (animator.GetCurrentAnimatorStateInfo(0).IsName(animation))
                 isOncePlay = true;
-            yield return new WaitForSeconds(0.1f);
+
+            if(isOncePlay && animator.GetCurrentAnimatorStateInfo(0).normalizedTime >= endRatio)
+            {
+                break;
+            }
+            yield return new WaitForFixedUpdate();
         }
 
         action?.Invoke();

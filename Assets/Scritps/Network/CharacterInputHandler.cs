@@ -33,7 +33,7 @@ public class CharacterInputHandler : MonoBehaviour
         // View Input
 
         // Move Input
-        accumulatedInput.movementInput += new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+        accumulatedInput.movementInput += new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
 
         NetworkButtons buttons = default;
 
@@ -44,6 +44,10 @@ public class CharacterInputHandler : MonoBehaviour
         // Fire
         if (Input.GetButtonDown("Fire1"))
             buttons.Set(InputButton.MouseButton0, true);
+
+        // Interact
+        if (Input.GetKey(KeyCode.LeftShift))
+            buttons.Set(InputButton.Run, true);
 
         // Interact
         if (Input.GetKeyDown(KeyCode.E))

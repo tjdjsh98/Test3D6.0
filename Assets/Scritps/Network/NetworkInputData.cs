@@ -6,6 +6,7 @@ public enum InputButton
     Jump,
     MouseButton0,
     Interact,
+    Run
 }
 public struct NetworkInputData : INetworkInput
 {

@@ -1,9 +1,11 @@
 using Fusion;
 using Fusion.Addons.SimpleKCC;
+using Mono.Cecil.Cil;
 using System.Collections.Generic;
 using TMPro;
 using Unity.Cinemachine;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class NetworkPlayerController : NetworkBehaviour
 {
@@ -55,6 +57,7 @@ public class NetworkPlayerController : NetworkBehaviour
     {
         DetectInteractableObject();
     }
+    Vector3 _start;
     public override void FixedUpdateNetwork()
     {
         if (GetInput(out NetworkInputData networkInputData) && Runner.IsForward)
@@ -71,23 +74,37 @@ public class NetworkPlayerController : NetworkBehaviour
             {
                 moveDirection.y = 0;
                 moveDirection.Normalize();
-                moveDirection *= _character.Speed;
-                _character.Move(moveDirection);
+                moveDirection *= 0.2f;
+                //_character.Move(moveDirection);
             }
           
 
             // Rotate
-            if (_character.IsEnableMove)
+            if (_character.IsEnableMove && _character.IsEnableTurn)
             {
                 if (networkInputData.movementInput != Vector2.zero)
                 {
-                    _inputAngle = Mathf.Atan2(moveDirection.x, moveDirection.z) * Mathf.Rad2Deg;
-                }
-                float deltaAngle = Mathf.DeltaAngle(transform.rotation.eulerAngles.y, _inputAngle) * 0.5f;
-                transform.rotation = Quaternion.Euler(0, transform.rotation.eulerAngles.y + deltaAngle, 0);
+                    float inputAngle = Mathf.Atan2(moveDirection.x, moveDirection.z) * Mathf.Rad2Deg;
 
-                _kcc.AddLookRotation(0, deltaAngle);
+                    float angle = Vector3.Angle(transform.transform.forward, moveDirection);
+                    
+                    if(angle >= 170)
+                    {
+                        _start = transform.forward;
+                        _character.IsEnableMove = false;
+                        _character.IsEnableTurn = false;
+                        _character.SetAnimatorTrigger("Turn");
+                        _character.WaitAnimationState("TurnBack", OnTurnAnimationEnded, 0.8f);
+                        _inputAngle = inputAngle;
+                        return;
+                    }
+
+                    _inputAngle = inputAngle;
+                }
+                float deltaAngle = Mathf.DeltaAngle(transform.rotation.eulerAngles.y, _inputAngle) * 0.1f;
+                _character.AddAngle(deltaAngle);                
             }
+
 
 
             // Jump
@@ -97,46 +114,64 @@ public class NetworkPlayerController : NetworkBehaviour
             }
 
             // Attack
-            if (!_character.IsAttack && networkInputData.buttons.WasPressed(_previousButtons, InputButton.MouseButton0))
+            if (networkInputData.buttons.WasPressed(_previousButtons, InputButton.MouseButton0))
             {
-                OnAttackAnimationStarted();
+                _character.SetAnimatorTrigger("Attack");
+                if(!_character.IsAttack)
+                    OnAttackAnimationStarted();
             }
             // Interact
             if (networkInputData.buttons.WasPressed(_previousButtons, InputButton.Interact))
             {
                 InteractOther();
             }
+            // Run
+            if ((networkInputData.buttons.Bits & (1<<(int)InputButton.Run)) != 0)
+            {
+                moveDirection *= 5;
+            }
 
+            //Debug.Log(moveDirection);
             _previousButtons = networkInputData.buttons;
+            _character.SetAnimatorFloat("Velocity", moveDirection.magnitude,0.1f,Runner.DeltaTime);
             CheckFallRespawn();
         }
 
-        HandleAnimation(networkInputData);
+        HandleAnimation();
     }
 
-    void HandleAnimation(NetworkInputData networkInputData)
+    void OnTurnAnimationEnded()
+    {
+        _character.IsEnableMove = true;
+        _character.IsEnableTurn = true;
+    }
+
+    void HandleAnimation()
     {
         _character.SetAnimatorBoolean("ContactGround", _kcc.IsGrounded);
-        _character.SetAnimatorFloat("VelocityX", networkInputData.movementInput.x);
-        _character.SetAnimatorFloat("VelocityZ", networkInputData.movementInput.y);
+        //_character.SetAnimatorFloat("Velocity", Mathf.Abs(_character.Velocity.magnitude));
         _character.SetAnimatorFloat("VelocityY", _kcc.RealVelocity.y);
     }
 
     void OnAttackAnimationStarted()
     {
+        Debug.Log("Start");
+        _character.SetAnimatorRootmotion(true);
         _character.IsAttack = true;
         _character.Attacked = OnAttackStarted;
         _character.AttackEnded = OnAttackEnded;
         Weapon?.OnAttackAnimationStarted();
-        _character.SetAnimatorTrigger("Attack");
 
         StartCoroutine(Utils.WaitAniationAndPlayCoroutine(GetComponentInChildren<Animator>(), "Attack", OnAttackAnimationEnded));
     }
 
-    void OnAttackAnimationEnded()
+    public void OnAttackAnimationEnded()
     {
+        
+        Debug.Log("End");
         Weapon?.OnAttackAnimationEnded();
         _character.IsAttack = false;
+        _character.SetAnimatorRootmotion(false);
     }
     void OnAttackStarted()
     {
@@ -148,6 +183,8 @@ public class NetworkPlayerController : NetworkBehaviour
         if (Weapon)
             Weapon.EndAttack();
     }
+
+
 
     // 캐릭터 주변에 상호작용할 수 있는 물체가 있는지 확인합니다.
     // 물체가 있고 로컬캐릭터라면 UI를 띄웁니다.
