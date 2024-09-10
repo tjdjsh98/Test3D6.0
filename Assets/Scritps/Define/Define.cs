@@ -27,8 +27,8 @@ public struct Range
 
 public struct DamageInfo
 {
-    public Character attacker;
-    public Character target;
+    public IDamageable attacker;
+    public IDamageable target;
     public int damage;
     public float knockbackPower;
     public Vector3 knockbackDirection;

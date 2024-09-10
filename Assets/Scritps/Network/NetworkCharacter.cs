@@ -1,7 +1,9 @@
 using Fusion;
 using Fusion.Addons.SimpleKCC;
 using Mono.Cecil.Cil;
+using NUnit.Framework.Interfaces;
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
@@ -9,10 +11,13 @@ using TMPro;
 using Tripolygon.UModeler.UI;
 using Tripolygon.UModelerX.Runtime;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.Animations;
 
 public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
 {
+    public GameObject GameObject => gameObject;
+
     [Header("Status")]
     [Networked][field: SerializeField] public int MaxHp { get; set; }
     [Networked, OnChangedRender(nameof(OnHpChanged))][field: SerializeField] public int Hp { get; set; }
@@ -24,10 +29,10 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
     [Header("ActionState")]
     [Networked][field: SerializeField] public bool IsAttack { get; set; }
     [Networked][field: SerializeField] public bool IsRun { get; set; }
-    [Networked][field: SerializeField] public bool IsDamaged { get; set; }
+    [Networked][field: SerializeField] public bool IsGetHit { get; set; }
     [Networked][field: SerializeField] public bool IsEnableMove { get; set; } = true;
     [Networked][field: SerializeField] public bool IsEnableTurn { get; set; } = true;
-
+    [Networked][field: SerializeField] public bool IsGrounded { get; set; } = true;
 
     // Velocity
     Vector3 _velocity;
@@ -43,11 +48,13 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
     NetworkMecanimAnimator _networkAnimator;
     NetworkManager _networkManager;
     AnimatorHelper _animatoHelper;
+    NavMeshAgent _navMeshAgent;
 
     // Handler
     public Action Attacked { get; set; }
     public Action AttackEnded { get; set; }
     public Action<DamageInfo> Died { get; set; }
+    public Action<DamageInfo> Damaged { get; set; }
 
 
     // Teleport
@@ -62,34 +69,62 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
         _networkAnimator = GetComponent<NetworkMecanimAnimator>();
         _kcc = GetComponent<SimpleKCC>();
         _animatoHelper = GetComponentInChildren<AnimatorHelper>();
+        _navMeshAgent = GetComponent<NavMeshAgent>();
         _animatoHelper.AnimatorMoved += OnAnimatorMoved;
+
+        _animator.logWarnings = false;
     }
 
     public override void FixedUpdateNetwork()
     {
+        CheckGround();
+
         HandleVelocity();
     }
 
+    // KCC가 있다면 KCC가 확인
+    // 없다면 레이캐스트로 구별한다.
+    void CheckGround()
+    {
+        if (_kcc)
+        {
+            IsGrounded = _kcc.IsGrounded;
+        }
+        else
+        {
+            IsGrounded = Physics.Raycast(transform.position, Vector3.down, 0.5f, Define.GROUND_LAYERMASK);
+        }
+    }
+
+    // 캐릭터의 루트모션 움직임을 조절합니다.
     void OnAnimatorMoved()
     {
-        _velocity = _animator.deltaPosition / Runner.DeltaTime;
+        if (!IsGrounded) return;
 
-        AddAngle(_animator.deltaRotation.eulerAngles.y);
+        _velocity = _animator.deltaPosition / Runner.DeltaTime;
+        _lookAngle += _animator.deltaRotation.eulerAngles.y;
     }
 
     public override void Spawned()
     {
-        //_networkManager = FindAnyObjectByType<NetworkManager>(FindObjectsInactive.Include);
-
-        //_networkManager.AddValueChanged<int>(this, nameof(Hp), OnHpChanged);
+      
     }
     public void HandleVelocity()
     {
-        SetAnimatorBoolean("ContactGround", _kcc == null ? true : _kcc.IsGrounded);
-        _kcc?.Move(_velocity, _jumpImpulse);
-        _kcc?.SetLookRotation(0, _lookAngle);
+        SetAnimatorBoolean("IsGrounded", IsGrounded);
+        if (_kcc)
+        {
+            SetAnimatorFloat("VelocityY", _kcc.RealVelocity.y);
+            _kcc?.Move(_velocity, _jumpImpulse);
+            _kcc?.SetLookRotation(0, _lookAngle);
+        }
+        else
+        {
+            transform.rotation = Quaternion.Euler(0, _lookAngle, 0);
+        }
         
-        _velocity = Vector3.zero;
+        _breakPower = IsGrounded ? 50 : 1;
+
         if (_velocity != Vector3.zero)
         {
             Vector3 breakPower = _velocity.normalized * Runner.DeltaTime * _breakPower;
@@ -108,7 +143,6 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
     public void Move(Vector3 direction, float ratio = 1)
     {
         if (!IsEnableMove) return;
-
         ratio = Mathf.Clamp01(ratio);
 
         _velocity = direction * Speed * ratio;
@@ -125,13 +159,19 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
         _velocity += power;
     }
 
-    public int Damaged(DamageInfo damageInfo)
+    public int Damage(DamageInfo damageInfo)
     {
         int result = 0;
 
         result = damageInfo.damage;
         Hp -= result;
 
+        SetAnimatorTrigger("GetHit");
+        IsGetHit = true;
+        IsEnableMove = false;
+        WaitAnimationState("GetHit", OnGetHit);
+
+        Damaged?.Invoke(damageInfo);
         if (Hp <= 0)
         {
             CharacterDie(damageInfo);
@@ -146,9 +186,16 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
         return result;
     }
 
+    void OnGetHit()
+    {
+        IsGetHit = false;
+        IsEnableMove = true;
+    }
+
     void CharacterDie(DamageInfo info)
     {
         Died?.Invoke(info);
+        Runner.Despawn(Object);
     }
     void OnHpChanged(NetworkBehaviourBuffer previous)
     {
@@ -194,6 +241,10 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
     {
         StartCoroutine(Utils.WaitAniationAndPlayCoroutine(_animator,stateName,ended,endRatio));
     }
+    public void WaitAnimationState(string[] stateNames, Action ended, float endRatio = 1)
+    {
+        StartCoroutine(Utils.WaitAniationAndPlayCoroutine(_animator, stateNames, ended, endRatio));
+    }
     public void SetPosition(Vector3 position)
     {
         _isTeleport = true;
@@ -207,4 +258,5 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
     {
         _lookAngle += angle;
     }
+
 }

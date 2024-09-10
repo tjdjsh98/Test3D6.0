@@ -14,17 +14,16 @@ public class NetworkPlayer : NetworkBehaviour, IPlayerLeft
     public Transform _cameraTarget;             // 이 것을 기준으로 카메라가 돌아감
 
     private void Awake()
-    { 
+    {
     }
 
     private void Update()
     {
         if (Object.HasStateAuthority&& Object.HasInputAuthority)
         {
-            if (Input.GetKeyDown(KeyCode.N))
+            if (Input.GetKeyDown(KeyCode.L))
             {
-                FindAnyObjectByType<NetworkRunner>().Spawn(Resources.Load<NetworkObject>("Prefabs/Block/Crate"), -Vector3.forward*10);
-                Debug.Log($"{gameObject.name}Spanw");
+                FindAnyObjectByType<NetworkRunner>().Spawn(Resources.Load<NetworkObject>("Prefabs/NetworkMonster"), -Vector3.forward*10);
             }
         }
     }

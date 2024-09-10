@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 using Image = UnityEngine.UI.Image;
 
-public class UIInventory : MonoBehaviour
+public class UIInventory : UIBase
 {
     GraphicRaycaster _raycaster;
     PointerEventData _pointerEnterEvent;
@@ -33,8 +33,7 @@ public class UIInventory : MonoBehaviour
     EquipmentType _dragedEquipmentType;
     Image _dragItemImage;
 
-
-    private void Awake()
+    public override void Init()
     {
         _dragItemImage = new GameObject().AddComponent<Image>();
         _dragItemImage.gameObject.SetActive(false);
@@ -90,13 +89,18 @@ public class UIInventory : MonoBehaviour
     }
     public void Open()
     {
-        UnityEngine.Cursor.lockState = CursorLockMode.None;
+        InputManager.Instance.IsEnableFocus = false;
+        InputManager.Instance.IsEnableInput = false;
+
         gameObject.SetActive(true);
         Refresh();
     }
 
     public void Close()
     {
+        InputManager.Instance.IsEnableFocus = true;
+        InputManager.Instance.IsEnableInput = true;
+
         gameObject.SetActive(false);
     }
 

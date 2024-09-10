@@ -6,27 +6,14 @@ using UnityEngine;
 using UnityEngine.Assertions.Must;
 using UnityEngine.Rendering;
 
-public class UIItemShower : MonoBehaviour
+public class UIItemShower : UIBase
 {
-    public static UIItemShower _instance;
-    public static UIItemShower Instance
-    {
-        get
-        {
-            if (_instance == null)
-                Init();
-            return _instance;
-        }
-    }
-
+  
     [SerializeField] GameObject _uiItemTagPrefab;
 
     List<UIItemTag> _uiItemTagList = new List<UIItemTag>();
 
-    static void Init()
-    {
-        _instance = GameObject.Find("UIItemShower").GetComponent<UIItemShower>();
-    }
+    public override void Init(){}
 
     private void LateUpdate()
     {

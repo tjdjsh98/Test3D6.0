@@ -1,7 +1,7 @@
 using TMPro;
 using UnityEngine;
 
-public class UIMainMenuHandler : MonoBehaviour
+public class UIMainMenuHandler : UIBase
 {
     [Header("Panels")]
     [SerializeField] GameObject _playerDetailspPanel;
@@ -15,6 +15,9 @@ public class UIMainMenuHandler : MonoBehaviour
 
     [Header("New Game Session")]
     [SerializeField] TextMeshProUGUI _sessionNameInputField;
+    public override void Init() { }
+
+
 
     void HideAllPanels()
     {

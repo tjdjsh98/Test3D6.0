@@ -7121,7 +7121,6 @@ GameObject:
   - component: {fileID: 7995709878370216984}
   - component: {fileID: 4692784895134128221}
   - component: {fileID: -7662520128971833511}
-  - component: {fileID: 7760771318190442498}
   - component: {fileID: -2171357065945110279}
   - component: {fileID: 8671323881149011929}
   - component: {fileID: 1849812193065974776}
@@ -7264,18 +7263,7 @@ MonoBehaviour:
   _IsRun: 0
   _IsDamaged: 0
   _IsEnableMove: 1
---- !u!114 &7760771318190442498
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7285040776154914501}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 26d865b2f3991644a86c59fc756f0b7a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  _IsEnableTurn: 1
 --- !u!114 &-2171357065945110279
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7364,11 +7352,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Animator: {fileID: 6040762123115772070}
-  TotalWords: 6
+  TotalWords: 7
   ApplyTiming: 0
   SyncSettings: 79
-  StateHashes: 0000000028a981077af3fe2ec0b4b54f1e1ff42c89f787200dd451cf48d3833bccf055d46dacfe3e773dc4d40d286c404e865f43c54502ee2b72afa238eb9eb2976bb92126f6a670897681e346980c4f14c2736668d1fe786adb23f22b1a167ca3b74ab697db95ee31bed5bf
-  TriggerHashes: 000000000d286c40
+  StateHashes: 0000000028a981077af3fe2ec0b4b54f1e1ff42c89f787200dd451cf48d3833bccf055d46dacfe3e773dc4d40d286c404e865f43c54502ee2b72afa238eb9eb2976bb92126f6a670897681e346980c4f14c27366387502c01bc5016682240b59a19408ff14140c2e37a40f889b65302970a6b8d48fe54b824d978a20a773509879d811fb68d1fe786adb23f22b1a167ca3b74ab697db95ee31bed5bf
+  TriggerHashes: 000000000d286c4079ba1280
 --- !u!114 &4629767289049234195
 MonoBehaviour:
   m_ObjectHideFlags: 0

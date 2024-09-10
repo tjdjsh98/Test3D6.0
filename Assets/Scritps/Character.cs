@@ -5,6 +5,7 @@ using UnityEngine.UIElements;
 
 public class Character : MonoBehaviour,IDamageable
 {
+    public GameObject GameObject => gameObject;
     Rigidbody _rigidBody;
     CapsuleCollider _collider;
     Animator _animator;
@@ -30,7 +31,9 @@ public class Character : MonoBehaviour,IDamageable
     public float Speed => _speed;
 
     public Action Attacked { get; set; }
+
     public Action<DamageInfo> Died { get; set; }
+    public Action<DamageInfo> Damaged { get; set; }
     
 
     private void Awake()
@@ -63,7 +66,7 @@ public class Character : MonoBehaviour,IDamageable
         }
     }
 
-    public int Damaged(DamageInfo info)
+    public int Damage(DamageInfo damageInfo)
     {
         {
             IsKnockback = true;
@@ -71,20 +74,21 @@ public class Character : MonoBehaviour,IDamageable
             _rigidBody.mass = 10;
             _navAgent.enabled = false;  
         }
-        if (info.knockbackDirection != Vector3.zero)
+        if (damageInfo.knockbackDirection != Vector3.zero)
         {
-            _rigidBody.AddForce(info.knockbackDirection.normalized *info.knockbackPower, ForceMode.Impulse);
+            _rigidBody.AddForce(damageInfo.knockbackDirection.normalized *damageInfo.knockbackPower, ForceMode.Impulse);
         }
 
-        Hp -= info.damage;
+        Hp -= damageInfo.damage;
 
+        Damaged?.Invoke(damageInfo);
         if(Hp <= 0)
         {
-            Died?.Invoke(info);
+            Died?.Invoke(damageInfo);
             Destroy(gameObject);
         }
 
-        return info.damage;
+        return damageInfo.damage;
     }
 
 

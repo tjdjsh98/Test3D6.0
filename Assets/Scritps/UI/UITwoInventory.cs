@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 using Image = UnityEngine.UI.Image;
 
-public class UITwoInventory : MonoBehaviour
+public class UITwoInventory : UIBase
 {
     GraphicRaycaster _raycaster;
     PointerEventData _pointerEnterEvent;
@@ -28,8 +28,7 @@ public class UITwoInventory : MonoBehaviour
     int _dragItemSlotIndex;
     Image _dragItemImage;
 
-
-    private void Awake()
+    public override void Init()
     {
         _dragItemImage = new GameObject().AddComponent<Image>();
         _dragItemImage.gameObject.SetActive(false);
@@ -56,7 +55,6 @@ public class UITwoInventory : MonoBehaviour
         Refresh();
         gameObject.SetActive(false);
     }
-
     void FillInventorySlot(out UIInventorySlot slot, Transform parent)
     {
         slot = new UIInventorySlot();
@@ -259,4 +257,6 @@ public class UITwoInventory : MonoBehaviour
             }
         }
     }
+
+    
 }

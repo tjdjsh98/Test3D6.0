@@ -2,14 +2,14 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class UICharacter : MonoBehaviour
+public class UICharacter : UIBase
 {
     Character _character;
 
     [SerializeField] RectTransform _hpBarTr;
     [SerializeField] TextMeshProUGUI _hpTextMesh;
     Vector2 _initHpbarSize;
-
+    public override void Init() { }
     public void ConnectCharacter(Character character)
     {
         _character = character;

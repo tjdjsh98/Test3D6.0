@@ -85,12 +85,11 @@ public class NetworkWeapon : NetworkBehaviour
 
         var character = go.GetComponentInParent<IDamageable>();
         DamageInfo damageInfo = new DamageInfo();
-        Debug.Log(character);
         //damageInfo.attacker = transform.root.GetComponent<NetworkCharacter>();
         damageInfo.damage = 1;
         damageInfo.knockbackDirection = _playerController.transform.forward;
         damageInfo.knockbackPower = 10;
-        character.Damaged(damageInfo);
+        character.Damage(damageInfo);
 
     }
 }

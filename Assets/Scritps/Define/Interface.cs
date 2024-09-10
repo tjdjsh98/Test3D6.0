@@ -3,13 +3,15 @@ using UnityEngine;
 
 public interface IDamageable
 {
+    public GameObject GameObject { get; }  
     public int MaxHp { get; set; }
     public int Hp { get; set; }
 
+    public Action<DamageInfo> Damaged { get; set; }
     public Action<DamageInfo> Died { get; set; }
 
     // 최종적으로 받아들인 데미지 반환
-    public int Damaged(DamageInfo damageInfo);
+    public int Damage(DamageInfo damageInfo);
 }
 
 public interface IRigidbody

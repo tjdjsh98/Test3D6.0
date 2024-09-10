@@ -95,7 +95,6 @@ public class PlayerController : MonoBehaviour
         ControlMovement();
          AttachGround();
         AttachWall();
-        InteractOther();
         ControlInventory();
         ControlAttack();
 
@@ -112,69 +111,6 @@ public class PlayerController : MonoBehaviour
             _firstPersonCamera.gameObject.SetActive(true);
             foreach (var mesh in _meshs)
                 mesh.gameObject.SetActive(false);
-        }
-    }
-
-    // 캐릭터 주변에 상호작용할 수 있는 물체가 있는지 확인합니다.
-    // 물체가 있다면 UI를 띄웁니다.
-
-    List<GameObject> _aroundItemList = new List<GameObject>();
-    List<UIItemTag> _arountItemUIList = new List<UIItemTag>();
-    void InteractOther()
-    {
-
-        Collider[] hits = Physics.OverlapSphere(transform.position, 2, LayerMask.GetMask("Item"));
-
-        if(hits.Length > 0)
-        {
-            for(int i = 0; i < hits.Length; i++)
-            {
-                GameObject gameObject = hits[i].gameObject;
-                if (_aroundItemList.Contains(gameObject)) continue;
-
-                _aroundItemList.Add(gameObject);
-                _arountItemUIList.Add(UIItemShower.Instance.ShowText(gameObject,gameObject.name));
-            }
-        }
-
-        for (int i = _aroundItemList.Count-1; i >= 0; i--)
-        {
-             if (Vector3.Distance(_aroundItemList[i].gameObject.transform.position, gameObject.transform.position) > 2)
-            {
-                _aroundItemList.RemoveAt(i);
-                _arountItemUIList[i].parent.gameObject.SetActive(false);
-                _arountItemUIList.RemoveAt(i);
-            }
-        }
-
-        // 가장 가까운 아이템부터 흭득한다.
-        if(Input.GetKeyDown(KeyCode.E))
-        {
-            int index = -1;
-            float closeDistance = float.MaxValue;
-            for(int i = 0; i <_aroundItemList.Count; i++)
-            {
-                float distance = Vector3.Distance(transform.position, _aroundItemList[i].transform.position);
-                if(distance < closeDistance)
-                {
-                    closeDistance = distance;
-                    index = i;
-                }
-            }
-
-            if(index >= 0)
-            {
-                GameObject item = _aroundItemList[index];
-
-                
-
-                IInteractable interact = item.GetComponent<IInteractable>();
-                interact.Interact(gameObject);
-
-                _aroundItemList.RemoveAt(index);
-                _arountItemUIList[index].parent.gameObject.SetActive(false);
-                _arountItemUIList.RemoveAt(index);
-            }
         }
     }
 

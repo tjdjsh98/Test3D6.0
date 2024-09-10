@@ -4,16 +4,20 @@ using UnityEngine;
 
 public class NetworkBlock : NetworkBehaviour, IDamageable
 {
+    public GameObject GameObject => gameObject;
     [Networked] public int MaxHp { get; set; }
     [Networked] public int Hp { get; set; }
 
     // Handler
     public Action<DamageInfo> Died { get; set; }
+    public Action<DamageInfo> Damaged { get; set; }
 
-    public int Damaged(DamageInfo damageInfo)
+    public int Damage(DamageInfo damageInfo)
     {
         Debug.Log("Dam");
         Hp -= 1;
+
+        Damaged?.Invoke(damageInfo);
         if (Hp < 0)
         {
             Die(damageInfo);
@@ -31,5 +35,4 @@ public class NetworkBlock : NetworkBehaviour, IDamageable
             networkRunner.Despawn(Object);
         }
     }
-
 }

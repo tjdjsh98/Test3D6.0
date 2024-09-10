@@ -5,16 +5,45 @@ using Random = UnityEngine.Random;
 
 public static class Utils
 {
-    public static IEnumerator WaitAniationAndPlayCoroutine(Animator animator, string animation, Action action,float endRatio = 1)
+    public static IEnumerator WaitAniationAndPlayCoroutine(Animator animator, string stateName, Action action,float endRatio = 1)
     {
         bool isOncePlay = false;
 
-        while (isOncePlay == false || animator.GetCurrentAnimatorStateInfo(0).IsName(animation))
+        while (isOncePlay == false || animator.GetCurrentAnimatorStateInfo(0).IsName(stateName))
         {
-            if (animator.GetCurrentAnimatorStateInfo(0).IsName(animation))
+            if (animator.GetCurrentAnimatorStateInfo(0).IsName(stateName))
                 isOncePlay = true;
 
             if(isOncePlay && animator.GetCurrentAnimatorStateInfo(0).normalizedTime >= endRatio)
+            {
+                break;
+            }
+            yield return new WaitForFixedUpdate();
+        }
+
+        action?.Invoke();
+    }
+    public static IEnumerator WaitAniationAndPlayCoroutine(Animator animator, string[] stateNames, Action action, float endRatio = 1)
+    {
+        bool isOncePlay = false;
+        bool statePlaying = false;
+
+       
+        while (isOncePlay == false || statePlaying)
+        {
+            if (!statePlaying)
+            {
+                foreach (var name in stateNames)
+                {
+                    statePlaying = animator.GetCurrentAnimatorStateInfo(0).IsName(name);
+                    if (statePlaying)
+                        break;
+                }
+            }
+            if (statePlaying)
+                isOncePlay = true;
+
+            if (isOncePlay && animator.GetCurrentAnimatorStateInfo(0).normalizedTime >= endRatio)
             {
                 break;
             }
