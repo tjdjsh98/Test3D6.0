@@ -9,9 +9,9 @@ AnimatorOverrideController:
   m_Name: GhostArchor
   m_Controller: {fileID: 9100000, guid: 085d0895e108fa44a97776570ca117d8, type: 2}
   m_Clips:
-  - m_OriginalClip: {fileID: 7400000, guid: 6e382f1022ab3ca4cbe923421618c970, type: 2}
-    m_OverrideClip: {fileID: 7400000, guid: efb0d9019fbccb846bf62db35bb79d1c, type: 2}
-  - m_OriginalClip: {fileID: 7400000, guid: 16876ed811a74e84ead6f7b9894b1817, type: 2}
-    m_OverrideClip: {fileID: 7400000, guid: 16876ed811a74e84ead6f7b9894b1817, type: 2}
-  - m_OriginalClip: {fileID: 7400000, guid: c3dabbd21e691df48a14d5d1cd269ef6, type: 2}
-    m_OverrideClip: {fileID: 7400000, guid: c3dabbd21e691df48a14d5d1cd269ef6, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: 544e9b22e377ae746acde5ada7e02640, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 994b469fac1202c42acc203d99899575, type: 2}
+  - m_OriginalClip: {fileID: -203655887218126122, guid: 043dd78967ef4064bb663ef6f9d86abe, type: 3}
+    m_OverrideClip: {fileID: 7400000, guid: 353fb56244f9d334dafc1c221265e838, type: 2}
+  - m_OriginalClip: {fileID: -203655887218126122, guid: b9d4ed6b4da88974a892a7246a7cf03b, type: 3}
+    m_OverrideClip: {fileID: 7400000, guid: af32f02330091cc42b87c2056b9aacb3, type: 2}

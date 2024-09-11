@@ -57,7 +57,7 @@ public class NetworkPlayerController : NetworkBehaviour
     Vector3 _start;
     public override void FixedUpdateNetwork()
     {
-        if (GetInput(out NetworkInputData networkInputData) && Runner.IsForward)
+        if (Runner.TryGetInputForPlayer(Object.InputAuthority,out NetworkInputData networkInputData) )
         {
             // Move
             Vector3 forward = networkInputData.aimForwardVector.normalized;

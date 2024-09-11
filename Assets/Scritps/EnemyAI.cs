@@ -14,6 +14,7 @@ public class EnemyAI : NetworkBehaviour
     
     protected NavMeshAgent _navAgent;
     public GameObject Target { private set; get; }
+    float _targetDistance;
 
     [SerializeField]Range _detectRange;
     [SerializeField] Range _attackRange;
@@ -44,12 +45,17 @@ public class EnemyAI : NetworkBehaviour
             _navAgent.speed = _character.Speed;
         }
         _initPosition = transform.position;
-
     }
 
     public override void Render()
     {
         _character.SetAnimatorBoolean("Walk", (_navAgent.velocity != Vector3.zero));
+        _character.SetAnimatorFloat("Velocity", _targetDistance);
+
+    }
+
+    public override void FixedUpdateNetwork()
+    {
 
         HandleAttack();
         DetectCharacter();
@@ -62,14 +68,13 @@ public class EnemyAI : NetworkBehaviour
         if (_character.IsAttack) return;
 
 
-        Collider[] colliders = Utils.RangeOverlapAll(gameObject, _detectRange, Define.PLAYER_LAYERMASK);
+        Collider[] colliders = Utils.RangeOverlapAll(gameObject, _detectRange, Define.CHARACTER_LAYERMASK);
 
         if(colliders.Length > 0)
         {
             Target = colliders[0].gameObject;
         }
     }
-
     void ChaseTarget()
     {
         if (_navAgent == null) return;
@@ -80,10 +85,9 @@ public class EnemyAI : NetworkBehaviour
             direction = Target.transform.position - transform.position;
         else
             direction = _navAgent.nextPosition - transform.position;
-        float distance = direction.magnitude;
+        _targetDistance = direction.magnitude;
        
         // 루트 모션으로 이동한다.
-        _character.SetAnimatorFloat("Velocity", distance);
         _navAgent.speed = _character.Velocity.magnitude;
 
 
@@ -108,7 +112,6 @@ public class EnemyAI : NetworkBehaviour
             _navAgent.SetDestination(_initPosition);
         }
     }
-
     void HandleAttack()
     {
         if(_attackModule!= null)
@@ -125,7 +128,7 @@ public class EnemyAI : NetworkBehaviour
     {
         if (_character.IsAttack) return;
 
-        Collider[] colliders = Utils.RangeOverlapAll(gameObject, _attackRange, Define.PLAYER_LAYERMASK);
+        Collider[] colliders = Utils.RangeOverlapAll(gameObject, _attackRange, Define.CHARACTER_LAYERMASK);
         
         if (colliders.Length > 0)
         {
@@ -159,7 +162,7 @@ public class EnemyAI : NetworkBehaviour
 
     void OnAttack()
     {
-        Collider[] colliders = Utils.RangeOverlapAll(gameObject,_attackRange, Define.PLAYER_LAYERMASK);
+        Collider[] colliders = Utils.RangeOverlapAll(gameObject,_attackRange, Define.CHARACTER_LAYERMASK);
 
         List<LagCompensatedHit> hits = new List<LagCompensatedHit>();
         Runner.LagCompensation.OverlapBox(transform.position + _attackRange.center, _attackRange.size / 2, transform.rotation,

@@ -1,12 +1,13 @@
+using Fusion;
 using UnityEngine;
 
-public abstract class AttackModule : MonoBehaviour
+public abstract class AttackModule : NetworkBehaviour
 {
-    protected Character _character;
+    protected NetworkCharacter _character;
     protected EnemyAI _enemyAI;
-    private void Awake()
+    protected virtual void Awake()
     {
-        _character = GetComponent<Character>();
+        _character = GetComponent<NetworkCharacter>();
         _enemyAI = GetComponent<EnemyAI>();
     }
     public abstract void HandleAttack();

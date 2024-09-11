@@ -89,6 +89,7 @@ public class NetworkWeapon : NetworkBehaviour
         damageInfo.damage = 1;
         damageInfo.knockbackDirection = _playerController.transform.forward;
         damageInfo.knockbackPower = 10;
+        Debug.Log("Hit");
         character.Damage(damageInfo);
 
     }

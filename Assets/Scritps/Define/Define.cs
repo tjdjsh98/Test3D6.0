@@ -3,8 +3,8 @@ using UnityEngine;
 public class Define
 {
     public static int GROUND_LAYERMASK = LayerMask.GetMask("Ground");
-    public static int PLAYER_LAYERMASK = LayerMask.GetMask("Player");
-    public static int ENEMY_LAYERMASK = LayerMask.GetMask("Enemy");
+    public static int CHARACTER_LAYERMASK = LayerMask.GetMask("Character");
+    public static int CHARACTER_LAYER= LayerMask.NameToLayer("Character");
 
 }
 public enum RangeShape

@@ -357,7 +357,7 @@ public class PlayerController : MonoBehaviour
 
     void OnAttacked()
     {
-        Collider[] colliders = Utils.RangeOverlapAll(gameObject, _attackRange, Define.ENEMY_LAYERMASK);
+        Collider[] colliders = Utils.RangeOverlapAll(gameObject, _attackRange, Define.CHARACTER_LAYERMASK);
 
         if (colliders == null) return;
 

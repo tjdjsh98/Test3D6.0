@@ -1,9 +1,11 @@
+using ExitGames.Client.Photon;
+using Fusion;
 using UnityEngine;
 
-public class Projectile : MonoBehaviour
+public class Projectile : NetworkBehaviour
 {
     Rigidbody _rigidbody;
-    DamageInfo _info;
+    DamageInfo _damageInfo;
     GameObject _trail;
 
     bool _onceAttack = false;
@@ -17,31 +19,29 @@ public class Projectile : MonoBehaviour
     private void OnTriggerEnter(Collider collision)
     {
         if (_onceAttack) return;
-        if(collision.gameObject.tag == "Player")
+        if(collision.gameObject.layer == Define.CHARACTER_LAYER)
         {
-            Character character = collision.gameObject.GetComponent<Character>();
+            NetworkCharacter character = collision.gameObject.GetComponent<NetworkCharacter>();
+            if (character.gameObject == _damageInfo.attacker.GameObject) return;
+
             if(character != null)
             {
-                character.Damaged(_info);
-                Destroy(gameObject);
+                character.Damage(_damageInfo);
+                Runner.Despawn(Object);
 
-                //transform.SetParent(character.GetModel().transform);
-                //transform.position = collision.ClosestPoint(transform.position - _rigidbody.linearVelocity* Time.fixedDeltaTime);
-                //_rigidbody.isKinematic = true;
-                //_trail.gameObject.SetActive(false);
                 _onceAttack = true;
             }
         }
     }
 
-    private void Update()
+    public override void FixedUpdateNetwork()
     {
         transform.LookAt(transform.position + _rigidbody.linearVelocity);
     }
 
     public void Shot(DamageInfo info, Vector3 direction, float power)
     {
-        _info = info;
+        _damageInfo = info;
         _onceAttack = false;
         _rigidbody.isKinematic = false;
         _trail.gameObject.SetActive(true);

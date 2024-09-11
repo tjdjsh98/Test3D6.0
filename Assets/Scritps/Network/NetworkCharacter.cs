@@ -1,18 +1,8 @@
 using Fusion;
 using Fusion.Addons.SimpleKCC;
-using Mono.Cecil.Cil;
-using NUnit.Framework.Interfaces;
 using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Runtime.InteropServices;
-using System.Security.Cryptography;
-using TMPro;
-using Tripolygon.UModeler.UI;
-using Tripolygon.UModelerX.Runtime;
 using UnityEngine;
 using UnityEngine.AI;
-using UnityEngine.Animations;
 
 public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
 {
@@ -35,12 +25,11 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
     [Networked][field: SerializeField] public bool IsGrounded { get; set; } = true;
 
     // Velocity
-    Vector3 _velocity;
+    public Vector3 Velocity { get; set; }
+    float LookAnlge { get; set;}
     float _jumpImpulse = 0;
     float _breakPower = 50;
 
-    public Vector3 Velocity => _velocity;
-    float _lookAngle;
 
     // Components
     Animator _animator;
@@ -49,12 +38,14 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
     NetworkManager _networkManager;
     AnimatorHelper _animatoHelper;
     NavMeshAgent _navMeshAgent;
+    CapsuleCollider _collider;
 
     // Handler
     public Action Attacked { get; set; }
     public Action AttackEnded { get; set; }
     public Action<DamageInfo> Died { get; set; }
     public Action<DamageInfo> Damaged { get; set; }
+    public Action GetHitEnded { get; set; } 
 
 
     // Teleport
@@ -71,14 +62,19 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
         _animatoHelper = GetComponentInChildren<AnimatorHelper>();
         _navMeshAgent = GetComponent<NavMeshAgent>();
         _animatoHelper.AnimatorMoved += OnAnimatorMoved;
+        _collider = GetComponent<CapsuleCollider>();
 
         _animator.logWarnings = false;
     }
 
-    public override void FixedUpdateNetwork()
+    public override void Render()
     {
         CheckGround();
+        SetAnimatorBoolean("IsGrounded", IsGrounded);
+    }
 
+    public override void FixedUpdateNetwork()
+    {
         HandleVelocity();
     }
 
@@ -101,8 +97,8 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
     {
         if (!IsGrounded) return;
 
-        _velocity = _animator.deltaPosition / Runner.DeltaTime;
-        _lookAngle += _animator.deltaRotation.eulerAngles.y;
+        Velocity = _animator.deltaPosition / Runner.DeltaTime;
+        LookAnlge += _animator.deltaRotation.eulerAngles.y;
     }
 
     public override void Spawned()
@@ -111,41 +107,40 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
     }
     public void HandleVelocity()
     {
-        SetAnimatorBoolean("IsGrounded", IsGrounded);
         if (_kcc)
         {
             SetAnimatorFloat("VelocityY", _kcc.RealVelocity.y);
-            _kcc?.Move(_velocity, _jumpImpulse);
-            _kcc?.SetLookRotation(0, _lookAngle);
+            _kcc?.Move(Velocity, _jumpImpulse);
+            _kcc?.SetLookRotation(0, LookAnlge);
         }
         else
         {
-            transform.rotation = Quaternion.Euler(0, _lookAngle, 0);
+            transform.rotation = Quaternion.Euler(0, LookAnlge, 0);
         }
-        
         _breakPower = IsGrounded ? 50 : 1;
 
-        if (_velocity != Vector3.zero)
+        if (Velocity != Vector3.zero)
         {
-            Vector3 breakPower = _velocity.normalized * Runner.DeltaTime * _breakPower;
-            if (_velocity.magnitude < breakPower.magnitude)
+            Vector3 breakPower = Velocity.normalized * Runner.DeltaTime * _breakPower;
+            if (Velocity.magnitude < breakPower.magnitude)
             {
-                _velocity = Vector3.zero;
+                Velocity = Vector3.zero;
             }
             else
             {
-                _velocity -= breakPower;
+                Velocity -= breakPower;
             }
         }
 
         _jumpImpulse = 0;
+
     }
     public void Move(Vector3 direction, float ratio = 1)
     {
         if (!IsEnableMove) return;
         ratio = Mathf.Clamp01(ratio);
 
-        _velocity = direction * Speed * ratio;
+        Velocity = direction * Speed * ratio;
     }
     public void Jump(float power)
     {
@@ -156,7 +151,7 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
 
     public void AddForce(Vector3 power, ForceMode forceMode = ForceMode.Impulse)
     {
-        _velocity += power;
+        Velocity += power;
     }
 
     public int Damage(DamageInfo damageInfo)
@@ -190,6 +185,7 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
     {
         IsGetHit = false;
         IsEnableMove = true;
+        GetHitEnded?.Invoke();
     }
 
     void CharacterDie(DamageInfo info)
@@ -215,7 +211,9 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
     public void SetAnimatorTrigger(string name)
     {
         _animator.SetTrigger(name);
-        _networkAnimator.SetTrigger(name);
+        if(Object.HasStateAuthority)
+            _networkAnimator.SetTrigger(name);
+
     }
     public void SetAnimatorBoolean(string name, bool boolean)
     {
@@ -252,11 +250,16 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
     }
     public void SetAngle(float angle)
     {
-        _lookAngle = angle;
+        LookAnlge = angle;
     }
     public void AddAngle(float angle)
     {
-        _lookAngle += angle;
+        LookAnlge += angle;
+    }
+
+    public Vector3 GetCenterWS()
+    {
+        return transform.position + _collider.center;
     }
 
 }

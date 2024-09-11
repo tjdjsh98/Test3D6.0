@@ -145,7 +145,7 @@ MonoBehaviour:
   _Hunger: 0
   _IsAttack: 0
   _IsRun: 0
-  _IsDamaged: 0
+  _IsGetHit: 0
   _IsEnableMove: 1
   _IsEnableTurn: 1
   _IsGrounded: 1
@@ -189,12 +189,12 @@ MonoBehaviour:
   m_Script: {fileID: 506319458, guid: e725a070cec140c4caffb81624c8c787, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Animator: {fileID: 0}
-  TotalWords: 1
+  Animator: {fileID: 5400315156663216604}
+  TotalWords: 3
   ApplyTiming: 2
   SyncSettings: 79
-  StateHashes: 000000002b1a167c794069558b7cfd670f5f2b8877967513f3b5a3fc0d286c404e865f439c3808945e4ac936a03df41c4e5f3c69
-  TriggerHashes: 000000000d286c40
+  StateHashes: 000000000d286c404e865f439c3808945e4ac936a03df41c4e5f3c698a18fce4b9abd9d337b935014e73a6a732edce8b7143fd88
+  TriggerHashes: 000000000d286c4032edce8b37b93501
 --- !u!114 &4127088250474741084
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -390,13 +390,7 @@ PrefabInstance:
       objectReference: {fileID: 9100000, guid: 085d0895e108fa44a97776570ca117d8, type: 2}
     - target: {fileID: 9500000, guid: b69174d668ba02d44b14a084b217670a, type: 3}
       propertyPath: m_WarningMessage
-      value: "\nBinding warning: Some generic clip(s) animate transforms that are
-        already bound by a Humanoid avatar. These transforms can only be changed
-        by Humanoid clips.\n\tTransform 'Root'\n\tTransform 'IndexFinger_02'\n\tTransform
-        'Elbow_R'\n\tTransform 'Finger_02'\n\tTransform 'Finger_03'\n\tTransform
-        'Ball_L'\n\tTransform 'Thumb_02'\n\tTransform 'Ball_R'\n\tTransform 'Clavicle_L'\n\tTransform
-        'Finger_01'\n\tand more ...\n\tFrom animation clip 'Standing Draw Arrow'\n\tFrom
-        animation clip 'Standing Aim Overdraw'"
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 13700000, guid: b69174d668ba02d44b14a084b217670a, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
@@ -413,6 +407,11 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 632122258421549075}
   m_SourcePrefab: {fileID: 100100000, guid: b69174d668ba02d44b14a084b217670a, type: 3}
+--- !u!95 &5400315156663216604 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 9500000, guid: b69174d668ba02d44b14a084b217670a, type: 3}
+  m_PrefabInstance: {fileID: 5400315156670536892}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &5400315156670503540 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 100040, guid: b69174d668ba02d44b14a084b217670a, type: 3}

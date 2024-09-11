@@ -23,7 +23,7 @@ public class NetworkPlayer : NetworkBehaviour, IPlayerLeft
         {
             if (Input.GetKeyDown(KeyCode.L))
             {
-                FindAnyObjectByType<NetworkRunner>().Spawn(Resources.Load<NetworkObject>("Prefabs/NetworkMonster"), -Vector3.forward*10);
+                FindAnyObjectByType<NetworkRunner>().Spawn(Resources.Load<NetworkObject>("Prefabs/NetworkRangedMonster"), -Vector3.forward*10);
             }
         }
     }
