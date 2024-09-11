@@ -30,7 +30,7 @@ public class RangeAttackModule :  AttackModule
         {
             Vector3 direction = _enemyAI.Target.transform.position - transform.position;
             float angle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg;
-            _character.SetAngle(angle);
+            //_character.SetAngle(angle);
             return;
         }
 

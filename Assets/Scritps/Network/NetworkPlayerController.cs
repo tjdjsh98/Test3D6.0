@@ -1,5 +1,6 @@
 using Fusion;
 using Fusion.Addons.SimpleKCC;
+using TMPro.EditorUtilities;
 using UnityEngine;
 
 public class NetworkPlayerController : NetworkBehaviour
@@ -7,6 +8,7 @@ public class NetworkPlayerController : NetworkBehaviour
     // Input
     float _inputAngle;
     NetworkButtons _previousButtons;
+
 
     // Other Component
     SimpleKCC _kcc;
@@ -85,23 +87,26 @@ public class NetworkPlayerController : NetworkBehaviour
 
                     float angle = Vector3.Angle(transform.forward, moveDirection);
                     
-                    if(angle >= 170)
-                    {
-                        _start = transform.forward;
-                        _character.IsEnableMove = false;
-                        _character.IsEnableTurn = false;
-                        _character.SetAnimatorTrigger("Turn");
-                        _character.WaitAnimationState(TurnStateNames, OnTurnAnimationEnded, 0.8f);
-                        _inputAngle = inputAngle;
-                        return;
-                    }
-
                     _inputAngle = inputAngle;
-                }
-                float deltaAngle = Mathf.DeltaAngle(transform.rotation.eulerAngles.y, _inputAngle) * 0.1f;
-                _character.AddAngle(deltaAngle);                
-            }
 
+                    if(angle >= 160)
+                    {
+                        if (Runner.IsForward)
+                        {
+                            _start = transform.forward;
+                            _character.IsEnableMove = false;
+                            _character.IsEnableTurn = false;
+                            _character.DeltaAngle = 0;
+                            _character.SetAnimatorTrigger("Turn");
+                            _character.WaitAnimationState(TurnStateNames, OnTurnAnimationEnded, 1f);
+                            return;
+                        }
+                    }
+                }
+            
+            }
+            float deltaAngle = Mathf.DeltaAngle(transform.rotation.eulerAngles.y, _inputAngle)* Runner.DeltaTime*10f ;
+            _character.AddAngle(deltaAngle);
 
 
             // Jump
@@ -124,7 +129,6 @@ public class NetworkPlayerController : NetworkBehaviour
                 moveDirection *= 5;
             }
 
-            //Debug.Log(moveDirection);
             _previousButtons = networkInputData.buttons;
             _character.SetAnimatorFloat("Velocity", moveDirection.magnitude,0.1f,Runner.DeltaTime);
             CheckFallRespawn();
@@ -135,8 +139,13 @@ public class NetworkPlayerController : NetworkBehaviour
 
     void OnTurnAnimationEnded()
     {
-        _character.IsEnableMove = true;
+        Debug.Log("TurnEnd");
         _character.IsEnableTurn = true;
+        _character.IsEnableMove = true;
+        Vector3 vel = _character.Velocity;
+        vel.y = 0;
+        _character.Velocity = vel;
+        _character.AddAngle(Mathf.DeltaAngle(transform.rotation.eulerAngles.y, _inputAngle));
     }
 
     void HandleAnimation()
@@ -145,7 +154,6 @@ public class NetworkPlayerController : NetworkBehaviour
 
     void OnAttackAnimationStarted()
     {
-        _character.SetAnimatorRootmotion(true);
         _character.IsAttack = true;
         _character.Attacked = OnAttackStarted;
         _character.AttackEnded = OnAttackEnded;

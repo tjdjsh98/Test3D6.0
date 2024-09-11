@@ -1,6 +1,8 @@
 using Fusion;
 using Fusion.Addons.SimpleKCC;
 using System;
+using Tripolygon.UModeler.UI;
+using Tripolygon.UModelerX.Runtime;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -25,8 +27,8 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
     [Networked][field: SerializeField] public bool IsGrounded { get; set; } = true;
 
     // Velocity
-    public Vector3 Velocity { get; set; }
-    float LookAnlge { get; set;}
+    [Networked]public Vector3 Velocity { get; set; }
+    [Networked]public float DeltaAngle { get; set;}
     float _jumpImpulse = 0;
     float _breakPower = 50;
 
@@ -45,14 +47,11 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
     public Action AttackEnded { get; set; }
     public Action<DamageInfo> Died { get; set; }
     public Action<DamageInfo> Damaged { get; set; }
-    public Action GetHitEnded { get; set; } 
+    public Action GetHitEnded { get; set; }
 
 
-    // Teleport
-    Vector3 _teleportPosition;
-    bool _isTeleport;
-
-    Vector3 _accumlatePosition;
+    Vector3 _animatorMove;
+    Vector3 _deltaAngle;
 
     private void Awake()
     {
@@ -71,13 +70,62 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
     {
         CheckGround();
         SetAnimatorBoolean("IsGrounded", IsGrounded);
-    }
 
+    }
+    // 캐릭터의 루트모션 움직임을 조절합니다.
+    void OnAnimatorMoved()
+    {
+        if (!IsGrounded) return;
+        
+        Velocity = _animator.deltaPosition / Time.deltaTime;
+        DeltaAngle += _animator.deltaRotation.eulerAngles.y;
+    }
     public override void FixedUpdateNetwork()
     {
         HandleVelocity();
     }
+    public void HandleVelocity()
+    {
+        if (_kcc)
+        {
+            SetAnimatorFloat("VelocityY", _kcc.RealVelocity.y);
+            _kcc?.Move(Velocity, _jumpImpulse);
+            float angle = Mathf.Lerp(0, DeltaAngle, Runner.DeltaTime * 50f);
+            _kcc?.AddLookRotation(0, angle);
+            //_kcc?.AddLookRotation(0, DeltaAngle);
+            DeltaAngle -= angle;
+        }
+        else
+        {
+            transform.rotation = Quaternion.Euler(0, DeltaAngle, 0);
+        }
 
+
+        Vector3 desiredMoveVelocity = Velocity;
+
+        if(_kcc.ProjectOnGround(desiredMoveVelocity, out Vector3 projectedDesiredMoveVelocity) == true)
+        {
+            desiredMoveVelocity = Vector3.Normalize(projectedDesiredMoveVelocity) * Velocity.magnitude;
+        }
+
+        _breakPower = IsGrounded ? 50 : 1;
+
+        float acceleration = 0;
+
+        if (desiredMoveVelocity == Vector3.zero)
+        {
+            acceleration = _breakPower;
+        }
+        else
+        {
+            acceleration = IsGrounded ? 50 : 20;
+        }
+
+        Velocity = Vector3.Lerp(Velocity, desiredMoveVelocity, acceleration * Runner.DeltaTime);
+        _kcc?.Move(Velocity, _jumpImpulse);
+
+        _jumpImpulse = 0;
+    }
     // KCC가 있다면 KCC가 확인
     // 없다면 레이캐스트로 구별한다.
     void CheckGround()
@@ -92,49 +140,13 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
         }
     }
 
-    // 캐릭터의 루트모션 움직임을 조절합니다.
-    void OnAnimatorMoved()
-    {
-        if (!IsGrounded) return;
 
-        Velocity = _animator.deltaPosition / Runner.DeltaTime;
-        LookAnlge += _animator.deltaRotation.eulerAngles.y;
-    }
 
     public override void Spawned()
     {
       
     }
-    public void HandleVelocity()
-    {
-        if (_kcc)
-        {
-            SetAnimatorFloat("VelocityY", _kcc.RealVelocity.y);
-            _kcc?.Move(Velocity, _jumpImpulse);
-            _kcc?.SetLookRotation(0, LookAnlge);
-        }
-        else
-        {
-            transform.rotation = Quaternion.Euler(0, LookAnlge, 0);
-        }
-        _breakPower = IsGrounded ? 50 : 1;
-
-        if (Velocity != Vector3.zero)
-        {
-            Vector3 breakPower = Velocity.normalized * Runner.DeltaTime * _breakPower;
-            if (Velocity.magnitude < breakPower.magnitude)
-            {
-                Velocity = Vector3.zero;
-            }
-            else
-            {
-                Velocity -= breakPower;
-            }
-        }
-
-        _jumpImpulse = 0;
-
-    }
+   
     public void Move(Vector3 direction, float ratio = 1)
     {
         if (!IsEnableMove) return;
@@ -211,21 +223,21 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
     public void SetAnimatorTrigger(string name)
     {
         _animator.SetTrigger(name);
-        if(Object.HasStateAuthority)
+        if(Object.HasInputAuthority)
             _networkAnimator.SetTrigger(name);
 
     }
     public void SetAnimatorBoolean(string name, bool boolean)
     {
-        _animator.SetBool(name, boolean);
+           _animator.SetBool(name, boolean);
     }
     public void SetAnimatorFloat(string name, float value,float dampTime= 0,float deltaTime =0)
     {
-        _animator.SetFloat(name, value, dampTime, deltaTime);
+            _animator.SetFloat(name, value, dampTime, deltaTime);
     }
     public void SetAnimatorInt(string name, int value)
     {
-        _animator.SetInteger(name, value);
+             _animator.SetInteger(name, value);
     }
 
     public void SetAnimatorRootmotion(bool enable)
@@ -243,18 +255,12 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
     {
         StartCoroutine(Utils.WaitAniationAndPlayCoroutine(_animator, stateNames, ended, endRatio));
     }
-    public void SetPosition(Vector3 position)
-    {
-        _isTeleport = true;
-        _teleportPosition = position;
-    }
-    public void SetAngle(float angle)
-    {
-        LookAnlge = angle;
-    }
+   
     public void AddAngle(float angle)
     {
-        LookAnlge += angle;
+        if (!IsEnableTurn) return;
+
+        DeltaAngle += angle;
     }
 
     public Vector3 GetCenterWS()

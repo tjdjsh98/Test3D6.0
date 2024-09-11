@@ -36,7 +36,7 @@ BlendTree:
   m_Name: Blend Tree
   m_Childs:
   - serializedVersion: 2
-    m_Motion: {fileID: 7400000, guid: caad528969c5c9f4fa8335e2d0a47a0e, type: 2}
+    m_Motion: {fileID: 7400000, guid: 2344b0b80be65bc408fcbbc799c98b28, type: 2}
     m_Threshold: 0
     m_Position: {x: 0, y: 0}
     m_TimeScale: 1
@@ -357,7 +357,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: -203655887218126122, guid: b406099e736401944bffea36c2d65273, type: 3}
+  m_Motion: {fileID: 7400000, guid: 17e7078be73af224b80233416ca7bd19, type: 2}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -608,7 +608,7 @@ AnimatorStateTransition:
   m_Mute: 0
   m_IsExit: 0
   serializedVersion: 3
-  m_TransitionDuration: 0.15306401
+  m_TransitionDuration: 0
   m_TransitionOffset: 0
   m_ExitTime: 0.7554349
   m_HasExitTime: 0
@@ -630,7 +630,7 @@ AnimatorStateTransition:
   m_Mute: 0
   m_IsExit: 0
   serializedVersion: 3
-  m_TransitionDuration: 0.24999994
+  m_TransitionDuration: 0
   m_TransitionOffset: 0
   m_ExitTime: 1
   m_HasExitTime: 1
@@ -760,7 +760,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: -203655887218126122, guid: a50166edf1b680b479e5e5aff205bd98, type: 3}
+  m_Motion: {fileID: 7400000, guid: 4220523da8d3cb74dae35c1c81835c17, type: 2}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -906,9 +906,9 @@ AnimatorStateTransition:
   m_Mute: 0
   m_IsExit: 0
   serializedVersion: 3
-  m_TransitionDuration: 0.2953111
-  m_TransitionOffset: 0.10619774
-  m_ExitTime: 0.83739555
+  m_TransitionDuration: 0.100411594
+  m_TransitionOffset: 0
+  m_ExitTime: 1
   m_HasExitTime: 1
   m_HasFixedDuration: 1
   m_InterruptionSource: 0
@@ -1352,7 +1352,7 @@ AnimatorStateTransition:
   m_Mute: 0
   m_IsExit: 0
   serializedVersion: 3
-  m_TransitionDuration: 0.12577432
+  m_TransitionDuration: 0
   m_TransitionOffset: 0
   m_ExitTime: 0.5431994
   m_HasExitTime: 0

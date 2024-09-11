@@ -20,9 +20,11 @@ public static class Utils
             }
             yield return new WaitForFixedUpdate();
         }
+        yield return new WaitForSeconds(animator.GetAnimatorTransitionInfo(0).duration);
 
         action?.Invoke();
     }
+    // translationTime 까지 기다려준다.
     public static IEnumerator WaitAniationAndPlayCoroutine(Animator animator, string[] stateNames, Action action, float endRatio = 1)
     {
         bool isOncePlay = false;
@@ -35,6 +37,7 @@ public static class Utils
             {
                 foreach (var name in stateNames)
                 {
+                    
                     statePlaying = animator.GetCurrentAnimatorStateInfo(0).IsName(name);
                     if (statePlaying)
                         break;
@@ -49,6 +52,8 @@ public static class Utils
             }
             yield return new WaitForFixedUpdate();
         }
+
+         yield return new WaitForSeconds(animator.GetAnimatorTransitionInfo(0).duration);
 
         action?.Invoke();
     }

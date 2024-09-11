@@ -7265,6 +7265,8 @@ MonoBehaviour:
   _IsEnableMove: 1
   _IsEnableTurn: 1
   _IsGrounded: 1
+  _Velocity: {x: 0, y: 0, z: 0}
+  _DeltaAngle: 0
 --- !u!114 &-2171357065945110279
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7320,7 +7322,7 @@ MonoBehaviour:
     Shape: 1
     IsTrigger: 0
     Radius: 0.2
-    Height: 1
+    Height: 0.2
     Extent: 0.035
     ColliderLayer: 11
     CollisionLayerMask:
@@ -7354,8 +7356,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Animator: {fileID: 6040762123115772070}
   TotalWords: 5
-  ApplyTiming: 0
-  SyncSettings: 111
+  ApplyTiming: 2
+  SyncSettings: 79
   StateHashes: 0000000028a981077af3fe2ec0b4b54f1e1ff42c89f787200dd451cf48d3833bccf055d46dacfe3e773dc4d40d286c404e865f43c54502ee2b72afa238eb9eb2976bb92126f6a670897681e346980c4f14c27366387502c01bc5016682240b59a19408ff14140c2e37a40f889b65302970a6b8d48fe54b824d978a20a773509879d811fb32edce8b7143fd8868d1fe786adb23f22b1a167ca3b74ab697db95ee31bed5bf
   TriggerHashes: 000000000d286c4079ba128032edce8b
 --- !u!114 &4629767289049234195
