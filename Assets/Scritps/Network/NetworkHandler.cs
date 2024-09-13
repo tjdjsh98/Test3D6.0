@@ -3,6 +3,7 @@ using Fusion.Sockets;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class NetworkHandler : MonoBehaviour, INetworkRunnerCallbacks
 {
@@ -10,6 +11,8 @@ public class NetworkHandler : MonoBehaviour, INetworkRunnerCallbacks
     private Dictionary<PlayerRef, NetworkObject> _spawnedCharacters = new Dictionary<PlayerRef, NetworkObject>();
 
     UISessionListHandler _uiSessionListHandler;
+
+    UnityEvent<NetworkRunner, PlayerInputData> InputEvent;
 
     InputManager _inputManager;
     
@@ -45,8 +48,7 @@ public class NetworkHandler : MonoBehaviour, INetworkRunnerCallbacks
 
     public void OnInput(NetworkRunner runner, NetworkInput input) 
     {
-        NetworkInputData data = _inputManager.GetNetworkInput();
-        input.Set(data);
+     
     }
 
     public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }

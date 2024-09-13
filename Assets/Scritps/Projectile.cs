@@ -21,7 +21,7 @@ public class Projectile : NetworkBehaviour
         if (_onceAttack) return;
         if(collision.gameObject.layer == Define.CHARACTER_LAYER)
         {
-            NetworkCharacter character = collision.gameObject.GetComponent<NetworkCharacter>();
+            NetworkCharacter character = collision.gameObject.GetComponentInParent<NetworkCharacter>();
             if (character.gameObject == _damageInfo.attacker.GameObject) return;
 
             if(character != null)
@@ -41,6 +41,7 @@ public class Projectile : NetworkBehaviour
 
     public void Shot(DamageInfo info, Vector3 direction, float power)
     {
+        Debug.Log("Shot");
         _damageInfo = info;
         _onceAttack = false;
         _rigidbody.isKinematic = false;

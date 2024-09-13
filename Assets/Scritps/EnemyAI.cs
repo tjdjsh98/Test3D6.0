@@ -7,12 +7,16 @@ using UnityEngine.Rendering;
 
 public class EnemyAI : NetworkBehaviour
 {
-    NetworkCharacter _character;
+    protected NetworkCharacter _character;
+    protected NavMeshAgent _navAgent;
+    protected Animator _animator;
+    protected AnimatorHelper _animatoHeler;
 
     [SerializeField] bool _debug;
 
     
-    protected NavMeshAgent _navAgent;
+
+
     public GameObject Target { private set; get; }
     float _targetDistance;
 
@@ -23,12 +27,14 @@ public class EnemyAI : NetworkBehaviour
 
     [Header("Module")]
     [SerializeField]AttackModule _attackModule;
+
     private void Awake()
     {
         _character = GetComponent<NetworkCharacter>();
         _navAgent = GetComponent<NavMeshAgent>();
-
-       
+        _animator = GetComponentInChildren<Animator>();
+        _animatoHeler = GetComponentInChildren<AnimatorHelper>();
+        _animatoHeler.AnimatorMoved += OnAnimatorMoved;
     }
 
     private void OnDrawGizmos()
@@ -36,6 +42,11 @@ public class EnemyAI : NetworkBehaviour
         if (!_debug) return;
         Utils.DrawRange(gameObject, _detectRange, Color.green);
         Utils.DrawRange(gameObject, _attackRange, Color.red);
+    }
+
+    private void OnAnimatorMoved()
+    {
+        _navAgent.speed = _animator.deltaPosition.magnitude / Time.deltaTime;
     }
 
     public override void Spawned()
@@ -49,14 +60,25 @@ public class EnemyAI : NetworkBehaviour
 
     public override void Render()
     {
+        if (!HasStateAuthority) return;
+
         _character.SetAnimatorBoolean("Walk", (_navAgent.velocity != Vector3.zero));
         _character.SetAnimatorFloat("Velocity", _targetDistance);
+
+        if (Target )
+        {
+            Vector3 direction = Target.transform.position - transform.position;
+            direction.y = 0;
+            direction.Normalize();
+            float angle = Vector3.SignedAngle(transform.forward, direction,Vector3.up) * Runner.DeltaTime * 10f;
+            _character.AddAngle(angle);
+        }
+
 
     }
 
     public override void FixedUpdateNetwork()
     {
-
         HandleAttack();
         DetectCharacter();
         ChaseTarget();

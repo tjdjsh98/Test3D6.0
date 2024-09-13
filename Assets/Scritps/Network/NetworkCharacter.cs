@@ -1,8 +1,7 @@
 using Fusion;
-using Fusion.Addons.SimpleKCC;
+using Fusion.Addons.KCC;
 using System;
-using Tripolygon.UModeler.UI;
-using Tripolygon.UModelerX.Runtime;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -21,24 +20,21 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
     [Header("ActionState")]
     [Networked][field: SerializeField] public bool IsAttack { get; set; }
     [Networked][field: SerializeField] public bool IsRun { get; set; }
-    [Networked][field: SerializeField] public bool IsGetHit { get; set; }
-    [Networked][field: SerializeField] public bool IsEnableMove { get; set; } = true;
-    [Networked][field: SerializeField] public bool IsEnableTurn { get; set; } = true;
+    [Networked, OnChangedRender(nameof(OnGetHitChanged))][field: SerializeField] public bool IsGetHit { get; set; }
     [Networked][field: SerializeField] public bool IsGrounded { get; set; } = true;
 
     // Velocity
-    [Networked]public Vector3 Velocity { get; set; }
-    [Networked]public float DeltaAngle { get; set;}
+    public Vector3 Velocity { get; set; }
+    float LookAnlge { get; set;}
     float _jumpImpulse = 0;
     float _breakPower = 50;
 
 
     // Components
     Animator _animator;
-    SimpleKCC _kcc;
+    KCC _kcc;
     NetworkMecanimAnimator _networkAnimator;
     NetworkManager _networkManager;
-    AnimatorHelper _animatoHelper;
     NavMeshAgent _navMeshAgent;
     CapsuleCollider _collider;
 
@@ -50,20 +46,20 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
     public Action GetHitEnded { get; set; }
 
 
-    Vector3 _animatorMove;
-    Vector3 _deltaAngle;
-
+    // WaitAnimationState
+    Dictionary<string, Coroutine> _waitAnimationStateDic = new Dictionary<string, Coroutine>();
+    float DeltaAngle;
+  
     private void Awake()
     {
         _animator = GetComponentInChildren<Animator>();
         _networkAnimator = GetComponent<NetworkMecanimAnimator>();
-        _kcc = GetComponent<SimpleKCC>();
-        _animatoHelper = GetComponentInChildren<AnimatorHelper>();
+        _kcc = GetComponent<KCC>();
         _navMeshAgent = GetComponent<NavMeshAgent>();
-        _animatoHelper.AnimatorMoved += OnAnimatorMoved;
         _collider = GetComponent<CapsuleCollider>();
 
         _animator.logWarnings = false;
+
     }
 
     public override void Render()
@@ -71,14 +67,6 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
         CheckGround();
         SetAnimatorBoolean("IsGrounded", IsGrounded);
 
-    }
-    // 캐릭터의 루트모션 움직임을 조절합니다.
-    void OnAnimatorMoved()
-    {
-        if (!IsGrounded) return;
-        
-        Velocity = _animator.deltaPosition / Time.deltaTime;
-        DeltaAngle += _animator.deltaRotation.eulerAngles.y;
     }
     public override void FixedUpdateNetwork()
     {
@@ -88,26 +76,18 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
     {
         if (_kcc)
         {
-            SetAnimatorFloat("VelocityY", _kcc.RealVelocity.y);
-            _kcc?.Move(Velocity, _jumpImpulse);
-            float angle = Mathf.Lerp(0, DeltaAngle, Runner.DeltaTime * 50f);
-            _kcc?.AddLookRotation(0, angle);
-            //_kcc?.AddLookRotation(0, DeltaAngle);
-            DeltaAngle -= angle;
+            SetAnimatorFloat("VelocityY", _kcc.Data.RealVelocity.y);
+            _kcc?.SetLookRotation(0, _kcc.Data.LookYaw + DeltaAngle );
+            DeltaAngle = 0;
+
         }
         else
         {
-            transform.rotation = Quaternion.Euler(0, DeltaAngle, 0);
+            transform.rotation = Quaternion.Euler(0,transform.rotation.eulerAngles.y + DeltaAngle, 0);
+            DeltaAngle = 0;
         }
-
 
         Vector3 desiredMoveVelocity = Velocity;
-
-        if(_kcc.ProjectOnGround(desiredMoveVelocity, out Vector3 projectedDesiredMoveVelocity) == true)
-        {
-            desiredMoveVelocity = Vector3.Normalize(projectedDesiredMoveVelocity) * Velocity.magnitude;
-        }
-
         _breakPower = IsGrounded ? 50 : 1;
 
         float acceleration = 0;
@@ -121,10 +101,12 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
             acceleration = IsGrounded ? 50 : 20;
         }
 
-        Velocity = Vector3.Lerp(Velocity, desiredMoveVelocity, acceleration * Runner.DeltaTime);
-        _kcc?.Move(Velocity, _jumpImpulse);
-
+        Velocity = Vector3.Lerp(_kcc?_kcc.Data.RealVelocity:Velocity, desiredMoveVelocity, acceleration * Runner.DeltaTime);
+        _kcc?.SetKinematicVelocity(Velocity);
+        _kcc?.Jump(Vector3.up * _jumpImpulse);
         _jumpImpulse = 0;
+
+        Velocity = Vector3.Lerp(Velocity, Vector3.zero, _breakPower * Runner.DeltaTime);
     }
     // KCC가 있다면 KCC가 확인
     // 없다면 레이캐스트로 구별한다.
@@ -132,7 +114,7 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
     {
         if (_kcc)
         {
-            IsGrounded = _kcc.IsGrounded;
+            IsGrounded = _kcc.Data.IsGrounded;
         }
         else
         {
@@ -149,15 +131,12 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
    
     public void Move(Vector3 direction, float ratio = 1)
     {
-        if (!IsEnableMove) return;
         ratio = Mathf.Clamp01(ratio);
 
         Velocity = direction * Speed * ratio;
     }
     public void Jump(float power)
     {
-        if (!IsEnableMove) return;
-
         _jumpImpulse = power;
     }
 
@@ -173,10 +152,7 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
         result = damageInfo.damage;
         Hp -= result;
 
-        SetAnimatorTrigger("GetHit");
         IsGetHit = true;
-        IsEnableMove = false;
-        WaitAnimationState("GetHit", OnGetHit);
 
         Damaged?.Invoke(damageInfo);
         if (Hp <= 0)
@@ -193,10 +169,18 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
         return result;
     }
 
+    void OnGetHitChanged()
+    {
+        if(IsGetHit)
+        {
+            Debug.Log("Hti");
+            SetAnimatorTrigger("GetHit");
+            WaitAnimationState("GetHit", OnGetHit);
+        }
+    }
     void OnGetHit()
     {
         IsGetHit = false;
-        IsEnableMove = true;
         GetHitEnded?.Invoke();
     }
 
@@ -222,16 +206,18 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
 
     public void SetAnimatorTrigger(string name)
     {
-        _animator.SetTrigger(name);
-        if(Object.HasInputAuthority)
+        
+        if(HasStateAuthority)
             _networkAnimator.SetTrigger(name);
-
+        else
+            _animator.SetTrigger(name);
     }
     public void SetAnimatorBoolean(string name, bool boolean)
     {
            _animator.SetBool(name, boolean);
+        
     }
-    public void SetAnimatorFloat(string name, float value,float dampTime= 0,float deltaTime =0)
+    public void SetAnimatorFloat(string name, float value,float dampTime= 0,float deltaTime =0.01f)
     {
             _animator.SetFloat(name, value, dampTime, deltaTime);
     }
@@ -249,17 +235,31 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
     // endRatio은 Normalize된 값으로 ended가 실행될 시간을 정해줍니다.
     public void WaitAnimationState(string stateName, Action ended,float endRatio = 1)
     {
-        StartCoroutine(Utils.WaitAniationAndPlayCoroutine(_animator,stateName,ended,endRatio));
+        if(_waitAnimationStateDic.ContainsKey(stateName))
+        {
+            StopCoroutine(_waitAnimationStateDic[stateName]);
+            _waitAnimationStateDic.Remove(stateName);
+        }
+        _waitAnimationStateDic.Add(stateName,StartCoroutine(Utils.WaitAniationAndPlayCoroutine(_animator,stateName,ended,endRatio)));
     }
     public void WaitAnimationState(string[] stateNames, Action ended, float endRatio = 1)
     {
-        StartCoroutine(Utils.WaitAniationAndPlayCoroutine(_animator, stateNames, ended, endRatio));
+
+        string stateName = "";
+        foreach (var name in stateNames)
+        {
+            stateName += $"{name}\n";
+        }
+        if (_waitAnimationStateDic.ContainsKey(stateName))
+        {
+            StopCoroutine(_waitAnimationStateDic[stateName]);
+            _waitAnimationStateDic.Remove(stateName);
+        }
+        _waitAnimationStateDic.Add(stateName,StartCoroutine(Utils.WaitAniationAndPlayCoroutine(_animator, stateNames, ended, endRatio)));
     }
    
     public void AddAngle(float angle)
     {
-        if (!IsEnableTurn) return;
-
         DeltaAngle += angle;
     }
 

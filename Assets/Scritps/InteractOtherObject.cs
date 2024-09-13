@@ -24,7 +24,7 @@ public class InteractOtherObject : NetworkBehaviour
     }
     public override void FixedUpdateNetwork()
     {
-        if (GetInput(out NetworkInputData networkInputData) && Runner.IsForward)
+        if (GetInput(out PlayerInputData networkInputData) && Runner.IsForward)
         {
             if(networkInputData.buttons.WasPressed(_previousButtons, InputButton.Interact))
             {

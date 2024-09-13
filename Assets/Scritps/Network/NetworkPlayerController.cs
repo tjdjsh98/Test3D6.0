@@ -1,44 +1,44 @@
 using Fusion;
-using Fusion.Addons.SimpleKCC;
-using TMPro.EditorUtilities;
+using Fusion.Addons.KCC;
+using NUnit.Framework.Interfaces;
+using Unity.Cinemachine;
 using UnityEngine;
 
+[DefaultExecutionOrder(-5)]
 public class NetworkPlayerController : NetworkBehaviour
 {
     // Input
+    PlayerInputData _accumulatedInput;
     float _inputAngle;
     NetworkButtons _previousButtons;
-
+    private Vector2Accumulator _lookRotationAccumulator = new Vector2Accumulator(0.02f, true);
+    int _lastFrame;
 
     // Other Component
-    SimpleKCC _kcc;
     NetworkCharacter _character;
-    NetworkPlayer _player;
-    Rigidbody _rigidbody;
+    CinemachineCamera _camera;
+    PlayerInputHandler _playerInputHandler;
+    KCC _kcc;
 
     // Misc
     static string[] TurnStateNames = new string[] { "Walk Turn 180", "Running Turn 180" };
 
-
     public NetworkWeapon Weapon;
+
+    bool _isFinishAniationProcess = false;
 
     void Awake()
     {
-        _kcc = GetComponent<SimpleKCC>();
         _character = GetComponent<NetworkCharacter>();
-        _player = GetComponent<NetworkPlayer>();
-        _rigidbody = GetComponent<Rigidbody>(); 
+        _camera = GameObject.FindAnyObjectByType<GameManager>().ThirdPersonCamera;
+        _playerInputHandler = GetComponent<PlayerInputHandler>();
+        _kcc = GetComponent<KCC>();
+
+
     }
-
-
-    private void Start()
-    {
-        
-    }
-
     private void Update()
     {
-        if(Object.HasInputAuthority && Input.GetKeyDown(KeyCode.I))
+        if (Object.HasInputAuthority && Input.GetKeyDown(KeyCode.I))
         {
             UIInventory inventory = UIManager.Instance.GetUI<UIInventory>();
 
@@ -55,113 +55,113 @@ public class NetworkPlayerController : NetworkBehaviour
     }
     public override void Render()
     {
+        _isFinishAniationProcess = false;
     }
-    Vector3 _start;
+    int _lastFixedFrame;
     public override void FixedUpdateNetwork()
     {
-        if (Runner.TryGetInputForPlayer(Object.InputAuthority,out NetworkInputData networkInputData) )
+        //Debug.Log(_playerInputHandler.FixedInputData.lookRotationDelta);
+        // Move
+        Vector3 forward = _playerInputHandler.FixedInputData.aimForwardVector.normalized;
+        Vector3 right = Vector3.Cross(Vector3.up, forward);
+        Vector3 moveDirection = forward * _playerInputHandler.FixedInputData.movementInput.y +
+                                    right * _playerInputHandler.FixedInputData.movementInput.x;
+        float velocity = 0;
+        float jumpPower = 0;
+        bool isTurn = false;
+
+        moveDirection.y = 0;
+        moveDirection.Normalize();
+
+        float angle = Vector3.Angle(_playerInputHandler.FixedInputData.bodyForwardVector, moveDirection);
+        if (_playerInputHandler.IsEnableInputRotation&&angle >= 160)
         {
-            // Move
-            Vector3 forward = networkInputData.aimForwardVector.normalized;
-            Vector3 right = Vector3.Cross(Vector3.up, forward);
-            Vector3 moveDirection = forward * networkInputData.movementInput.y +
-                                        right * networkInputData.movementInput.x;
-
-            float jumpPower = 0;
-
-            if (networkInputData.movementInput != Vector2.zero)
-            {
-                moveDirection.y = 0;
-                moveDirection.Normalize();
-                moveDirection *= 0.2f;
-                //_character.Move(moveDirection);
-            }
-          
-
-            // Rotate
-            if (_character.IsEnableMove && _character.IsEnableTurn)
-            {
-                if (networkInputData.movementInput != Vector2.zero)
-                {
-                    float inputAngle = Mathf.Atan2(moveDirection.x, moveDirection.z) * Mathf.Rad2Deg;
-
-                    float angle = Vector3.Angle(transform.forward, moveDirection);
-                    
-                    _inputAngle = inputAngle;
-
-                    if(angle >= 160)
-                    {
-                        if (Runner.IsForward)
-                        {
-                            _start = transform.forward;
-                            _character.IsEnableMove = false;
-                            _character.IsEnableTurn = false;
-                            _character.DeltaAngle = 0;
-                            _character.SetAnimatorTrigger("Turn");
-                            _character.WaitAnimationState(TurnStateNames, OnTurnAnimationEnded, 1f);
-                            return;
-                        }
-                    }
-                }
-            
-            }
-            float deltaAngle = Mathf.DeltaAngle(transform.rotation.eulerAngles.y, _inputAngle)* Runner.DeltaTime*10f ;
-            _character.AddAngle(deltaAngle);
-
-
-            // Jump
-            if (_kcc.IsGrounded && networkInputData.buttons.WasPressed(_previousButtons, InputButton.Jump))
-            {
-                _character.Jump(5);
-            }
-
-            // Attack
-            if (networkInputData.buttons.WasPressed(_previousButtons, InputButton.MouseButton0))
-            {
-                _character.SetAnimatorTrigger("Attack");
-                if(!_character.IsAttack)
-                    OnAttackAnimationStarted();
-            }
-           
-            // Run
-            if ((networkInputData.buttons.Bits & (1<<(int)InputButton.Run)) != 0)
-            {
-                moveDirection *= 5;
-            }
-
-            _previousButtons = networkInputData.buttons;
-            _character.SetAnimatorFloat("Velocity", moveDirection.magnitude,0.1f,Runner.DeltaTime);
-            CheckFallRespawn();
+            isTurn = true;
         }
+
+        // Jump
+        if (_character.IsGrounded && _playerInputHandler.FixedInputData.buttons.WasPressed(_previousButtons, InputButton.Jump))
+        {
+            _character.Jump(5);
+        }
+
+      
+        if (_playerInputHandler.FixedInputData.buttons.WasPressed(_previousButtons, InputButton.MouseButton0))
+        {
+            Debug.Log("Attack");
+            _character.SetAnimatorTrigger("Attack");
+            if (!_character.IsAttack)
+                OnAttackAnimationStarted();
+
+        }
+
+
+        // 애니메이션 처리
+        // 리시뮬레이션되지 않게 처리함
+        if (!_isFinishAniationProcess && Runner.IsFirstTick)
+        {
+            _isFinishAniationProcess = true;
+
+         
+            // Attack Animation
+
+
+            // 0.2  = 걷기
+            // 1    = 달리기
+            if (_playerInputHandler.FixedInputData.movementInput != Vector2.zero)
+            {
+                velocity = 0.2f;
+                if (_playerInputHandler.FixedInputData.buttons.IsSet(InputButton.Run))
+                {
+                    velocity = 1;
+                }
+            }
+
+            _character.SetAnimatorFloat("Velocity", velocity, 0.1f, Runner.DeltaTime);
+
+            // Turn Animation 
+            if (isTurn)
+            {
+                _playerInputHandler.IsEnableInputMove = false;
+                _playerInputHandler.IsEnableInputRotation = false;
+                _character.SetAnimatorTrigger("Turn");
+                _character.WaitAnimationState(TurnStateNames, OnTurnAnimationEnded);
+            }
+        }
+  
+        // Rotation
+        if (Mathf.Abs(_playerInputHandler.FixedInputData.lookRotationDelta.y) < 160f)
+            _character.AddAngle(_playerInputHandler.FixedInputData.lookRotationDelta.y);
+
+        // Position
+        _kcc.SetPosition(_kcc.Data.TargetPosition + _playerInputHandler.FixedInputData.moveDelta, false);
+
+
+        _previousButtons = _playerInputHandler.FixedInputData.buttons;
+        CheckFallRespawn();
 
         HandleAnimation();
     }
-
     void OnTurnAnimationEnded()
     {
         Debug.Log("TurnEnd");
-        _character.IsEnableTurn = true;
-        _character.IsEnableMove = true;
+        _playerInputHandler.IsEnableInputRotation = true;
         Vector3 vel = _character.Velocity;
         vel.y = 0;
         _character.Velocity = vel;
-        _character.AddAngle(Mathf.DeltaAngle(transform.rotation.eulerAngles.y, _inputAngle));
     }
-
     void HandleAnimation()
     {
     }
-
     void OnAttackAnimationStarted()
     {
         _character.IsAttack = true;
         _character.Attacked = OnAttackStarted;
         _character.AttackEnded = OnAttackEnded;
+
         Weapon?.OnAttackAnimationStarted();
-
-        StartCoroutine(Utils.WaitAniationAndPlayCoroutine(GetComponentInChildren<Animator>(), "Attack", OnAttackAnimationEnded));
+        _character.WaitAnimationState("AttackEnd", OnAttackAnimationEnded);
     }
-
     public void OnAttackAnimationEnded()
     {
         Weapon?.OnAttackAnimationEnded();
@@ -178,15 +178,14 @@ public class NetworkPlayerController : NetworkBehaviour
         if (Weapon)
             Weapon.EndAttack();
     }
-
-
-
-  
     void CheckFallRespawn()
     {
-        if(transform.position.y < -12)
+        if (transform.position.y < -12)
         {
             transform.position = Utils.GetRandomSpawnPoint();
         }
     }
+
+
+  
 }

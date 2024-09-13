@@ -47,7 +47,7 @@ namespace NetworkPractice
         }
         public override void FixedUpdateNetwork()
         {
-            if (GetInput(out NetworkInputData networkInputData))
+            if (GetInput(out PlayerInputData networkInputData))
             {
                 //if(networkInputData.isFireButtonPressed)
                 //{

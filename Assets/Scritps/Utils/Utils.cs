@@ -8,18 +8,20 @@ public static class Utils
     public static IEnumerator WaitAniationAndPlayCoroutine(Animator animator, string stateName, Action action,float endRatio = 1)
     {
         bool isOncePlay = false;
+        float duration = 0;
 
-        while (isOncePlay == false || animator.GetCurrentAnimatorStateInfo(0).IsName(stateName))
+        while (isOncePlay == false)
         {
             if (animator.GetCurrentAnimatorStateInfo(0).IsName(stateName))
-                isOncePlay = true;
-
-            if(isOncePlay && animator.GetCurrentAnimatorStateInfo(0).normalizedTime >= endRatio)
             {
-                break;
-            }
+                duration = animator.GetCurrentAnimatorStateInfo(0).length;
+                isOncePlay = true;
+            }  
             yield return new WaitForFixedUpdate();
         }
+
+        yield return new WaitForSeconds(duration);
+
         yield return new WaitForSeconds(animator.GetAnimatorTransitionInfo(0).duration);
 
         action?.Invoke();
@@ -27,32 +29,31 @@ public static class Utils
     // translationTime 까지 기다려준다.
     public static IEnumerator WaitAniationAndPlayCoroutine(Animator animator, string[] stateNames, Action action, float endRatio = 1)
     {
-        bool isOncePlay = false;
         bool statePlaying = false;
 
-       
-        while (isOncePlay == false || statePlaying)
+        float duration = 0;       
+        while (!statePlaying)
         {
+
             if (!statePlaying)
             {
                 foreach (var name in stateNames)
                 {
-                    
+
                     statePlaying = animator.GetCurrentAnimatorStateInfo(0).IsName(name);
+                    
                     if (statePlaying)
+                    {
+                        duration = animator.GetCurrentAnimatorStateInfo(0).length;
                         break;
+                    }
                 }
             }
-            if (statePlaying)
-                isOncePlay = true;
 
-            if (isOncePlay && animator.GetCurrentAnimatorStateInfo(0).normalizedTime >= endRatio)
-            {
-                break;
-            }
+            if (duration != 0) break;
             yield return new WaitForFixedUpdate();
         }
-
+        yield return new WaitForSeconds(duration);
          yield return new WaitForSeconds(animator.GetAnimatorTransitionInfo(0).duration);
 
         action?.Invoke();

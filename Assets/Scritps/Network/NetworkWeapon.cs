@@ -29,12 +29,12 @@ public class NetworkWeapon : NetworkBehaviour
 
     public virtual void OnAttackAnimationStarted()
     {
-        _playerController.GetComponent<NetworkCharacter>().IsEnableMove = false;
+        //_playerController.GetComponent<NetworkCharacter>().IsEnableMove = false;
     }
 
     public virtual void OnAttackAnimationEnded()
     {
-        _playerController.GetComponent<NetworkCharacter>().IsEnableMove = true;
+        //_playerController.GetComponent<NetworkCharacter>().IsEnableMove = true;
     }
 
     public virtual void StartAttack()

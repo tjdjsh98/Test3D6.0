@@ -26,7 +26,6 @@ public class HpBar : NetworkBehaviour
 
         if (ratio < 0) ratio = 0;
         float sizeX = _back.size.x * ratio;
-        Debug.Log(sizeX);
         _front.size = new Vector2(sizeX, _back.size.y);
         _front.transform.localPosition = new Vector3( (_back.size.x - sizeX)/2, 0, 0);
 

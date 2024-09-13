@@ -1,14 +1,14 @@
 using Fusion;
 using Unity.Cinemachine;
 using UnityEngine;
+using UnityEngine.Rendering;
 
-public class InputManager : SimulationBehaviour, IBeforeUpdate
+public class InputManager : NetworkBehaviour
 {
     static InputManager _instance;
     public static InputManager Instance
     { get { InitSingleton(); return _instance; } }
-    NetworkInputData accumulatedInput;
-    bool isReset;
+    PlayerInputData _accumulatedInput;
 
     // Components
     CinemachineCamera _camera;
@@ -38,31 +38,34 @@ public class InputManager : SimulationBehaviour, IBeforeUpdate
         InitSingleton();
     }
 
-    private void Update()
+    public override void Spawned()
     {
-        GetInputData();
+        Runner.GetComponent<NetworkEvents>().OnInput    .AddListener(OnInput);
+    }
 
+    public override void FixedUpdateNetwork()
+    {
         if (IsEnableFocus)
         {
             if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1))
             {
-                Cursor.lockState= CursorLockMode.Locked;
+                Cursor.lockState = CursorLockMode.Locked;
                 Cursor.visible = false;
             }
 
-            if(Input.GetKeyDown(KeyCode.Escape))
+            if (Input.GetKeyDown(KeyCode.Escape))
             {
-                Cursor.lockState= CursorLockMode.None;
+                Cursor.lockState = CursorLockMode.None;
                 Cursor.visible = true;
             }
         }
-        else if(Cursor.lockState== CursorLockMode.Locked)
+        else if (Cursor.lockState == CursorLockMode.Locked)
         {
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
         }
 
-        if(_cameraController.enabled == true && !IsEnableInput)
+        if (_cameraController.enabled == true && !IsEnableInput)
         {
             _cameraController.enabled = false;
         }
@@ -70,20 +73,16 @@ public class InputManager : SimulationBehaviour, IBeforeUpdate
         {
             _cameraController.enabled = true;
         }
-
     }
 
-    void GetInputData()
+    void OnInput(NetworkRunner runner, NetworkInput input)
     {
-        if (isReset)
-            accumulatedInput = default;
-
         if (!IsEnableInput) return;
 
         // View Input
 
         // Move Input
-        accumulatedInput.movementInput += new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
+        _accumulatedInput.movementInput += new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
 
         NetworkButtons buttons = default;
 
@@ -104,21 +103,14 @@ public class InputManager : SimulationBehaviour, IBeforeUpdate
             buttons.Set(InputButton.Interact, true);
 
         // aimForward
-        accumulatedInput.aimForwardVector = _camera.transform.forward;
-        accumulatedInput.aimForwardVector.y = 0;
-        accumulatedInput.aimForwardVector.Normalize();
+        _accumulatedInput.aimForwardVector = _camera.transform.forward;
+        _accumulatedInput.aimForwardVector.y = 0;
+        _accumulatedInput.aimForwardVector.Normalize();
 
-        accumulatedInput.buttons = new NetworkButtons(accumulatedInput.buttons.Bits | buttons.Bits);
-    }
+        _accumulatedInput.buttons = new NetworkButtons(_accumulatedInput.buttons.Bits | buttons.Bits);
 
-    public void BeforeUpdate()
-    {
-        GetInputData();
-    }
+        input.Set(_accumulatedInput);
 
-    public NetworkInputData GetNetworkInput()
-    {
-        isReset = true;
-        return accumulatedInput;
+        _accumulatedInput = default;
     }
 }
