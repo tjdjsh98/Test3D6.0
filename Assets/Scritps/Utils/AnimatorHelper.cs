@@ -6,12 +6,19 @@ using UnityEngine.Rendering;
 
 public class AnimatorHelper : MonoBehaviour
 {
+    Animator _animator;
     public List<UnityEvent> events;
-
     public Action AnimatorMoved;
+
+    [SerializeField] float _rot;
+    private void Awake()
+    {
+        _animator = GetComponent<Animator>();
+    }
 
     private void OnAnimatorMove()
     {
+        _rot += _animator.deltaRotation.eulerAngles.y;
         AnimatorMoved?.Invoke();
     }
     public void EventInvoke(int index)
@@ -19,18 +26,5 @@ public class AnimatorHelper : MonoBehaviour
         if(index < 0 || index >= events.Count) return;
 
         events[index]?.Invoke();
-    }
-
-    public void ApplyRootMotionToParent()
-    {
-        //Debug.Log(transform.parent.transform.localPosition + transform.localPosition);
-        //var character = GetComponentInParent<NetworkCharacter>();
-        //character.SetAnimatorRootmotion(false);
-        //character.SetPosition(transform.position);
-
-        //transform.localPosition = Vector3.zero;
-
-        //transform.parent.transform.localRotation = transform.localRotation;
-        //transform.localRotation = Quaternion.identity;
     }
 }

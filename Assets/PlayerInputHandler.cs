@@ -2,6 +2,7 @@ using Fusion;
 using Fusion.Addons.KCC;
 using TMPro;
 using Unity.Cinemachine;
+using UnityEditor.Rendering;
 using UnityEngine;
 using UnityEngine.TextCore.Text;
 using Input = UnityEngine.Input;
@@ -26,6 +27,7 @@ public class PlayerInputHandler : NetworkBehaviour,IBeforeUpdate, IBeforeTick
     public bool IsEnableInputRotation { get; set; } = true;
 
 
+    [SerializeField]float _totalRot;
     private void Awake()
     {
         _character = GetComponent<NetworkCharacter>();
@@ -48,7 +50,10 @@ public class PlayerInputHandler : NetworkBehaviour,IBeforeUpdate, IBeforeTick
         if (HasInputAuthority)
         {
             _accumulatedInput.moveDelta += _animator.deltaPosition;
-            _accumulatedInput.lookRotationDelta += (Vector2)_animator.deltaRotation.eulerAngles;
+            Vector2 deltaAngle = (Vector2)_animator.deltaRotation.eulerAngles;
+            deltaAngle.x = deltaAngle.x > 180 ? deltaAngle.x - 360 : deltaAngle.x;
+            deltaAngle.y = deltaAngle.y > 180 ? deltaAngle.y - 360 : deltaAngle.y;
+            _accumulatedInput.lookRotationDelta += deltaAngle;
         }
     }
     public void BeforeUpdate()
@@ -86,14 +91,18 @@ public class PlayerInputHandler : NetworkBehaviour,IBeforeUpdate, IBeforeTick
         _lastFrame = Time.frameCount;
 
         ProcessInput();
-       
+
         input.Set(_accumulatedInput);
 
         _accumulatedInput = default;
     }
 
+    int _procseeInputFrame;
     void ProcessInput()
     {
+        if (_procseeInputFrame == Time.frameCount) return;
+        _procseeInputFrame = Time.frameCount;
+
         // aimForward
         _accumulatedInput.aimForwardVector = _camera.transform.forward;
         _accumulatedInput.aimForwardVector.y = 0;
@@ -137,7 +146,7 @@ public class PlayerInputHandler : NetworkBehaviour,IBeforeUpdate, IBeforeTick
         {
             characterMoveDirection.Normalize();
             float deltaAngle = Vector3.SignedAngle(transform.forward, characterMoveDirection, Vector3.up);
-            _accumulatedInput.lookRotationDelta.y = deltaAngle;
+            _accumulatedInput.lookRotationDelta.y += deltaAngle;
         }
         
         _accumulatedInput.buttons = new NetworkButtons(_accumulatedInput.buttons.Bits | buttons.Bits);

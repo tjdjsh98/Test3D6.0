@@ -88,10 +88,14 @@ public class NetworkPlayerController : NetworkBehaviour
       
         if (_playerInputHandler.FixedInputData.buttons.WasPressed(_previousButtons, InputButton.MouseButton0))
         {
-            Debug.Log("Attack");
+            
             _character.SetAnimatorTrigger("Attack");
             if (!_character.IsAttack)
+            {
                 OnAttackAnimationStarted();
+                _character.WaitAnimationState("OneHandAttack", OnAttackAnimationEnded);
+            }
+
 
         }
 
@@ -128,9 +132,9 @@ public class NetworkPlayerController : NetworkBehaviour
                 _character.WaitAnimationState(TurnStateNames, OnTurnAnimationEnded);
             }
         }
-  
+
         // Rotation
-        if (Mathf.Abs(_playerInputHandler.FixedInputData.lookRotationDelta.y) < 160f)
+        if(!isTurn)
             _character.AddAngle(_playerInputHandler.FixedInputData.lookRotationDelta.y);
 
         // Position
@@ -156,6 +160,8 @@ public class NetworkPlayerController : NetworkBehaviour
     void OnAttackAnimationStarted()
     {
         _character.IsAttack = true;
+        _playerInputHandler.IsEnableInputMove = false;
+        _playerInputHandler.IsEnableInputRotation = false;
         _character.Attacked = OnAttackStarted;
         _character.AttackEnded = OnAttackEnded;
 
@@ -166,7 +172,8 @@ public class NetworkPlayerController : NetworkBehaviour
     {
         Weapon?.OnAttackAnimationEnded();
         _character.IsAttack = false;
-        _character.SetAnimatorRootmotion(false);
+        _playerInputHandler.IsEnableInputMove = true;
+        _playerInputHandler.IsEnableInputRotation = true;
     }
     void OnAttackStarted()
     {

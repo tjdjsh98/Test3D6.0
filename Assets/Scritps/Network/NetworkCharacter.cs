@@ -77,7 +77,8 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
         if (_kcc)
         {
             SetAnimatorFloat("VelocityY", _kcc.Data.RealVelocity.y);
-            _kcc?.SetLookRotation(0, _kcc.Data.LookYaw + DeltaAngle );
+            //_kcc?.SetLookRotation(0, _kcc.Data.LookYaw + DeltaAngle );
+            _kcc.AddLookRotation(0,DeltaAngle);
             DeltaAngle = 0;
 
         }
@@ -226,10 +227,6 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
              _animator.SetInteger(name, value);
     }
 
-    public void SetAnimatorRootmotion(bool enable)
-    {
-        _animator.applyRootMotion = enable;
-    }
 
     // 특정 애니메이션 상태를 기다려 줍니다.
     // endRatio은 Normalize된 값으로 ended가 실행될 시간을 정해줍니다.
