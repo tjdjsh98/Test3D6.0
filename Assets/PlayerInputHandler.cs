@@ -22,6 +22,7 @@ public class PlayerInputHandler : NetworkBehaviour,IBeforeUpdate, IBeforeTick
     Animator _animator;
     AnimatorHelper _animatoHelper;
     NetworkCharacter _character;
+    KCC _kcc;
 
     public bool IsEnableInputMove { get; set; } = true;
     public bool IsEnableInputRotation { get; set; } = true;
@@ -31,6 +32,7 @@ public class PlayerInputHandler : NetworkBehaviour,IBeforeUpdate, IBeforeTick
     private void Awake()
     {
         _character = GetComponent<NetworkCharacter>();
+        _kcc = GetComponent<KCC>(); 
         _animator = GetComponentInChildren<Animator>();
         _animatoHelper = GetComponentInChildren<AnimatorHelper>();
         _animatoHelper.AnimatorMoved += OnAnimatorMoved;
@@ -91,17 +93,17 @@ public class PlayerInputHandler : NetworkBehaviour,IBeforeUpdate, IBeforeTick
         _lastFrame = Time.frameCount;
 
         ProcessInput();
-
         input.Set(_accumulatedInput);
-
+        
         _accumulatedInput = default;
+        _procseeInputFrame = false;
     }
 
-    int _procseeInputFrame;
+    bool _procseeInputFrame;
     void ProcessInput()
     {
-        if (_procseeInputFrame == Time.frameCount) return;
-        _procseeInputFrame = Time.frameCount;
+        if (_procseeInputFrame) return;
+        _procseeInputFrame = true;
 
         // aimForward
         _accumulatedInput.aimForwardVector = _camera.transform.forward;
@@ -129,10 +131,7 @@ public class PlayerInputHandler : NetworkBehaviour,IBeforeUpdate, IBeforeTick
 
         // Fire
         if (Input.GetButtonDown("Fire1"))
-        {
             buttons.Set(InputButton.MouseButton0, true);
-          
-        }
 
         // Interact
         if (Input.GetKey(KeyCode.LeftShift))
@@ -144,9 +143,15 @@ public class PlayerInputHandler : NetworkBehaviour,IBeforeUpdate, IBeforeTick
 
         if (IsEnableInputRotation)
         {
-            characterMoveDirection.Normalize();
-            float deltaAngle = Vector3.SignedAngle(transform.forward, characterMoveDirection, Vector3.up);
-            _accumulatedInput.lookRotationDelta.y += deltaAngle;
+            if (characterMoveDirection != Vector3.zero)
+            {
+                characterMoveDirection.Normalize();
+                float angle = Mathf.Atan2(characterMoveDirection.x, characterMoveDirection.z) * Mathf.Rad2Deg;
+
+                float deltaAngle = angle - _kcc.FixedData.GetLookRotation().y;
+               
+                _accumulatedInput.lookRotationDelta.y += deltaAngle;
+            }
         }
         
         _accumulatedInput.buttons = new NetworkButtons(_accumulatedInput.buttons.Bits | buttons.Bits);

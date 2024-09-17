@@ -66,6 +66,7 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
     {
         CheckGround();
         SetAnimatorBoolean("IsGrounded", IsGrounded);
+        DeltaAngle = 0;
 
     }
     public override void FixedUpdateNetwork()
@@ -76,16 +77,15 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
     {
         if (_kcc)
         {
-            SetAnimatorFloat("VelocityY", _kcc.Data.RealVelocity.y);
-            //_kcc?.SetLookRotation(0, _kcc.Data.LookYaw + DeltaAngle );
+            SetAnimatorFloat("VelocityY", _kcc.FixedData.RealVelocity.y);
             _kcc.AddLookRotation(0,DeltaAngle);
-            DeltaAngle = 0;
 
+            DeltaAngle = 0;
         }
         else
         {
             transform.rotation = Quaternion.Euler(0,transform.rotation.eulerAngles.y + DeltaAngle, 0);
-            DeltaAngle = 0;
+            //DeltaAngle = 0;
         }
 
         Vector3 desiredMoveVelocity = Velocity;
