@@ -60,6 +60,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _AlphaThreadhold: 0.907
+    - _Dissolve: 0
     - _Distortion: 0.0434
     - _FlipX: 1
     - _QueueControl: 0

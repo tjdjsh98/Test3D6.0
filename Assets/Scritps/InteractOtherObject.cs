@@ -1,22 +1,23 @@
 using Fusion;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class InteractOtherObject : NetworkBehaviour
 {
-    UIItemShower _uiItemShower;
+    UIInteract _uiItemShower;
 
     NetworkButtons _previousButtons;
 
-    // 캐릭터 주변에 상호작용할 수 있는 물체가 있는지 확인합니다.
-    // 물체가 있고 로컬캐릭터라면 UI를 띄웁니다.
+    GameObject _nameTagTarget;
 
-    List<GameObject> _aroundItemList = new List<GameObject>();
-    List<UIItemTag> _arountItemUIList = new List<UIItemTag>();
+    NameTag _nameTagPrefab;
+    NameTag _nameTag;
 
     private void Awake()
     {
-        _uiItemShower = UIManager.Instance.GetUI<UIItemShower>();
+        _uiItemShower = UIManager.Instance.GetUI<UIInteract>();
+        _nameTagPrefab = Resources.Load<NameTag>("Prefabs/NameTag");
+        _nameTag = Instantiate<NameTag>(_nameTagPrefab);
+        _nameTag.gameObject.SetActive(false);
     }
     private void Update()
     {
@@ -34,33 +35,37 @@ public class InteractOtherObject : NetworkBehaviour
         }
     }
     void DetectInteractableObject()
-    { 
-        Collider[] hits = Physics.OverlapSphere(transform.position, 2, LayerMask.GetMask("Item"));
+    {
+        Collider[] hits = Physics.OverlapBox(transform.position + Vector3.forward + Vector3.up * 0.5f
+            , Vector3.one, transform.rotation, Define.INTERACTABLE_LAYERMASK);
 
-        if (hits.Length > 0)
+        if (hits.Length == 0)
         {
-            for (int i = 0; i < hits.Length; i++)
+            if(_nameTag.gameObject.activeSelf == true)
             {
-                GameObject gameObject = hits[i].gameObject;
-                if (_aroundItemList.Contains(gameObject)) continue;
-
-                _aroundItemList.Add(gameObject);
-                if (Object.HasInputAuthority)
-                    _arountItemUIList.Add(_uiItemShower.ShowText(gameObject, gameObject.name));
+                _nameTag.gameObject.SetActive(false);
+                _nameTagTarget = null;
             }
         }
 
-        for (int i = _aroundItemList.Count - 1; i >= 0; i--)
+        float preDistance = float.PositiveInfinity;
+        GameObject result = null;
+        foreach (Collider hit in hits)
         {
-            if (_aroundItemList[i] == null || Vector3.Distance(_aroundItemList[i].gameObject.transform.position, gameObject.transform.position) > 2)
+            float distance = Vector3.Distance(transform.position, hit.transform.position);
+            if (distance < preDistance)
             {
-                _aroundItemList.RemoveAt(i);
-                if (Object.HasInputAuthority)
-                {
-                    _arountItemUIList[i].parent.gameObject.SetActive(false);
-                    _arountItemUIList.RemoveAt(i);
-                }
+                result = hit.gameObject;
+                preDistance = distance;
             }
+        }
+
+        if (result == _nameTagTarget) return;
+        _nameTagTarget = result;
+        if(_nameTagTarget != null )
+        {
+            UIManager.Instance.GetUI<UIInteract>().HideAll();
+           UIManager.Instance.GetUI<UIInteract>().ShowText(_nameTagTarget, _nameTagTarget.gameObject.name);
         }
     }
     void InteractOther()
@@ -68,24 +73,5 @@ public class InteractOtherObject : NetworkBehaviour
         if (!Object.HasStateAuthority) return;
 
         // 가장 가까운 아이템부터 흭득한다.
-
-        int index = -1;
-        float closeDistance = float.MaxValue;
-        for (int i = 0; i < _aroundItemList.Count; i++)
-        {
-            float distance = Vector3.Distance(transform.position, _aroundItemList[i].transform.position);
-            if (distance < closeDistance)
-            {
-                index = i;
-                closeDistance = distance;
-            }
-        }
-        Debug.Log(_aroundItemList.Count);
-
-        if (index != -1)
-        {
-            _aroundItemList[index].GetComponentInParent<IInteractable>().Interact(gameObject);
-            Debug.Log(_aroundItemList[index]);
-        }
     }
 }

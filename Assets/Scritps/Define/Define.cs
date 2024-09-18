@@ -5,6 +5,8 @@ public class Define
     public static int GROUND_LAYERMASK = LayerMask.GetMask("Ground");
     public static int CHARACTER_LAYERMASK = LayerMask.GetMask("Character");
     public static int CHARACTER_LAYER= LayerMask.NameToLayer("Character");
+    public static int INTERACTABLE_LAYER= LayerMask.NameToLayer("Interactable");
+    public static int INTERACTABLE_LAYERMASK= LayerMask.GetMask("Interactable");
 
 }
 public enum RangeShape

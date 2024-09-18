@@ -1,6 +1,7 @@
 using Fusion;
 using Fusion.Addons.KCC;
 using NUnit.Framework.Interfaces;
+using Unity.Burst.CompilerServices;
 using Unity.Cinemachine;
 using UnityEngine;
 
@@ -146,6 +147,8 @@ public class NetworkPlayerController : NetworkBehaviour
 
         HandleAnimation();
     }
+
+   
     void OnTurnAnimationEnded()
     {
         Debug.Log("TurnEnd");
