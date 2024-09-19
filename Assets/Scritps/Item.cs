@@ -5,6 +5,7 @@ public class Item : NetworkBehaviour, IInteractable
 {
     BoxCollider _collider;
     Rigidbody _rigidbody;
+    [field:SerializeField]public InteractType InteractType { get; set; }
 
     [field: SerializeField] public ItemType ItemType { get; set; }
     [field: SerializeField]public EquipmentType EquipmentType { get; set; }
@@ -31,15 +32,28 @@ private void Awake()
         _collider.isTrigger = false;
     }
 
-    public void Interact(GameObject interactor)
+    public bool Interact(GameObject interactor)
     {
         Inventory inventory = interactor.GetComponent<Inventory>();
-        inventory.InsertItem(gameObject);
 
+        var data = inventory.AccumulateInputData;
+        data.isAddItem = true;
+        data.addItemID = Object.Id;
+        inventory.AccumulateInputData = data;
+
+        return true;
     }
+
+}
+
+public enum InteractType
+{
+    Item,
+    Work,
 }
 
 public interface IInteractable
 {
-    public void Interact(GameObject interactor);
+    public InteractType InteractType { get; set; }
+    public bool Interact(GameObject interactor);
 }

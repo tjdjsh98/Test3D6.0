@@ -1,6 +1,9 @@
 using Fusion;
 using Fusion.Addons.KCC;
+using System;
+using System.Text;
 using TMPro;
+using TMPro.EditorUtilities;
 using Unity.Cinemachine;
 using UnityEditor.Rendering;
 using UnityEngine;
@@ -9,11 +12,10 @@ using Input = UnityEngine.Input;
 
 public class PlayerInputHandler : NetworkBehaviour,IBeforeUpdate, IBeforeTick
 {
-
     // InputData
     public PlayerInputData FixedInputData => _fixedInputData;
 
-    PlayerInputData _accumulatedInput;
+    public PlayerInputData _accumulatedInput;
     PlayerInputData _preFixedInputData;
     PlayerInputData _fixedInputData;
 
@@ -27,8 +29,8 @@ public class PlayerInputHandler : NetworkBehaviour,IBeforeUpdate, IBeforeTick
     public bool IsEnableInputMove { get; set; } = true;
     public bool IsEnableInputRotation { get; set; } = true;
 
+    public Action ResetAccumulateInputData;
 
-    [SerializeField]float _totalRot;
     private void Awake()
     {
         _character = GetComponent<NetworkCharacter>();
@@ -41,10 +43,14 @@ public class PlayerInputHandler : NetworkBehaviour,IBeforeUpdate, IBeforeTick
     public override void Spawned()
     {
         _camera = FindAnyObjectByType<GameManager>().ThirdPersonCamera;
-        if (HasInputAuthority)
-        {
-            Runner.GetComponent<NetworkEvents>().OnInput.AddListener(OnPlayerInput);
-        }
+        InputManager.Instance.BeforeInputDataSent += ProcessInput;
+        InputManager.Instance.InputDataReset += OnReset;
+    }
+
+    public override void Despawned(NetworkRunner runner, bool hasState)
+    {
+        InputManager.Instance.BeforeInputDataSent -= ProcessInput;
+        InputManager.Instance.InputDataReset -= OnReset;
     }
     void OnAnimatorMoved()
     {
@@ -58,16 +64,21 @@ public class PlayerInputHandler : NetworkBehaviour,IBeforeUpdate, IBeforeTick
             _accumulatedInput.lookRotationDelta += deltaAngle;
         }
     }
+
+    void OnReset()
+    {
+        _accumulatedInput = default;
+        _procseeInputFrame = false;
+    }
     public void BeforeUpdate()
     {
-        if (HasInputAuthority == false)
-            return;
-
         ProcessInput();
     }
 
     public void BeforeTick()
     {
+        if (HasInputAuthority == false)
+            return;
         if (Object == null) return;
 
         _preFixedInputData = _fixedInputData;
@@ -86,22 +97,11 @@ public class PlayerInputHandler : NetworkBehaviour,IBeforeUpdate, IBeforeTick
         }
     }
 
-    int _lastFrame;
-    public void OnPlayerInput(NetworkRunner runner, NetworkInput input)
-    {
-        if (_lastFrame == Time.frameCount) return;
-        _lastFrame = Time.frameCount;
-
-        ProcessInput();
-        input.Set(_accumulatedInput);
-        
-        _accumulatedInput = default;
-        _procseeInputFrame = false;
-    }
 
     bool _procseeInputFrame;
     void ProcessInput()
     {
+        if (HasInputAuthority == false) return;
         if (_procseeInputFrame) return;
         _procseeInputFrame = true;
 
@@ -116,44 +116,51 @@ public class PlayerInputHandler : NetworkBehaviour,IBeforeUpdate, IBeforeTick
         Vector3 characterMoveDirection = cameraForward * movementInput.y +
             cameraRight * movementInput.x;
 
-        // Move Input
-        _accumulatedInput.movementInput += movementInput;
-        _accumulatedInput.movementInput.Normalize();
-
-        // Body Forward
-        _accumulatedInput.bodyForwardVector = transform.forward;
-
-        NetworkButtons buttons = default;
-
-        // Jump
-        if (Input.GetButtonDown("Jump"))
-            buttons.Set(InputButton.Jump, true);
-
-        // Fire
-        if (Input.GetButtonDown("Fire1"))
-            buttons.Set(InputButton.MouseButton0, true);
-
-        // Interact
-        if (Input.GetKey(KeyCode.LeftShift))
-            buttons.Set(InputButton.Run, true);
-
-        // Interact
-        if (Input.GetKeyDown(KeyCode.E))
-            buttons.Set(InputButton.Interact, true);
-
-        if (IsEnableInputRotation)
+        if (InputManager.Instance.IsEnableInput)
         {
-            if (characterMoveDirection != Vector3.zero)
+            if (IsEnableInputMove)
             {
-                characterMoveDirection.Normalize();
-                float angle = Mathf.Atan2(characterMoveDirection.x, characterMoveDirection.z) * Mathf.Rad2Deg;
-
-                float deltaAngle = angle - _kcc.FixedData.GetLookRotation().y;
-               
-                _accumulatedInput.lookRotationDelta.y += deltaAngle;
+                // Move Input
+                _accumulatedInput.movementInput += movementInput;
+                _accumulatedInput.movementInput.Normalize();
             }
-        }
-        
+
+            // Body Forward
+            _accumulatedInput.bodyForwardVector = transform.forward;
+
+            NetworkButtons buttons = default;
+
+            // Jump
+            if (Input.GetButtonDown("Jump"))
+                buttons.Set(InputButton.Jump, true);
+
+            // Fire
+            if (Input.GetButtonDown("Fire1"))
+                buttons.Set(InputButton.MouseButton0, true);
+
+            // Interact
+            if (Input.GetKey(KeyCode.LeftShift))
+                buttons.Set(InputButton.Run, true);
+
+            // Interact
+            if (Input.GetKeyDown(KeyCode.E))
+                buttons.Set(InputButton.Interact, true);
+
+            if (IsEnableInputRotation)
+            {
+                if (characterMoveDirection != Vector3.zero)
+                {
+                    characterMoveDirection.Normalize();
+                    float angle = Mathf.Atan2(characterMoveDirection.x, characterMoveDirection.z) * Mathf.Rad2Deg;
+
+                    float deltaAngle = angle - _kcc.FixedData.GetLookRotation().y;
+
+                    _accumulatedInput.lookRotationDelta.y += deltaAngle;
+                }
+            }
         _accumulatedInput.buttons = new NetworkButtons(_accumulatedInput.buttons.Bits | buttons.Bits);
+        }
+        InputManager.Instance.InsertPlayerInputData(_accumulatedInput);
     }
+
 }

@@ -1,4 +1,5 @@
 using Fusion;
+using UnityEditor.Timeline.Actions;
 using UnityEngine;
 public class Inventory : NetworkBehaviour
 {
@@ -8,7 +9,50 @@ public class Inventory : NetworkBehaviour
     [Networked, OnChangedRender(nameof(OnInventoryChanged))]
     [Capacity(16)]
     NetworkArray<ItemSlot> _slots => MakeInitializer<ItemSlot>(new ItemSlot[10]);
+    public InventoryInputData AccumulateInputData { get; set; }
 
+
+    public override void Spawned()
+    {
+        InputManager.Instance.BeforeInputDataSent += OnBeforeInputDataSent;
+        InputManager.Instance.InputDataReset += OnInputDataReset;
+    }
+
+    public override void Despawned(NetworkRunner runner, bool hasState)
+    {
+        InputManager.Instance.BeforeInputDataSent -= OnBeforeInputDataSent;
+        InputManager.Instance.InputDataReset -= OnInputDataReset;
+    }
+
+    void OnBeforeInputDataSent()
+    {
+        if(HasInputAuthority)
+            InputManager.Instance.InsertInventoryInputData(AccumulateInputData);
+    }
+
+    void OnInputDataReset()
+    {
+        AccumulateInputData = default;
+    }
+
+    public override void FixedUpdateNetwork()
+    {
+        if(GetInput<NetworkInputData>(out var inputData))
+        {
+            if (HasStateAuthority)
+            {
+                if (inputData.inventoryInputData.isAddItem)
+                {
+                    InsertItem(Runner.FindObject(inputData.inventoryInputData.addItemID).gameObject);
+                }
+
+                if (inputData.inventoryInputData.isDropItem)
+                {
+                    DropItem(inputData.inventoryInputData.myInventoryIndex);
+                }
+            }
+        }
+    }
 
     public bool InsertItem(GameObject gameObject, int count = 1, int index = -1)
     {
@@ -87,6 +131,8 @@ public class Inventory : NetworkBehaviour
         if(index < 0 || index >= _slots.Length) return false;
 
         Item itemPrefab = Resources.Load<Item>($"Prefabs/Item/{_slots[index].itemName}");
+        if(itemPrefab == null) return false;
+
         var networkRunner = FindAnyObjectByType<NetworkRunner>();
 
         Item time = networkRunner.Spawn(itemPrefab, transform.position + transform.forward);

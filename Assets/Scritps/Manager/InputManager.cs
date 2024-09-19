@@ -1,4 +1,5 @@
 using Fusion;
+using System;
 using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -8,11 +9,15 @@ public class InputManager : NetworkBehaviour
     static InputManager _instance;
     public static InputManager Instance
     { get { InitSingleton(); return _instance; } }
-    PlayerInputData _accumulatedInput;
+    NetworkInputData _accumulatedInput;
 
     // Components
     CinemachineCamera _camera;
     CinemachineInputAxisController _cameraController;
+    int _lastFrame;
+
+    public Action BeforeInputDataSent;
+    public Action InputDataReset;
 
 
     // State
@@ -31,6 +36,13 @@ public class InputManager : NetworkBehaviour
     {
         _camera = FindAnyObjectByType<GameManager>().ThirdPersonCamera;
         _cameraController = _camera.GetComponent<CinemachineInputAxisController>();
+
+    }
+
+    public override void Spawned()
+    {
+        FindAnyObjectByType<NetworkEvents>().OnInput.AddListener(OnPlayerInput);
+
     }
 
     void Awake()
@@ -38,12 +50,7 @@ public class InputManager : NetworkBehaviour
         InitSingleton();
     }
 
-    public override void Spawned()
-    {
-        Runner.GetComponent<NetworkEvents>().OnInput    .AddListener(OnInput);
-    }
-
-    public override void FixedUpdateNetwork()
+    public void Update()
     {
         if (IsEnableFocus)
         {
@@ -75,42 +82,25 @@ public class InputManager : NetworkBehaviour
         }
     }
 
-    void OnInput(NetworkRunner runner, NetworkInput input)
+    public void OnPlayerInput(NetworkRunner runner, NetworkInput input)
     {
-        if (!IsEnableInput) return;
+        if (_lastFrame == Time.frameCount) return;
+        _lastFrame = Time.frameCount;
 
-        // View Input
-
-        // Move Input
-        _accumulatedInput.movementInput += new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
-
-        NetworkButtons buttons = default;
-
-        // Jump
-        if (Input.GetButtonDown("Jump"))
-            buttons.Set(InputButton.Jump, true);
-
-        // Fire
-        if (Input.GetButtonDown("Fire1"))
-            buttons.Set(InputButton.MouseButton0, true);
-
-        // Interact
-        if (Input.GetKey(KeyCode.LeftShift))
-            buttons.Set(InputButton.Run, true);
-
-        // Interact
-        if (Input.GetKeyDown(KeyCode.E))
-            buttons.Set(InputButton.Interact, true);
-
-        // aimForward
-        _accumulatedInput.aimForwardVector = _camera.transform.forward;
-        _accumulatedInput.aimForwardVector.y = 0;
-        _accumulatedInput.aimForwardVector.Normalize();
-
-        _accumulatedInput.buttons = new NetworkButtons(_accumulatedInput.buttons.Bits | buttons.Bits);
-
+        BeforeInputDataSent?.Invoke();
+      
         input.Set(_accumulatedInput);
 
+        InputDataReset?.Invoke();
         _accumulatedInput = default;
+    }
+
+    public void InsertPlayerInputData(PlayerInputData data)
+    {
+        _accumulatedInput.playerInputData = data;
+    }
+    public void InsertInventoryInputData(InventoryInputData data)
+    {
+        _accumulatedInput.inventoryInputData = data;
     }
 }

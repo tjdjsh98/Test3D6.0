@@ -15,11 +15,13 @@ public class UIInventory : UIBase
     Inventory _connectedInventory;
     CharacterEquipment _connectedCharacterEquipment;
 
+
+
     [SerializeField] GameObject _itemSlotParent;
     List<UIInventorySlot> _uiInventorySlotList = new List<UIInventorySlot>();
+   
 
     [Header("Equipment")]
-
     [SerializeField] GameObject _equipmentParent;
     UIInventorySlot _heatSlot;
     UIInventorySlot _bodySlot;
@@ -62,7 +64,7 @@ public class UIInventory : UIBase
         Refresh();
         gameObject.SetActive(false);
     }
-    private void Update()
+    private void LateUpdate()
     {
         ControlMouse();
         if(_dragItemImage.gameObject.activeSelf)
@@ -89,8 +91,8 @@ public class UIInventory : UIBase
     }
     public void Open()
     {
-        InputManager.Instance.IsEnableFocus = false;
         InputManager.Instance.IsEnableInput = false;
+        InputManager.Instance.IsEnableFocus = false;
 
         gameObject.SetActive(true);
         Refresh();
@@ -182,7 +184,12 @@ public class UIInventory : UIBase
                 // 인벤토리에서 버리기
                 if (_dragItemSlotIndex >= 0)
                 {
-                    _connectedInventory.DropItem(_dragItemSlotIndex);
+                    var data = _connectedInventory.AccumulateInputData;
+                    data.isDropItem = true;
+                    data.myInventoryIndex = _dragItemSlotIndex;
+                    _connectedInventory.AccumulateInputData = data;
+
+                    Debug.Log(_connectedInventory.AccumulateInputData.isDropItem);
                     Refresh();
                 }
 

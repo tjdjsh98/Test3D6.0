@@ -18,7 +18,6 @@ public class NetworkPlayerController : NetworkBehaviour
     // Other Component
     NetworkCharacter _character;
     CinemachineCamera _camera;
-    PlayerInputHandler _playerInputHandler;
     KCC _kcc;
 
     // Misc
@@ -32,7 +31,6 @@ public class NetworkPlayerController : NetworkBehaviour
     {
         _character = GetComponent<NetworkCharacter>();
         _camera = GameObject.FindAnyObjectByType<GameManager>().ThirdPersonCamera;
-        _playerInputHandler = GetComponent<PlayerInputHandler>();
         _kcc = GetComponent<KCC>();
 
 
@@ -61,98 +59,99 @@ public class NetworkPlayerController : NetworkBehaviour
     int _lastFixedFrame;
     public override void FixedUpdateNetwork()
     {
-        //Debug.Log(_playerInputHandler.FixedInputData.lookRotationDelta);
-        // Move
-        Vector3 forward = _playerInputHandler.FixedInputData.aimForwardVector.normalized;
-        Vector3 right = Vector3.Cross(Vector3.up, forward);
-        Vector3 moveDirection = forward * _playerInputHandler.FixedInputData.movementInput.y +
-                                    right * _playerInputHandler.FixedInputData.movementInput.x;
-        float velocity = 0;
-        float jumpPower = 0;
-        bool isTurn = false;
-
-        moveDirection.y = 0;
-        moveDirection.Normalize();
-
-        float angle = Vector3.Angle(_playerInputHandler.FixedInputData.bodyForwardVector, moveDirection);
-        if (_playerInputHandler.IsEnableInputRotation&&angle >= 160)
+        if (GetInput<NetworkInputData>(out var inputData))
         {
-            isTurn = true;
-        }
+            PlayerInputData playerInputData = inputData.playerInputData;
+            //Debug.Log(_playerInputHandler.FixedInputData.lookRotationDelta);
+            // Move
+            Vector3 forward = playerInputData.aimForwardVector.normalized;
+            Vector3 right = Vector3.Cross(Vector3.up, forward);
+            Vector3 moveDirection = forward * playerInputData.movementInput.y +
+                                        right * playerInputData.movementInput.x;
+            float velocity = 0;
+            float jumpPower = 0;
+            bool isTurn = false;
 
-        // Jump
-        if (_character.IsGrounded && _playerInputHandler.FixedInputData.buttons.WasPressed(_previousButtons, InputButton.Jump))
-        {
-            _character.Jump(5);
-        }
+            moveDirection.y = 0;
+            moveDirection.Normalize();
 
-      
-        if (_playerInputHandler.FixedInputData.buttons.WasPressed(_previousButtons, InputButton.MouseButton0))
-        {
-            
-            _character.SetAnimatorTrigger("Attack");
-            if (!_character.IsAttack)
+            float angle = Vector3.Angle(playerInputData.bodyForwardVector, moveDirection);
+            if ( angle >= 160)
             {
-                OnAttackAnimationStarted();
-                _character.WaitAnimationState("OneHandAttack", OnAttackAnimationEnded);
+                isTurn = true;
+            }
+
+            // Jump
+            if (_character.IsGrounded && playerInputData.buttons.WasPressed(_previousButtons, InputButton.Jump))
+            {
+                _character.Jump(2);
             }
 
 
-        }
-
-
-        // 애니메이션 처리
-        // 리시뮬레이션되지 않게 처리함
-        if (!_isFinishAniationProcess && Runner.IsFirstTick)
-        {
-            _isFinishAniationProcess = true;
-
-         
-            // Attack Animation
-
-
-            // 0.2  = 걷기
-            // 1    = 달리기
-            if (_playerInputHandler.FixedInputData.movementInput != Vector2.zero)
+            if (playerInputData.buttons.WasPressed(_previousButtons, InputButton.MouseButton0))
             {
-                velocity = 0.2f;
-                if (_playerInputHandler.FixedInputData.buttons.IsSet(InputButton.Run))
+
+                _character.SetAnimatorTrigger("Attack");
+                if (!_character.IsAttack)
                 {
-                    velocity = 1;
+                    OnAttackAnimationStarted();
+                    _character.WaitAnimationState("OneHandAttack", OnAttackAnimationEnded);
                 }
             }
 
-            _character.SetAnimatorFloat("Velocity", velocity, 0.1f, Runner.DeltaTime);
 
-            // Turn Animation 
-            if (isTurn)
+            // 애니메이션 처리
+            // 리시뮬레이션되지 않게 처리함
+            if (!_isFinishAniationProcess && Runner.IsFirstTick)
             {
-                _playerInputHandler.IsEnableInputMove = false;
-                _playerInputHandler.IsEnableInputRotation = false;
-                _character.SetAnimatorTrigger("Turn");
-                _character.WaitAnimationState(TurnStateNames, OnTurnAnimationEnded);
+                _isFinishAniationProcess = true;
+
+
+                // Attack Animation
+
+
+                // 0.2  = 걷기
+                // 1    = 달리기
+                if (playerInputData.movementInput != Vector2.zero)
+                {
+                    velocity = 0.2f;
+                    if (playerInputData.buttons.IsSet(InputButton.Run))
+                    {
+                        velocity = 1;
+                    }
+                }
+
+                _character.SetAnimatorFloat("Velocity", velocity, 0.1f, Runner.DeltaTime);
+
+                // Turn Animation 
+                if (isTurn)
+                {
+                    //_playerInputHandler.IsEnableInputRotation = false;
+                    _character.SetAnimatorTrigger("Turn");
+                    _character.WaitAnimationState(TurnStateNames, OnTurnAnimationEnded);
+                }
             }
+
+            // Rotation
+            if (!isTurn)
+                _character.AddAngle(playerInputData.lookRotationDelta.y);
+
+            // Position
+            _kcc.SetPosition(_kcc.Data.TargetPosition + playerInputData.moveDelta, false);
+
+
+            _previousButtons = playerInputData.buttons;
+            CheckFallRespawn();
+
+            HandleAnimation();
         }
-
-        // Rotation
-        if(!isTurn)
-            _character.AddAngle(_playerInputHandler.FixedInputData.lookRotationDelta.y);
-
-        // Position
-        _kcc.SetPosition(_kcc.Data.TargetPosition + _playerInputHandler.FixedInputData.moveDelta, false);
-
-
-        _previousButtons = _playerInputHandler.FixedInputData.buttons;
-        CheckFallRespawn();
-
-        HandleAnimation();
     }
 
    
     void OnTurnAnimationEnded()
     {
         Debug.Log("TurnEnd");
-        _playerInputHandler.IsEnableInputRotation = true;
+        //_playerInputHandler.IsEnableInputRotation = true;
         Vector3 vel = _character.Velocity;
         vel.y = 0;
         _character.Velocity = vel;
@@ -163,8 +162,8 @@ public class NetworkPlayerController : NetworkBehaviour
     void OnAttackAnimationStarted()
     {
         _character.IsAttack = true;
-        _playerInputHandler.IsEnableInputMove = false;
-        _playerInputHandler.IsEnableInputRotation = false;
+        //_playerInputHandler.IsEnableInputMove = false;
+        //_playerInputHandler.IsEnableInputRotation = false;
         _character.Attacked = OnAttackStarted;
         _character.AttackEnded = OnAttackEnded;
 
@@ -175,8 +174,8 @@ public class NetworkPlayerController : NetworkBehaviour
     {
         Weapon?.OnAttackAnimationEnded();
         _character.IsAttack = false;
-        _playerInputHandler.IsEnableInputMove = true;
-        _playerInputHandler.IsEnableInputRotation = true;
+        //_playerInputHandler.IsEnableInputMove = true;
+        //_playerInputHandler.IsEnableInputRotation = true;
     }
     void OnAttackStarted()
     {

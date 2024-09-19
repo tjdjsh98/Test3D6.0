@@ -102,6 +102,18 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
             acceleration = IsGrounded ? 50 : 20;
         }
 
+        if (_kcc)
+        {
+            if(_kcc.Data.RealVelocity.y <= 0)
+            {
+                _kcc.GetProcessor<EnvironmentProcessor>().Gravity = Vector3.down * 2.0f;
+            }
+            else
+            {
+                _kcc.GetProcessor<EnvironmentProcessor>().Gravity = Vector3.down * 2.0f;
+
+            }
+        }
         Velocity = Vector3.Lerp(_kcc?_kcc.Data.RealVelocity:Velocity, desiredMoveVelocity, acceleration * Runner.DeltaTime);
         _kcc?.SetKinematicVelocity(Velocity);
         _kcc?.Jump(Vector3.up * _jumpImpulse);
@@ -127,7 +139,6 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
 
     public override void Spawned()
     {
-      
     }
    
     public void Move(Vector3 direction, float ratio = 1)
