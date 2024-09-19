@@ -43,14 +43,21 @@ public class PlayerInputHandler : NetworkBehaviour,IBeforeUpdate, IBeforeTick
     public override void Spawned()
     {
         _camera = FindAnyObjectByType<GameManager>().ThirdPersonCamera;
-        InputManager.Instance.BeforeInputDataSent += ProcessInput;
-        InputManager.Instance.InputDataReset += OnReset;
+
+        if (HasInputAuthority)
+        {
+            InputManager.Instance.BeforeInputDataSent += OnBeforeInputDataSent;
+            InputManager.Instance.InputDataReset += OnReset;
+        }
     }
 
     public override void Despawned(NetworkRunner runner, bool hasState)
     {
-        InputManager.Instance.BeforeInputDataSent -= ProcessInput;
-        InputManager.Instance.InputDataReset -= OnReset;
+        if (HasInputAuthority)
+        {
+            InputManager.Instance.BeforeInputDataSent -= OnBeforeInputDataSent;
+            InputManager.Instance.InputDataReset -= OnReset;
+        }
     }
     void OnAnimatorMoved()
     {
@@ -63,6 +70,12 @@ public class PlayerInputHandler : NetworkBehaviour,IBeforeUpdate, IBeforeTick
             deltaAngle.y = deltaAngle.y > 180 ? deltaAngle.y - 360 : deltaAngle.y;
             _accumulatedInput.lookRotationDelta += deltaAngle;
         }
+    }
+
+    void OnBeforeInputDataSent()
+    {
+        ProcessInput();
+        InputManager.Instance.InsertPlayerInputData(_accumulatedInput);
     }
 
     void OnReset()
@@ -160,6 +173,7 @@ public class PlayerInputHandler : NetworkBehaviour,IBeforeUpdate, IBeforeTick
             }
         _accumulatedInput.buttons = new NetworkButtons(_accumulatedInput.buttons.Bits | buttons.Bits);
         }
+
         InputManager.Instance.InsertPlayerInputData(_accumulatedInput);
     }
 

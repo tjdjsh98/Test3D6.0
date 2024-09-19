@@ -88,7 +88,7 @@ public class InputManager : NetworkBehaviour
         _lastFrame = Time.frameCount;
 
         BeforeInputDataSent?.Invoke();
-      
+
         input.Set(_accumulatedInput);
 
         InputDataReset?.Invoke();

@@ -137,7 +137,7 @@ public class NetworkPlayerController : NetworkBehaviour
                 _character.AddAngle(playerInputData.lookRotationDelta.y);
 
             // Position
-            _kcc.SetPosition(_kcc.Data.TargetPosition + playerInputData.moveDelta, false);
+            _kcc.SetPosition(Vector3.Lerp(_kcc.FixedData.TargetPosition ,  _kcc.FixedData.TargetPosition + playerInputData.moveDelta,0.9f), false);
 
 
             _previousButtons = playerInputData.buttons;
