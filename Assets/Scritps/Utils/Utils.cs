@@ -5,16 +5,16 @@ using Random = UnityEngine.Random;
 
 public static class Utils
 {
-    public static IEnumerator WaitAniationAndPlayCoroutine(Animator animator, string stateName, Action action,float endRatio = 1)
+    public static IEnumerator WaitAniationAndPlayCoroutine(Animator animator, string stateName, Action action, int layerIndex = 0, float endRatio = 1)
     {
         bool isOncePlay = false;
         float duration = 0;
 
         while (isOncePlay == false)
         {
-            if (animator.GetCurrentAnimatorStateInfo(0).IsName(stateName))
+            if (animator.GetCurrentAnimatorStateInfo(layerIndex).IsName(stateName))
             {
-                duration = animator.GetCurrentAnimatorStateInfo(0).length;
+                duration = animator.GetCurrentAnimatorStateInfo(layerIndex).length;
                 isOncePlay = true;
             }  
             yield return new WaitForFixedUpdate();
@@ -27,7 +27,7 @@ public static class Utils
         action?.Invoke();
     }
     // translationTime 까지 기다려준다.
-    public static IEnumerator WaitAniationAndPlayCoroutine(Animator animator, string[] stateNames, Action action, float endRatio = 1)
+    public static IEnumerator WaitAniationAndPlayCoroutine(Animator animator, string[] stateNames, Action action,int layerIndex = 0, float endRatio = 1)
     {
         bool statePlaying = false;
 
@@ -40,11 +40,11 @@ public static class Utils
                 foreach (var name in stateNames)
                 {
 
-                    statePlaying = animator.GetCurrentAnimatorStateInfo(0).IsName(name);
+                    statePlaying = animator.GetCurrentAnimatorStateInfo(layerIndex).IsName(name);
                     
                     if (statePlaying)
                     {
-                        duration = animator.GetCurrentAnimatorStateInfo(0).length;
+                        duration = animator.GetCurrentAnimatorStateInfo(layerIndex).length;
                         break;
                     }
                 }

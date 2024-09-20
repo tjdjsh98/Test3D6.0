@@ -99,27 +99,36 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
         }
         else
         {
-            acceleration = IsGrounded ? 50 : 20;
+            acceleration = IsGrounded ? 30 : 2;
+            desiredMoveVelocity.y = _kcc.FixedData.DynamicVelocity.y;
+            _kcc?.SetDynamicVelocity(desiredMoveVelocity);
         }
 
         if (_kcc)
         {
             if(_kcc.Data.RealVelocity.y <= 0)
             {
-                _kcc.GetProcessor<EnvironmentProcessor>().Gravity = Vector3.down * 2.0f;
+                _kcc.GetProcessor<EnvironmentProcessor>().Gravity = Vector3.down * 5.0f;
             }
             else
             {
-                _kcc.GetProcessor<EnvironmentProcessor>().Gravity = Vector3.down * 2.0f;
+                _kcc.GetProcessor<EnvironmentProcessor>().Gravity = Vector3.down * 3.0f;
 
             }
         }
-        Velocity = Vector3.Lerp(_kcc?_kcc.Data.RealVelocity:Velocity, desiredMoveVelocity, acceleration * Runner.DeltaTime);
-        _kcc?.SetKinematicVelocity(Velocity);
-        _kcc?.Jump(Vector3.up * _jumpImpulse);
-        _jumpImpulse = 0;
+        
 
-        Velocity = Vector3.Lerp(Velocity, Vector3.zero, _breakPower * Runner.DeltaTime);
+        if (Runner.IsFirstTick && _jumpImpulse > 0)
+        {
+            _kcc?.Jump(Vector3.up * _jumpImpulse);
+            _jumpImpulse = 0;
+        }
+
+        if (Runner.IsLastTick)
+        {
+            desiredMoveVelocity = Vector3.Lerp(desiredMoveVelocity, Vector3.zero, acceleration * Runner.DeltaTime);
+            Velocity = desiredMoveVelocity;
+        }
     }
     // KCC가 있다면 KCC가 확인
     // 없다면 레이캐스트로 구별한다.
@@ -241,16 +250,16 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
 
     // 특정 애니메이션 상태를 기다려 줍니다.
     // endRatio은 Normalize된 값으로 ended가 실행될 시간을 정해줍니다.
-    public void WaitAnimationState(string stateName, Action ended,float endRatio = 1)
+    public void WaitAnimationState(string stateName, Action ended, int layerIndex = 0, float endRatio = 1)
     {
         if(_waitAnimationStateDic.ContainsKey(stateName))
         {
             StopCoroutine(_waitAnimationStateDic[stateName]);
             _waitAnimationStateDic.Remove(stateName);
         }
-        _waitAnimationStateDic.Add(stateName,StartCoroutine(Utils.WaitAniationAndPlayCoroutine(_animator,stateName,ended,endRatio)));
+        _waitAnimationStateDic.Add(stateName,StartCoroutine(Utils.WaitAniationAndPlayCoroutine(_animator,stateName,ended, layerIndex, endRatio)));
     }
-    public void WaitAnimationState(string[] stateNames, Action ended, float endRatio = 1)
+    public void WaitAnimationState(string[] stateNames, Action ended,int layerIndex=0, float endRatio = 1)
     {
 
         string stateName = "";
@@ -263,9 +272,13 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
             StopCoroutine(_waitAnimationStateDic[stateName]);
             _waitAnimationStateDic.Remove(stateName);
         }
-        _waitAnimationStateDic.Add(stateName,StartCoroutine(Utils.WaitAniationAndPlayCoroutine(_animator, stateNames, ended, endRatio)));
+        _waitAnimationStateDic.Add(stateName,StartCoroutine(Utils.WaitAniationAndPlayCoroutine(_animator, stateNames, ended, layerIndex, endRatio)));
     }
    
+    public void SetAnimationLayerWeight(int index,int weight)
+    {
+        _animator.SetLayerWeight(index, weight);
+    }
     public void AddAngle(float angle)
     {
         DeltaAngle += angle;

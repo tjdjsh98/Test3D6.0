@@ -6,7 +6,8 @@ public enum InputButton
     Jump,
     MouseButton0,
     Interact,
-    Run
+    Run,
+    Throw,
 }
 
 public struct NetworkInputData : INetworkInput
@@ -24,6 +25,7 @@ public struct PlayerInputData : INetworkInput
     public NetworkButtons buttons;
     public Vector2 lookRotationDelta;
     public Vector3 moveDelta;
+    public Vector3 velocity;
 }
 
 public struct InventoryInputData : INetworkInput

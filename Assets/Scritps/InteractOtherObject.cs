@@ -30,11 +30,6 @@ public class InteractOtherObject : NetworkBehaviour
     {
       
     }
-    private void Update()
-    {
-        DetectInteractableObject();
-      
-    }
     public override void FixedUpdateNetwork()
     {
         if (GetInput(out NetworkInputData networkInputData))
@@ -45,6 +40,7 @@ public class InteractOtherObject : NetworkBehaviour
             }
             _previousButtons = networkInputData.playerInputData.buttons;
         }
+        DetectInteractableObject();
         if ((_isInteracting && _interactGameObject == null))
         {
             _interactBlock.Interact(gameObject);
@@ -58,7 +54,6 @@ public class InteractOtherObject : NetworkBehaviour
     }
     void DetectInteractableObject()
     {
-        if (!HasInputAuthority) return;
 
         Vector3 center = Vector3.forward + Vector3.up * 0.5f;
         center.z = Mathf.Cos(transform.rotation.eulerAngles.y * Mathf.Deg2Rad);
@@ -87,6 +82,8 @@ public class InteractOtherObject : NetworkBehaviour
 
         if (result == _nameTagTarget) return;
         _nameTagTarget = result;
+
+        if (!HasInputAuthority) return;
         UIManager.Instance.GetUI<UIInteract>().HideAll();
         if(_nameTagTarget != null )
         {
@@ -95,7 +92,6 @@ public class InteractOtherObject : NetworkBehaviour
     }
     void InteractOther()
     {
-        if (!Object.HasInputAuthority) return;
         if (_nameTagTarget == null) return;
         if(_interactBlock != null)
         {

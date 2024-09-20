@@ -1,13 +1,8 @@
 using Fusion;
 using Fusion.Addons.KCC;
 using System;
-using System.Text;
-using TMPro;
-using TMPro.EditorUtilities;
 using Unity.Cinemachine;
-using UnityEditor.Rendering;
 using UnityEngine;
-using UnityEngine.TextCore.Text;
 using Input = UnityEngine.Input;
 
 public class PlayerInputHandler : NetworkBehaviour,IBeforeUpdate, IBeforeTick
@@ -30,6 +25,8 @@ public class PlayerInputHandler : NetworkBehaviour,IBeforeUpdate, IBeforeTick
     public bool IsEnableInputRotation { get; set; } = true;
 
     public Action ResetAccumulateInputData;
+
+    Vector3 _animationMoveDelta;
 
     private void Awake()
     {
@@ -65,10 +62,13 @@ public class PlayerInputHandler : NetworkBehaviour,IBeforeUpdate, IBeforeTick
         if (HasInputAuthority)
         {
             _accumulatedInput.moveDelta += _animator.deltaPosition;
+            _accumulatedInput.velocity += _animator.deltaPosition/ Runner.DeltaTime;
+
             Vector2 deltaAngle = (Vector2)_animator.deltaRotation.eulerAngles;
             deltaAngle.x = deltaAngle.x > 180 ? deltaAngle.x - 360 : deltaAngle.x;
             deltaAngle.y = deltaAngle.y > 180 ? deltaAngle.y - 360 : deltaAngle.y;
             _accumulatedInput.lookRotationDelta += deltaAngle;
+            
         }
     }
 
@@ -110,7 +110,7 @@ public class PlayerInputHandler : NetworkBehaviour,IBeforeUpdate, IBeforeTick
         }
     }
 
-
+    float _lastTime;
     bool _procseeInputFrame;
     void ProcessInput()
     {
@@ -158,6 +158,10 @@ public class PlayerInputHandler : NetworkBehaviour,IBeforeUpdate, IBeforeTick
             // Interact
             if (Input.GetKeyDown(KeyCode.E))
                 buttons.Set(InputButton.Interact, true);
+
+            // Throw
+            if (Input.GetKeyDown(KeyCode.Q))
+                buttons.Set(InputButton.Throw, true);
 
             if (IsEnableInputRotation)
             {
