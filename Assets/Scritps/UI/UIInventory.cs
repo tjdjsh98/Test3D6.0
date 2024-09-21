@@ -15,8 +15,6 @@ public class UIInventory : UIBase
     Inventory _connectedInventory;
     CharacterEquipment _connectedCharacterEquipment;
 
-
-
     [SerializeField] GameObject _itemSlotParent;
     List<UIInventorySlot> _uiInventorySlotList = new List<UIInventorySlot>();
    
@@ -185,11 +183,12 @@ public class UIInventory : UIBase
                 if (_dragItemSlotIndex >= 0)
                 {
                     var data = _connectedInventory.AccumulateInputData;
+                    data.ObjectId = _connectedInventory.Object.Id;
+                    data.inventoryId = _connectedInventory.Id;
                     data.isDropItem = true;
                     data.myInventoryIndex = _dragItemSlotIndex;
                     _connectedInventory.AccumulateInputData = data;
 
-                    Debug.Log(_connectedInventory.AccumulateInputData.isDropItem);
                     Refresh();
                 }
 
@@ -214,7 +213,7 @@ public class UIInventory : UIBase
     }
     void RefreshInventory()
     {
-        if (_connectedInventory)
+        if (_connectedInventory != null)
         {
             int slotCount = _connectedInventory.SlotCount;
 

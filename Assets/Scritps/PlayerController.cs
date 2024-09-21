@@ -67,7 +67,6 @@ public class PlayerController : MonoBehaviour
         _inventory = GetComponent<Inventory>();
         _characterEquipment = GetComponent<CharacterEquipment>();
         _character = GetComponentInChildren<Character>();
-        _uiCharacter.ConnectCharacter(_character);
         _rigidBody.maxLinearVelocity = 100;
     }
 

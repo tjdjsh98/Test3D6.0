@@ -6,8 +6,8 @@ public class Item : NetworkBehaviour, IInteractable
     BoxCollider _collider;
     Rigidbody _rigidbody;
     [field:SerializeField]public InteractType InteractType { get; set; }
-
     [field: SerializeField] public ItemType ItemType { get; set; }
+    [field: SerializeField] public ItemSize ItemSize { get; set; }
     [field: SerializeField]public EquipmentType EquipmentType { get; set; }
 
 private void Awake()
@@ -34,7 +34,9 @@ private void Awake()
 
     public bool Interact(GameObject interactor)
     {
-        Inventory inventory = interactor.GetComponent<Inventory>();
+        PrototypeCharacterController prototypeCharacterController = interactor.GetComponent<PrototypeCharacterController>();
+        if (prototypeCharacterController == null) return false;
+        Inventory inventory = prototypeCharacterController.QuickSlotInventory;
 
         var data = inventory.AccumulateInputData;
         data.isAddItem = true;
@@ -52,6 +54,12 @@ public enum InteractType
     Work,
 }
 
+public enum ItemSize
+{
+    Small,
+    Middle,
+    Large,
+}
 public interface IInteractable
 {
     public InteractType InteractType { get; set; }

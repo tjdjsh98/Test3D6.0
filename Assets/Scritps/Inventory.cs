@@ -1,15 +1,23 @@
 using Fusion;
+using System;
 using UnityEngine;
 public class Inventory : NetworkBehaviour
 {
-    [SerializeField] int _slotCount = 10;
+    [Networked][SerializeField] int _slotCount { get; set; } = 10;
     public int SlotCount => _slotCount;
-
+    
     [Networked, OnChangedRender(nameof(OnInventoryChanged))]
     [Capacity(16)]
-    NetworkArray<ItemSlot> _slots => MakeInitializer<ItemSlot>(new ItemSlot[10]);
-    public InventoryInputData AccumulateInputData { get; set; }
+    NetworkArray<ItemSlot> _slots { get; }= NetworkBehaviour.MakeInitializer(new ItemSlot[16]);
+    public InventoryInputData _accumulateInputData;
+    public InventoryInputData AccumulateInputData { get
+        {
+         return _accumulateInputData;
+        } set { _accumulateInputData = value;  _isInput = true; }
+    }
 
+    public Action ItemChanged { get; set; }
+    bool _isInput;
 
     public override void Spawned()
     {
@@ -25,41 +33,28 @@ public class Inventory : NetworkBehaviour
 
     void OnBeforeInputDataSent()
     {
-        if(HasInputAuthority)
+        if (HasInputAuthority && _isInput)
+        {
             InputManager.Instance.InsertInventoryInputData(AccumulateInputData);
+        }
     }
 
     void OnInputDataReset()
     {
-        AccumulateInputData = default;
-    }
-
-    public override void FixedUpdateNetwork()
-    {
-        if(GetInput<NetworkInputData>(out var inputData))
+        if (_isInput)
         {
-            if (HasStateAuthority)
-            {
-                if (inputData.inventoryInputData.isAddItem)
-                {
-                    InsertItem(Runner.FindObject(inputData.inventoryInputData.addItemID).gameObject);
-                }
-
-                if (inputData.inventoryInputData.isDropItem)
-                {
-                    DropItem(inputData.inventoryInputData.myInventoryIndex);
-                }
-            }
+            AccumulateInputData = default;
+            _isInput = false;
         }
     }
 
     public bool InsertItem(GameObject gameObject, int count = 1, int index = -1)
     {
-        var networkRunner =  FindAnyObjectByType<NetworkRunner>();
+        var networkRunner =  GameObject.FindAnyObjectByType<NetworkRunner>();
         Item item = gameObject.GetComponent<Item>();
         if (item == null) return false;
         string itemName = gameObject.name;
-        
+
         if (index == -1)
         {
             int emptySlot = -1;
@@ -77,6 +72,7 @@ public class Inventory : NetworkBehaviour
                     _slots.Set(i, tempSlot);
 
                     networkRunner.Despawn(item.Object);
+                    ItemChanged?.Invoke();
                     return true;
                 }
             }
@@ -108,15 +104,10 @@ public class Inventory : NetworkBehaviour
                 networkRunner.Despawn(item.Object);
             }
         }
-
+        ItemChanged?.Invoke();
         return true;
     }
-    // 자신의 앞으로 아이템을 버린다.
-
-    public void Awake()
-    {
-        name = name.Split('(')[0];
-    }
+    
     public bool SetSlot(ItemSlot slot, int index)
     {
         if(index < 0 || index >= _slots.Length) return false;
@@ -129,13 +120,16 @@ public class Inventory : NetworkBehaviour
     {
         if(index < 0 || index >= _slots.Length) return false;
 
+        Debug.Log(index);
+
         Item itemPrefab = Resources.Load<Item>($"Prefabs/Item/{_slots[index].itemName}");
         if(itemPrefab == null) return false;
 
-        var networkRunner = FindAnyObjectByType<NetworkRunner>();
+        var networkRunner = GameObject.FindAnyObjectByType<NetworkRunner>();
 
         Item time = networkRunner.Spawn(itemPrefab, transform.position + transform.forward);
         RemoveItem(index);
+        ItemChanged?.Invoke();
         return true;
     }
     public bool RemoveItem(int index)
@@ -143,6 +137,7 @@ public class Inventory : NetworkBehaviour
         if(index < 0 || index >= _slots.Length) return false;
 
         _slots.Set(index, new ItemSlot());
+        ItemChanged?.Invoke();
         return true;
     }
     public ItemSlot GetSlot(int index)
@@ -154,25 +149,7 @@ public class Inventory : NetworkBehaviour
 
     void OnInventoryChanged(NetworkBehaviourBuffer previous)
     {
-
-        string d = "";
-        Debug.Log(_slots.Length);
-
-        for (int i = 0; i < _slots.Length; i++)
-        {
-            d += $"{i} : {_slots[i].itemName} {_slots[i].count}\n";
-        }
-        Debug.Log(d);
-
-
-        //var preValue = GetArrayReader<NetworkArray<ItemSlot2>>(nameof(slots)).Read(previous);
-       
-        //d = "";
-        //for (int i = 0; i < preValue.Length; i++)
-        //{
-        //    d += $"{i} : {preValue[0].Get(i).count}\n";
-        //}
-        //Debug.Log(d);
+        ItemChanged?.Invoke();
     }
 }
 

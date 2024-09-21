@@ -13,7 +13,13 @@ public enum InputButton
 public struct NetworkInputData : INetworkInput
 {
     public PlayerInputData playerInputData;
+
+    public int inventoryCount;
     public InventoryInputData inventoryInputData;
+    public InventoryInputData inventoryInputData2;
+    public InventoryInputData inventoryInputData3;
+    public InventoryInputData inventoryInputData4;
+    public InventoryInputData inventoryInputData5;
 }
 public struct PlayerInputData : INetworkInput
 {
@@ -35,7 +41,9 @@ public struct InventoryInputData : INetworkInput
     public NetworkId addItemID;
 
     // 인벤토리 관련
-    public NetworkId encounter;
+    public NetworkId ObjectId;
+    public NetworkBehaviourId inventoryId;
+    public NetworkId encounterId;
     public NetworkBool isDropItem;
     public int myInventoryIndex;
     public int encounterIndex;

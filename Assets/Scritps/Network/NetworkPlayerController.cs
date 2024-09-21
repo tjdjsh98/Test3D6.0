@@ -4,7 +4,7 @@ using Unity.Cinemachine;
 using UnityEngine;
 
 [DefaultExecutionOrder(-5)]
-public class NetworkPlayerController : NetworkBehaviour
+public class NetworkPlayerController : NetworkBehaviour, IBeforeTick
 {
     // Input
     NetworkButtons _previousButtons;
@@ -50,6 +50,12 @@ public class NetworkPlayerController : NetworkBehaviour
     {
         _isFinishAniationProcess = false;
     }
+
+    public void BeforeTick()
+    {
+        
+    }
+
     int _lastFixedFrame;
     public override void FixedUpdateNetwork()
     {
@@ -199,6 +205,5 @@ public class NetworkPlayerController : NetworkBehaviour
         }
     }
 
-
-  
+ 
 }

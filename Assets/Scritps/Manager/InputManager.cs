@@ -12,8 +12,6 @@ public class InputManager : NetworkBehaviour
     NetworkInputData _accumulatedInput;
 
     // Components
-    CinemachineCamera _camera;
-    CinemachineInputAxisController _cameraController;
     int _lastFrame;
 
     public Action BeforeInputDataSent;
@@ -34,8 +32,8 @@ public class InputManager : NetworkBehaviour
 
     void Init()
     {
-        _camera = FindAnyObjectByType<GameManager>().ThirdPersonCamera;
-        _cameraController = _camera.GetComponent<CinemachineInputAxisController>();
+        //_camera = FindAnyObjectByType<GameManager>().ThirdPersonCamera;
+        //_cameraController = _camera.GetComponent<CinemachineInputAxisController>();
 
     }
 
@@ -72,14 +70,14 @@ public class InputManager : NetworkBehaviour
             Cursor.visible = true;
         }
 
-        if (_cameraController.enabled == true && !IsEnableInput)
-        {
-            _cameraController.enabled = false;
-        }
-        if (_cameraController.enabled == false && IsEnableInput)
-        {
-            _cameraController.enabled = true;
-        }
+        //if (_cameraController.enabled == true && !IsEnableInput)
+        //{
+        //    _cameraController.enabled = false;
+        //}
+        //if (_cameraController.enabled == false && IsEnableInput)
+        //{
+        //    _cameraController.enabled = true;
+        //}
     }
 
     public void OnPlayerInput(NetworkRunner runner, NetworkInput input)
@@ -101,6 +99,18 @@ public class InputManager : NetworkBehaviour
     }
     public void InsertInventoryInputData(InventoryInputData data)
     {
-        _accumulatedInput.inventoryInputData = data;
+        if(_accumulatedInput.inventoryCount == 0) 
+            _accumulatedInput.inventoryInputData = data;
+        if (_accumulatedInput.inventoryCount == 1)
+            _accumulatedInput.inventoryInputData2 = data;
+        if (_accumulatedInput.inventoryCount == 2)
+            _accumulatedInput.inventoryInputData3 = data;
+        if (_accumulatedInput.inventoryCount == 3)
+            _accumulatedInput.inventoryInputData4 = data;
+        if (_accumulatedInput.inventoryCount == 4)
+            _accumulatedInput.inventoryInputData5 = data;
+
+        Debug.Log(data.isAddItem);
+        _accumulatedInput.inventoryCount++;
     }
 }

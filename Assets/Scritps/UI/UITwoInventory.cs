@@ -222,7 +222,7 @@ public class UITwoInventory : UIBase
     }
     void RefreshInventory(List<UIInventorySlot> uiSlotList,Inventory inventory)
     {
-        if (inventory)
+        if (inventory != null)
         {
             int slotCount = inventory.SlotCount;
 

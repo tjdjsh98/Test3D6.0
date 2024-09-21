@@ -20,6 +20,14 @@ public class InteractOtherObject : NetworkBehaviour
     IInteractable _interactBlock;
     GameObject _interactGameObject;
 
+
+    // 들고 다닐 수 있는 아이템 위치
+    [SerializeField] Transform _smallItemPos;
+    [SerializeField] Transform _largeItemPos;
+
+    Item _leftItem;
+
+
     private void Awake()
     {
         _networkCharacter = GetComponent<NetworkCharacter>();
@@ -54,7 +62,6 @@ public class InteractOtherObject : NetworkBehaviour
     }
     void DetectInteractableObject()
     {
-
         Vector3 center = Vector3.forward + Vector3.up * 0.5f;
         center.z = Mathf.Cos(transform.rotation.eulerAngles.y * Mathf.Deg2Rad);
         center.x = Mathf.Sin(transform.rotation.eulerAngles.y * Mathf.Deg2Rad);
@@ -123,6 +130,8 @@ public class InteractOtherObject : NetworkBehaviour
                     float angle = Vector3.SignedAngle(transform.forward, _nameTagTarget.transform.position - transform.position, Vector3.up);
                     _networkCharacter.AddAngle(angle);
                 }
+
+                _nameTagTarget = null;
             }
         }
     }

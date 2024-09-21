@@ -35,8 +35,8 @@ public class NetworkPlayer : NetworkBehaviour, IPlayerLeft
         if (Object.HasInputAuthority)
         {
             Local = this;
-            _thirdPersonCamera = GameObject.Find("ThirdPersonCamera").GetComponent<CinemachineCamera>();
-            _thirdPersonCamera.Target = new CameraTarget() { TrackingTarget = _cameraTarget };
+            //_thirdPersonCamera = GameObject.Find("ThirdPersonCamera").GetComponent<CinemachineCamera>();
+            //_thirdPersonCamera.Target = new CameraTarget() { TrackingTarget = _cameraTarget };
         }
      
         name = $"P_{Object.Id}";
