@@ -1,5 +1,8 @@
 using Fusion;
+using System;
+using System.Collections;
 using UnityEngine;
+using UnityEngine.TextCore;
 
 public class InteractOtherObject : NetworkBehaviour
 {
@@ -12,7 +15,7 @@ public class InteractOtherObject : NetworkBehaviour
 
     NetworkButtons _previousButtons;
 
-    GameObject _nameTagTarget;
+    GameObject _target;
 
 
     // InteractType이 Work인 오브젝트 관리
@@ -21,9 +24,7 @@ public class InteractOtherObject : NetworkBehaviour
     GameObject _interactGameObject;
 
 
-    // 들고 다닐 수 있는 아이템 위치
-    [SerializeField] Transform _smallItemPos;
-    [SerializeField] Transform _largeItemPos;
+
 
     Item _leftItem;
 
@@ -36,7 +37,15 @@ public class InteractOtherObject : NetworkBehaviour
 
     private void OnDrawGizmosSelected()
     {
-      
+        Matrix4x4 rot = Matrix4x4.Rotate(transform.rotation);
+        Matrix4x4 pos = Matrix4x4.Translate(transform.position + transform.forward + transform.up *0.5f);
+        Gizmos.matrix =  pos * rot;
+
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireCube(Vector3.zero, Vector3.one);
+
+        Gizmos.matrix = Matrix4x4.identity;
+
     }
     public override void FixedUpdateNetwork()
     {
@@ -62,44 +71,57 @@ public class InteractOtherObject : NetworkBehaviour
     }
     void DetectInteractableObject()
     {
-        Vector3 center = Vector3.forward + Vector3.up * 0.5f;
-        center.z = Mathf.Cos(transform.rotation.eulerAngles.y * Mathf.Deg2Rad);
-        center.x = Mathf.Sin(transform.rotation.eulerAngles.y * Mathf.Deg2Rad);
-        center += transform.position;
+        if (!HasInputAuthority) return;
 
-        Collider[] hits = Physics.OverlapBox(center
+        Vector3 center = transform.position;
+
+        Collider[] hits = Physics.OverlapBox(center + transform.forward + transform.up * 0.5f
             , Vector3.one, transform.rotation, Define.INTERACTABLE_LAYERMASK);
+
 
         if (hits.Length == 0)
         {
             UIManager.Instance.GetUI<UIInteract>().HideAll();
         }
 
-        float preDistance = float.PositiveInfinity;
-        GameObject result = null;
+        Array.Sort<Collider>(hits, (num1, num2) =>
+        {
+            return (Vector3.Distance(transform.position, num1.transform.position) > Vector3.Distance(transform.position, num2.transform.position)) ? 1 : -1;
+        });
+
+        bool isNone = true;
         foreach (Collider hit in hits)
         {
-            float distance = Vector3.Distance(transform.position, hit.transform.position);
-            if (distance < preDistance)
-            {
-                result = hit.gameObject;
-                preDistance = distance;
-            }
+            IInteractable interactable = hit.GetComponentInParent<IInteractable>();
+
+            // Despawn이 먼저 호출되어 확인을 안해주면 interactable.IsInteractable 에서
+            // 오류가 발생하여 이 줄이 필요합니다.
+            if (!hit.GetComponentInParent<NetworkObject>().IsValid) continue;
+            if (interactable == null) continue;
+            if (!interactable.IsInteractable) continue;
+
+            if (_target == hit.gameObject) return;
+            _target = hit.gameObject;
+            isNone = false;
+            break;
         }
 
-        if (result == _nameTagTarget) return;
-        _nameTagTarget = result;
-
-        if (!HasInputAuthority) return;
         UIManager.Instance.GetUI<UIInteract>().HideAll();
-        if(_nameTagTarget != null )
+        if(isNone) return;
+        
+        if(_target != null )
         {
-            UIManager.Instance.GetUI<UIInteract>().ShowText(_nameTagTarget, _nameTagTarget.gameObject.name);
+            string name = "";
+            IData data = _target.GetComponentInParent<IData>();
+            if (data != null) name = data.DataName;
+            else name = _target.gameObject.name;
+
+            UIManager.Instance.GetUI<UIInteract>().ShowText(_target, name);
         }
     }
     void InteractOther()
     {
-        if (_nameTagTarget == null) return;
+        if (_target == null) return;
         if(_interactBlock != null)
         {
             _interactBlock.Interact(gameObject);
@@ -110,7 +132,7 @@ public class InteractOtherObject : NetworkBehaviour
             GetComponent<PlayerInputHandler>().IsEnableInputRotation = true;
         }
 
-        IInteractable interactBlock = _nameTagTarget.GetComponentInParent<IInteractable>();
+        IInteractable interactBlock = _target.GetComponentInParent<IInteractable>();
 
         if (interactBlock != null)
         {
@@ -123,15 +145,15 @@ public class InteractOtherObject : NetworkBehaviour
                 {
                     _interactBlock = interactBlock;
                     _isInteracting = true;
-                    _interactGameObject = _nameTagTarget;
+                    _interactGameObject = _target;
                     GetComponent<PlayerInputHandler>().IsEnableInputMove = false;
                     GetComponent<PlayerInputHandler>().IsEnableInputRotation = false;
                     _networkCharacter.SetAnimatorBoolean("Working", true);
-                    float angle = Vector3.SignedAngle(transform.forward, _nameTagTarget.transform.position - transform.position, Vector3.up);
+                    float angle = Vector3.SignedAngle(transform.forward, _target.transform.position - transform.position, Vector3.up);
                     _networkCharacter.AddAngle(angle);
                 }
 
-                _nameTagTarget = null;
+                _target = null;
             }
         }
     }

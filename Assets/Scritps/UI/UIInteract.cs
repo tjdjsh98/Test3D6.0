@@ -8,9 +8,9 @@ using UnityEngine.Rendering.Universal;
 public class UIInteract : UIBase
 {
   
-    [SerializeField] GameObject _uiItemTagPrefab;
+    [SerializeField] GameObject _uiInteractTagPrefab;
 
-    List<UIItemTag> _uiItemTagList = new List<UIItemTag>();
+    List<UIInteractTag> _uiInteractTagList = new List<UIInteractTag>();
 
     public override void Init(){}
 
@@ -20,25 +20,9 @@ public class UIInteract : UIBase
         
     }
 
-    //private void LateUpdate()
-    //{
-    //    foreach(var itemTag in _uiItemTagList)
-    //    {
-    //        if(itemTag.parent.gameObject.activeSelf)
-    //        {
-    //            if (itemTag.item == null) continue;
-
-    //            Vector3 positionSC = Camera.main.WorldToScreenPoint(itemTag.item.transform.position);
-
-    //            itemTag.parent.transform.position = positionSC;
-    //            Debug.Log(positionSC);
-    //        }
-    //    }
-    //}
-
     private void LateUpdate()
     {
-        foreach (var itemTag in _uiItemTagList)
+        foreach (var itemTag in _uiInteractTagList)
         {
             if (itemTag.parent.gameObject.activeSelf)
             {
@@ -55,11 +39,11 @@ public class UIInteract : UIBase
         
     }
 
-    public UIItemTag ShowText(GameObject item, string text)
+    public UIInteractTag ShowText(GameObject item, string text)
     {
-        UIItemTag itemTag = null;
+        UIInteractTag itemTag = null;
 
-        foreach(var tempItemTag in _uiItemTagList)
+        foreach(var tempItemTag in _uiInteractTagList)
         {
             if (tempItemTag.parent.activeSelf == false)
             {
@@ -70,15 +54,15 @@ public class UIInteract : UIBase
 
         if(itemTag ==  null)
         {
-            GameObject tag = Instantiate(_uiItemTagPrefab);
+            GameObject tag = Instantiate(_uiInteractTagPrefab);
 
             tag.transform.SetParent(transform);
             tag.transform.localScale = Vector3.one;
-            itemTag = new UIItemTag();
+            itemTag = new UIInteractTag();
             itemTag.parent = tag;
             itemTag.tagTextMesh = tag.transform.Find("Name").GetComponent<TextMeshProUGUI>();
 
-            _uiItemTagList.Add(itemTag);
+            _uiInteractTagList.Add(itemTag);
         }
 
         itemTag.item = item;
@@ -90,7 +74,7 @@ public class UIInteract : UIBase
 
     public void HideAll()
     {
-        foreach (var tempItemTag in _uiItemTagList)
+        foreach (var tempItemTag in _uiInteractTagList)
         {
             tempItemTag.parent.SetActive(false);
         }
@@ -100,7 +84,7 @@ public class UIInteract : UIBase
 }
 
 
-public class UIItemTag
+public class UIInteractTag
 {
     public GameObject parent;
     public GameObject item;

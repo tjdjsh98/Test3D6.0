@@ -4,6 +4,7 @@ using UnityEngine;
 public class WorkingBlock : NetworkBehaviour, IInteractable
 {
     [field: SerializeField] public InteractType InteractType { get; set; } = InteractType.Work;
+    [Networked] public NetworkBool IsInteractable { get; set; } = true;
     GameObject _interactor { get; set; }
     [SerializeField] float _requireTime = 3;
     float _elaspedTime =0;

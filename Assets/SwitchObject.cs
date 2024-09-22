@@ -7,6 +7,8 @@ public class SwitchObject : NetworkBehaviour,IInteractable
     [SerializeField][Networked, OnChangedRender(nameof(Switch))] bool _isTurnOn { get; set; }
     [SerializeField] List<GameObject> _switchObject;
     [field: SerializeField] public InteractType InteractType { get; set; }
+    [Networked] public NetworkBool IsInteractable { get; set; } = true;
+
     public override void Spawned()
     {
         foreach (var obj in _switchObject)
@@ -29,4 +31,5 @@ public class SwitchObject : NetworkBehaviour,IInteractable
             obj.gameObject.SetActive(_isTurnOn);
         }
     }
+
 }

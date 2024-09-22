@@ -2,11 +2,28 @@ using UnityEngine;
 
 public class Define
 {
-    public static int GROUND_LAYERMASK = LayerMask.GetMask("Ground");
-    public static int CHARACTER_LAYERMASK = LayerMask.GetMask("Character");
-    public static int CHARACTER_LAYER= LayerMask.NameToLayer("Character");
-    public static int INTERACTABLE_LAYER= LayerMask.NameToLayer("Interactable");
-    public static int INTERACTABLE_LAYERMASK= LayerMask.GetMask("Interactable");
+    static int _ground_LayerMask = 0;
+    static int _character_LayerMask = 0;
+    static int _character_Layer = 0;
+    static int _interactable_Layer = 0;
+    static int _interactable_LayerMask = 0;
+    public static int GROUND_LAYERMASK { get { DefineInit(); return _ground_LayerMask; } }
+    public static int CHARACTER_LAYERMASK { get { DefineInit(); return _character_LayerMask; } }
+    public static int CHARACTER_LAYER { get { DefineInit(); return _character_Layer; } }
+    public static int INTERACTABLE_LAYER { get { DefineInit(); return _interactable_Layer; } }
+    public static int INTERACTABLE_LAYERMASK { get { DefineInit(); return _interactable_LayerMask; } }
+
+    static bool defineInit = false;
+    static void DefineInit() 
+    {
+        if (defineInit) return;
+        defineInit = true;
+        _ground_LayerMask = LayerMask.GetMask("Ground");
+        _character_LayerMask = LayerMask.GetMask("Character");
+        _character_Layer = LayerMask.NameToLayer("Character");
+        _interactable_Layer = LayerMask.NameToLayer("Interactable");
+        _interactable_LayerMask = LayerMask.GetMask("Interactable");
+    }
 
 }
 public enum RangeShape

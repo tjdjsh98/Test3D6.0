@@ -1,3 +1,4 @@
+using Fusion;
 using UnityEngine;
 
 public class Chest : MonoBehaviour, IInteractable
@@ -5,6 +6,7 @@ public class Chest : MonoBehaviour, IInteractable
     [SerializeField] UITwoInventory _ui;
     Inventory _inventory;
     [field: SerializeField] public InteractType InteractType { get; set; }
+    [Networked] public NetworkBool IsInteractable { get; set; } = true;
 
     private void Awake()
     {

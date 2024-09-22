@@ -165,6 +165,16 @@ public class PlayerInputHandler : NetworkBehaviour,IBeforeUpdate, IBeforeTick
             if (Input.GetKeyDown(KeyCode.Q))
                 buttons.Set(InputButton.Throw, true);
 
+            // QuickSlot
+            if (Input.GetKeyDown(KeyCode.Alpha1))
+                buttons.Set(InputButton.Num1, true);
+            if (Input.GetKeyDown(KeyCode.Alpha2))
+                buttons.Set(InputButton.Num2, true);
+            if (Input.GetKeyDown(KeyCode.Alpha3))
+                buttons.Set(InputButton.Num3, true);
+            if (Input.GetKeyDown(KeyCode.Alpha4))
+                buttons.Set(InputButton.Num4, true);
+
             if (IsEnableInputRotation)
             {
                 if (characterMoveDirection != Vector3.zero)

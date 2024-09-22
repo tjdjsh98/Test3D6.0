@@ -82,8 +82,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e3ecad42b0812554ba56d8af3a2f0b7e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <DataName>k__BackingField: Default
+  <InteractType>k__BackingField: 0
+  _IsInteractable:
+    _value: 1
   <ItemType>k__BackingField: 0
+  <ItemSize>k__BackingField: 0
   <EquipmentType>k__BackingField: 0
+  _IsHide: 0
 --- !u!1 &5735337014805000956
 GameObject:
   m_ObjectHideFlags: 0

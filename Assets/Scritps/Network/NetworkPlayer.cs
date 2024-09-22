@@ -17,16 +17,6 @@ public class NetworkPlayer : NetworkBehaviour, IPlayerLeft
     {
     }
 
-    private void Update()
-    {
-        if (Object.HasStateAuthority&& Object.HasInputAuthority)
-        {
-            if (Input.GetKeyDown(KeyCode.L))
-            {
-                FindAnyObjectByType<NetworkRunner>().Spawn(Resources.Load<NetworkObject>("Prefabs/NetworkRangedMonster"), -Vector3.forward*10);
-            }
-        }
-    }
 
     // 입력권한 있는 캐릭터가 로컬 캐릭터
     // 카메라가 입력 권한이 있는 플레이어를 따라감

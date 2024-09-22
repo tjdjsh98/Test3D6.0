@@ -12,6 +12,10 @@ public class UICharacter : UIBase
     [SerializeField] TextMeshProUGUI _hpTextMesh;
     Vector2 _initHpbarSize;
 
+    [SerializeField] RectTransform _staminaBarTr;
+    [SerializeField] TextMeshProUGUI _staminaTextMesh;
+    Vector2 _initStaminabarSize;
+
     // QuickSlot
     Inventory _quickSlotInventory;
     [SerializeField] Transform _quickSlotParent;
@@ -24,6 +28,7 @@ public class UICharacter : UIBase
             UIInventorySlot slot = new UIInventorySlot();
             slot.parent = _quickSlotParent.GetChild(i).gameObject;
             slot.itemTextmesh = slot.parent.transform.Find("Text").GetComponent<TextMeshProUGUI>();
+            slot.itemImage = slot.parent.GetComponent<Image>();
             _quickSlotList.Add(slot);
         }
     }
@@ -37,8 +42,10 @@ public class UICharacter : UIBase
         _character = character;
         _characterController = character.GetComponent<PrototypeCharacterController>();
         _initHpbarSize = _hpBarTr.sizeDelta;
+        _initStaminabarSize = _staminaBarTr.sizeDelta;
         _quickSlotInventory = _characterController.QuickSlotInventory;
         _quickSlotInventory.ItemChanged += RefreshQuickSlot;
+        _characterController.QuickSlotIndexChanged += RefreshQuickSlotIndex;
 
         RefreshQuickSlot();
     }
@@ -49,6 +56,10 @@ public class UICharacter : UIBase
         {
             _quickSlotInventory.ItemChanged -= RefreshQuickSlot;
         }
+        if (_characterController)
+        {
+            _characterController.QuickSlotIndexChanged -= RefreshQuickSlotIndex;
+        }
 
         _character = null;
         _characterController = null;
@@ -58,6 +69,7 @@ public class UICharacter : UIBase
     public void Update()
     {
         ShowHp();
+        ShowStamina();
     }
 
     void ShowHp()
@@ -69,16 +81,38 @@ public class UICharacter : UIBase
         _hpBarTr.sizeDelta = new Vector2(_initHpbarSize.x * ratio, _initHpbarSize.y);
         _hpTextMesh.text = _character.Hp.ToString();
     }
+    void ShowStamina()
+    {
+        if (_character == null) return;
 
+        float ratio = (float)_character.Stamina / _character.MaxStamina;
+
+        _staminaBarTr.sizeDelta = new Vector2(_initStaminabarSize.x * ratio, _initStaminabarSize.y);
+        _staminaTextMesh.text = _character.Stamina.ToString();
+    }
     void RefreshQuickSlot()
     {
-        Debug.Log(_quickSlotList.Count);
         for(int i = 0; i < _quickSlotInventory.SlotCount; i++)
         {
-            Debug.Log(i);
             ItemSlot itemSlot = _quickSlotInventory.GetSlot(i);
             _quickSlotList[i].itemTextmesh.text = itemSlot.itemName.ToString();
+
+       
         }
     }
 
+    void RefreshQuickSlotIndex()
+    {
+        for (int i = 0; i < _quickSlotInventory.SlotCount; i++)
+        {
+            if (_characterController.QuickSlotSelectIndex == i)
+            {
+                _quickSlotList[i].itemImage.color = Color.green;
+            }
+            else
+            {
+                _quickSlotList[i].itemImage.color = Color.white;
+            }
+        }
+    }
 }

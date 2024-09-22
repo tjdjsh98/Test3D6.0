@@ -8,6 +8,10 @@ public enum InputButton
     Interact,
     Run,
     Throw,
+    Num1,
+    Num2,
+    Num3,
+    Num4,
 }
 
 public struct NetworkInputData : INetworkInput

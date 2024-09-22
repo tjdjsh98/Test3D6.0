@@ -1,6 +1,7 @@
 using Fusion;
 using System;
 using UnityEngine;
+
 public class Inventory : NetworkBehaviour
 {
     [Networked][SerializeField] int _slotCount { get; set; } = 10;
@@ -48,12 +49,15 @@ public class Inventory : NetworkBehaviour
         }
     }
 
+
+    // 기존에 있던 아이템이어서 수량을 누적할 때는 Despawn해줍니다.
+    // 새로운 아이템이라면 아이템을 비활성화해줍니다.
     public bool InsertItem(GameObject gameObject, int count = 1, int index = -1)
     {
         var networkRunner =  GameObject.FindAnyObjectByType<NetworkRunner>();
         Item item = gameObject.GetComponent<Item>();
         if (item == null) return false;
-        string itemName = gameObject.name;
+        string itemName = item.DataName;
 
         if (index == -1)
         {
@@ -65,7 +69,7 @@ public class Inventory : NetworkBehaviour
                     emptySlot = i;
                     break;
                 }
-                if (_slots[i].itemName == itemName)
+                if (item.IsStackable && _slots[i].itemName == itemName)
                 {
                     ItemSlot tempSlot = _slots[i];
                     tempSlot.count += count;
@@ -80,15 +84,18 @@ public class Inventory : NetworkBehaviour
             if (emptySlot == -1) return false;
             {
                 ItemSlot tempSlot = _slots[emptySlot];
+                NetworkObject networkObject = gameObject.GetComponent<NetworkObject>();
+                tempSlot.itemId = networkObject? networkObject.Id : default;
                 tempSlot.itemName = itemName;
                 tempSlot.count = count;
                 _slots.Set(emptySlot, tempSlot);
-                networkRunner.Despawn(item.Object);
+                item.IsHide = true;
+                item.IsInteractable = false;
             }
         }
         else
         {
-            if (_slots[index].itemName == itemName )
+            if (item.IsStackable && _slots[index].itemName == itemName )
             {
                 ItemSlot tempSlot = _slots[index];
                 tempSlot.count += count;
@@ -98,10 +105,13 @@ public class Inventory : NetworkBehaviour
             else 
             {
                 ItemSlot tempSlot = _slots[index];
+                NetworkObject networkObject = gameObject.GetComponent<NetworkObject>();
+                tempSlot.itemId = networkObject ? networkObject.Id : default;
                 tempSlot.itemName = itemName;
                 tempSlot.count = count;
                 _slots.Set(index, tempSlot);
-                networkRunner.Despawn(item.Object);
+                item.IsHide = true;
+                item.IsInteractable = false;
             }
         }
         ItemChanged?.Invoke();
@@ -120,14 +130,27 @@ public class Inventory : NetworkBehaviour
     {
         if(index < 0 || index >= _slots.Length) return false;
 
-        Debug.Log(index);
+        NetworkObject obj = Runner.FindObject(_slots[index].itemId);
+        // 저장된 아이템이 있다면 활성화
+        // 아이템 아이디는 기본값으로 변경 -> 추후에 다시 버릴 때 새로 만들어서 버리게 하기
+        if (obj)
+        {
+            obj.transform.position = transform.position + transform.forward;
+            ItemSlot slot = _slots.Get(index);
+            slot.itemId = default;
+            _slots.Set(index, slot);
+            Item item = obj.GetComponent<Item>();
+            item.IsHide = false;
+            item.IsInteractable = true;
 
-        Item itemPrefab = Resources.Load<Item>($"Prefabs/Item/{_slots[index].itemName}");
-        if(itemPrefab == null) return false;
-
-        var networkRunner = GameObject.FindAnyObjectByType<NetworkRunner>();
-
-        Item time = networkRunner.Spawn(itemPrefab, transform.position + transform.forward);
+        }
+        // 업다면 새로 만들어줍니다.
+        else
+        {
+            Item itemPrefab = Resources.Load<Item>($"Prefabs/Item/{_slots[index].itemName}");
+            if (itemPrefab == null) return false;
+            Item time = Runner.Spawn(itemPrefab, transform.position + transform.forward);
+        }
         RemoveItem(index);
         ItemChanged?.Invoke();
         return true;
@@ -155,6 +178,7 @@ public class Inventory : NetworkBehaviour
 
 public struct ItemSlot : INetworkStruct
 {
+    public NetworkId itemId;
     public NetworkString<_64> itemName;
     public int count;
 }

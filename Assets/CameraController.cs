@@ -1,6 +1,7 @@
+using Fusion;
 using UnityEngine;
 
-public class CameraController : MonoBehaviour
+public class CameraController : NetworkBehaviour
 {
     Camera _camera;
     [SerializeField] GameObject _pivot;
@@ -18,6 +19,8 @@ public class CameraController : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (!HasInputAuthority) return;
+
         Vector3 mouseDelta = Input.mousePositionDelta;
         _pitch -= mouseDelta.x;  
         _roll -= mouseDelta.y;

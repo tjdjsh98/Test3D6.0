@@ -222,7 +222,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Type: 3
   SphereRadius: 0.2
-  CapsuleRadius: 0.2
+  CapsuleRadius: 0.25
   BoxExtents: {x: 0, y: 0, z: 0}
   CapsuleExtents: 1
   Offset: {x: 0, y: 0.5, z: 0}
@@ -315,9 +315,9 @@ MonoBehaviour:
   _settings:
     Shape: 1
     IsTrigger: 0
-    Radius: 0.35
+    Radius: 0.25
     Height: 1
-    Extent: 0.035
+    Extent: 0.025
     ColliderLayer: 7
     CollisionLayerMask:
       serializedVersion: 2
@@ -364,6 +364,7 @@ MonoBehaviour:
   - {fileID: 8685971482309519971}
   - {fileID: 7162295192408305763}
   - {fileID: 3888767791671892451}
+  - {fileID: 8321107032693159025}
   - {fileID: 9026326367071277578}
   - {fileID: 6881369164517107483}
 --- !u!114 &4629767289049234195
@@ -410,7 +411,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7312f191ff403524891c087318560355, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _MaxHp: 10
+  _Hp: 10
+  _MaxStamina: 10
+  _Stamina: 10
   _velocity: {x: 0, y: 0, z: 0}
+  _IsGrounded: 0
+  _IsRun: 0
+  _IsExhaust: 0
 --- !u!114 &8685971482309519971
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -424,6 +432,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <QuickSlotInventory>k__BackingField: {fileID: 6881369164517107483}
+  _QuickSlotSelectIndex: -1
+  _smallItemPos: {fileID: 5527436870779068543}
+  _largeItemPos: {fileID: 8547965688668481192}
   <Inventory>k__BackingField: {fileID: 9026326367071277578}
 --- !u!114 &1849812193065974776
 MonoBehaviour:
@@ -462,8 +473,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3d716abe8a507004f863d4231d7d8e30, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _smallItemPos: {fileID: 5527436870779068543}
-  _largeItemPos: {fileID: 8547965688668481192}
 --- !u!114 &8321107032693159025
 MonoBehaviour:
   m_ObjectHideFlags: 0

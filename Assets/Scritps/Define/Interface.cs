@@ -21,3 +21,8 @@ public interface IRigidbody
     public void Move(Vector3 diection, float ratio = 1);
     public void AddForce(Vector3 power, ForceMode forceMode = ForceMode.Impulse);
 }
+
+public interface IData
+{
+    public string DataName { get; set; }
+}

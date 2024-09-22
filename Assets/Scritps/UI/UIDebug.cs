@@ -51,7 +51,7 @@ public class UIDebug : UIBase
             int index = 0;
             if (command.Length == 5) 
             {
-                if (command[0].Equals("Spawn"))
+                if (command[0].Equals("Item"))
                 {
                     string name = command[1];
                     bool result = int.TryParse(command[2], out int x);
@@ -60,7 +60,7 @@ public class UIDebug : UIBase
 
                     if (result)
                     {
-                        NetworkObject networkObject = Resources.Load<NetworkObject>($"Prefabs/{name}");
+                        NetworkObject networkObject = DataManager.Instance.GetData<Item>(name).GetComponent<NetworkObject>();
 
                         Debug.Log(networkObject);
                         if (networkObject != null)
