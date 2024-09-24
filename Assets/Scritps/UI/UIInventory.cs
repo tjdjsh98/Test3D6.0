@@ -29,18 +29,11 @@ public class UIInventory : UIBase
     [SerializeField] GameObject _trash;
 
     // 아이템 드래그 드롭
-    int _dragItemSlotIndex;
     EquipmentType _dragedEquipmentType;
-    Image _dragItemImage;
 
     public override void Init()
     {
-        _dragItemImage = new GameObject().AddComponent<Image>();
-        _dragItemImage.gameObject.SetActive(false);
-        _dragItemImage.transform.SetParent(transform);
-        _dragItemImage.GetComponent<RectTransform>().sizeDelta = Vector2.one * 100;
-        _dragItemImage.transform.localScale = Vector3.one;
-
+        
         _raycaster = GameObject.Find("Canvas").GetComponent<GraphicRaycaster>();
         _pointerEnterEvent = new PointerEventData(null);
 
@@ -62,14 +55,7 @@ public class UIInventory : UIBase
         Refresh();
         gameObject.SetActive(false);
     }
-    private void LateUpdate()
-    {
-        ControlMouse();
-        if(_dragItemImage.gameObject.activeSelf)
-        {
-            _dragItemImage.transform.position = Input.mousePosition;
-        }
-    }
+   
 
     void FillInventorySlot(out UIInventorySlot slot, Transform parent)
     {
@@ -81,7 +67,15 @@ public class UIInventory : UIBase
 
     public void ConnectInventory(Inventory inventory)
     {
+        DisconnectInventory();
         _connectedInventory = inventory;
+        _connectedInventory.ItemChanged += Refresh;
+    }
+    public void DisconnectInventory()
+    {
+        if(_connectedInventory)
+            _connectedInventory.ItemChanged -= Refresh;
+        _connectedInventory = null;
     }
     public void ConnecteCharacterEquipment(CharacterEquipment characterEquipment)
     {
@@ -101,111 +95,89 @@ public class UIInventory : UIBase
         InputManager.Instance.IsEnableFocus = true;
         InputManager.Instance.IsEnableInput = true;
 
+        DisconnectInventory();
         gameObject.SetActive(false);
     }
 
-    void ControlMouse()
+    public void OnItemSlotPointerDrag(GameObject itemImage)
     {
-        if (Input.GetMouseButtonDown(0)) {
-            _pointerEnterEvent.position = Input.mousePosition;
-            _results.Clear();
-            _raycaster.Raycast(_pointerEnterEvent, _results);
-
-            // 아이템이 존재한다면 드래그
-            for (int i = 0; i < _results.Count; i++)
+        for (int i = 0; i < _uiInventorySlotList.Count; i++)
+        {
+            if (_uiInventorySlotList[i].itemImage.gameObject == itemImage)
             {
-                GameObject ui = _results[i].gameObject;
+                ItemSlot slot = _connectedInventory.GetSlot(i);
+                if (slot.itemName == "") return;
 
-                // 인벤토리
-                for (int j = 0; j < _uiInventorySlotList.Count; j++)
-                {
-                    if(ui == _uiInventorySlotList[j].itemImage.gameObject)
-                    {
-                        ItemSlot slot = _connectedInventory.GetSlot(j);
-                        if (slot.itemName == "") return;
-
-                        _dragItemSlotIndex = j;
-                        DragIItem(_uiInventorySlotList[i]);
-                        return;
-                    }
-                }
-
-                // 장비창
-                // TODO
-                if (_heatSlot.itemImage.gameObject == ui) { }
-                if (_weaponSlot.itemImage.gameObject == ui) 
-                {
-                    _dragedEquipmentType = EquipmentType.RightWeapon;
-                    DragIItem(_weaponSlot);
-                }
-                if (_bodySlot.itemImage.gameObject == ui) { }
-                if (_shoesSlot.itemImage.gameObject == ui) { }
+                UIManager.Instance.DragItemSlotIndex = i;
+                UIManager.Instance.StartedDragInventory = _connectedInventory;
+                UIManager.Instance.DragIItem(_uiInventorySlotList[i].itemImage.sprite);
+                return;
             }
         }
 
-        if (Input.GetMouseButtonUp(0))
+        // 장비창
+        // TODO
+        if (_heatSlot.itemImage.gameObject == itemImage) { }
+        if (_weaponSlot.itemImage.gameObject == itemImage)
         {
-            ReleaseItem();
+            _dragedEquipmentType = EquipmentType.RightWeapon;
+            UIManager.Instance.DragIItem(_weaponSlot.itemImage.sprite);
         }
+        if (_bodySlot.itemImage.gameObject == itemImage) { }
+        if (_shoesSlot.itemImage.gameObject == itemImage) { }
     }
 
-    void DragIItem(UIInventorySlot slot)
+    public void OnItemSlotPointerDrop(GameObject itemImage)
     {
-        _dragItemImage.sprite = slot.itemImage.sprite;
-        _dragItemImage.gameObject.SetActive(true);
-    }
+        Inventory startedDragInventory = UIManager.Instance.StartedDragInventory;
+        int dragItemSlotIndex = UIManager.Instance.DragItemSlotIndex;
 
-    void ReleaseItem()
-    {
-        if (!_dragItemImage.gameObject.activeSelf) return;
+        if (startedDragInventory == null || dragItemSlotIndex < 0) return;
 
-
-        _pointerEnterEvent.position = Input.mousePosition;
-        _results.Clear();
-        _raycaster.Raycast(_pointerEnterEvent, _results);
-
-        // 인벤토리 레이캐스트 확인
-        // 아이템이 존재한다면 드래그
-        for (int i = 0; i < _results.Count; i++)
+      
+        for (int i = 0; i < _uiInventorySlotList.Count; i++)
         {
-            GameObject ui = _results[i].gameObject;
+            if (itemImage.gameObject != _uiInventorySlotList[i].itemImage.gameObject) continue;
 
-            // 인벤토리 호가인
-
-
-            // 장착 가능한 아이템인지 확인
-
-
-            // 아이템 버리기
-            if (ui == _trash)
+            // 아이템 이동
+            if(_connectedInventory != startedDragInventory || i != dragItemSlotIndex)
             {
-                // 인벤토리에서 버리기
-                if (_dragItemSlotIndex >= 0)
-                {
-                    var data = _connectedInventory.AccumulateInputData;
-                    data.ObjectId = _connectedInventory.Object.Id;
-                    data.inventoryId = _connectedInventory.Id;
-                    data.isDropItem = true;
-                    data.myInventoryIndex = _dragItemSlotIndex;
-                    _connectedInventory.AccumulateInputData = data;
+                var data = startedDragInventory.AccumulateInputData;
+                data.isExchangeItem = true;
+                data.myInventoryObjectId = startedDragInventory.Object.Id;
+                data.myInventoryId = startedDragInventory.Id;
+                data.myInventoryIndex = dragItemSlotIndex;
 
-                    Refresh();
-                }
+                data.encounterInventoryObjectId = _connectedInventory.Object.Id;
+                data.encounterInventoryId = _connectedInventory.Id;
+                data.encounterInventoryIndex = i;
 
-                // 장비아이템에서 버리기
-                if(_dragedEquipmentType == EquipmentType.RightWeapon)
-                {
-                    _connectedCharacterEquipment.Unequip(EquipmentType.RightWeapon);
-                    Refresh();
-                }
+                _connectedInventory.AccumulateInputData = data;
             }
         }
+    }
+    public void OnDropItemPointerDrop(GameObject itemImage)
+    {
+        Inventory startedDragInventory = UIManager.Instance.StartedDragInventory;
+        int dragItemSlotIndex = UIManager.Instance.DragItemSlotIndex;
 
-        _dragItemSlotIndex = -1;
-        _dragedEquipmentType = EquipmentType.LeftWeapon;
-        _dragItemImage.gameObject.SetActive(false);
+        if (startedDragInventory == null || dragItemSlotIndex < 0) return;
+
+        // 인벤토리에서 버리기
+        if(_trash.gameObject == itemImage)
+        {
+            var data = startedDragInventory.AccumulateInputData;
+            data.myInventoryObjectId = startedDragInventory.Object.Id;
+            data.myInventoryId = startedDragInventory.Id;
+            data.isDropItem = true;
+            data.myInventoryIndex = dragItemSlotIndex;
+            _connectedInventory.AccumulateInputData = data;
+
+            Refresh();
+        }
     }
 
+  
     void Refresh()
     {
         RefreshInventory();

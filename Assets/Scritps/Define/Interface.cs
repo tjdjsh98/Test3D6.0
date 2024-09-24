@@ -17,7 +17,7 @@ public interface IDamageable
 public interface IRigidbody
 {
     public void HandleVelocity();
-    public void Jump(float power);
+    public void Jump(Vector3 direction, float power);
     public void Move(Vector3 diection, float ratio = 1);
     public void AddForce(Vector3 power, ForceMode forceMode = ForceMode.Impulse);
 }

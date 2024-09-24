@@ -54,7 +54,6 @@ public class Inventory : NetworkBehaviour
     // 새로운 아이템이라면 아이템을 비활성화해줍니다.
     public bool InsertItem(GameObject gameObject, int count = 1, int index = -1)
     {
-        var networkRunner =  GameObject.FindAnyObjectByType<NetworkRunner>();
         Item item = gameObject.GetComponent<Item>();
         if (item == null) return false;
         string itemName = item.DataName;
@@ -64,18 +63,19 @@ public class Inventory : NetworkBehaviour
             int emptySlot = -1;
             for(int i = 0; i < _slots.Length; i++)  
             {
-                if (_slots[i].itemName == "")
+                if (_slots[i].itemId == default(NetworkId))
                 {
                     emptySlot = i;
                     break;
                 }
                 if (item.IsStackable && _slots[i].itemName == itemName)
                 {
+                    Debug.Log("Destroy" + _slots[i].itemName);
                     ItemSlot tempSlot = _slots[i];
                     tempSlot.count += count;
                     _slots.Set(i, tempSlot);
 
-                    networkRunner.Despawn(item.Object);
+                    Runner.Despawn(item.Object);
                     ItemChanged?.Invoke();
                     return true;
                 }
@@ -83,6 +83,7 @@ public class Inventory : NetworkBehaviour
 
             if (emptySlot == -1) return false;
             {
+                Debug.Log("AAA");
                 ItemSlot tempSlot = _slots[emptySlot];
                 NetworkObject networkObject = gameObject.GetComponent<NetworkObject>();
                 tempSlot.itemId = networkObject? networkObject.Id : default;
@@ -90,6 +91,7 @@ public class Inventory : NetworkBehaviour
                 tempSlot.count = count;
                 _slots.Set(emptySlot, tempSlot);
                 item.IsHide = true;
+                item.IsUseRigidbody = false;
                 item.IsInteractable = false;
             }
         }
@@ -100,7 +102,7 @@ public class Inventory : NetworkBehaviour
                 ItemSlot tempSlot = _slots[index];
                 tempSlot.count += count;
                 _slots.Set(index, tempSlot);
-                networkRunner.Despawn(item.Object);
+                Runner.Despawn(item.Object);
             }
             else 
             {
@@ -111,6 +113,7 @@ public class Inventory : NetworkBehaviour
                 tempSlot.count = count;
                 _slots.Set(index, tempSlot);
                 item.IsHide = true;
+                item.IsUseRigidbody = false;
                 item.IsInteractable = false;
             }
         }
@@ -124,6 +127,7 @@ public class Inventory : NetworkBehaviour
 
 
         _slots.Set(index, slot);
+        ItemChanged?.Invoke();
         return true;
     }
     public bool DropItem(int index)
@@ -141,6 +145,7 @@ public class Inventory : NetworkBehaviour
             _slots.Set(index, slot);
             Item item = obj.GetComponent<Item>();
             item.IsHide = false;
+            item.IsUseRigidbody = true;
             item.IsInteractable = true;
 
         }

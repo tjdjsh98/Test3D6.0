@@ -2,15 +2,12 @@ using Fusion;
 using System;
 using System.Collections;
 using UnityEngine;
-using UnityEngine.TextCore;
 
 public class InteractOtherObject : NetworkBehaviour
 {
 
     // Components
-    UIInteract _uiItemShower;
     NetworkCharacter _networkCharacter;
-    PlayerInputHandler _playerInputHandler;
 
 
     NetworkButtons _previousButtons;
@@ -23,16 +20,11 @@ public class InteractOtherObject : NetworkBehaviour
     IInteractable _interactBlock;
     GameObject _interactGameObject;
 
-
-
-
     Item _leftItem;
-
 
     private void Awake()
     {
         _networkCharacter = GetComponent<NetworkCharacter>();
-        _uiItemShower = UIManager.Instance.GetUI<UIInteract>();
     }
 
     private void OnDrawGizmosSelected()
@@ -82,6 +74,7 @@ public class InteractOtherObject : NetworkBehaviour
         if (hits.Length == 0)
         {
             UIManager.Instance.GetUI<UIInteract>().HideAll();
+            _target = null;
         }
 
         Array.Sort<Collider>(hits, (num1, num2) =>
@@ -121,6 +114,7 @@ public class InteractOtherObject : NetworkBehaviour
     }
     void InteractOther()
     {
+        if (!Runner.IsFirstTick) return;
         if (_target == null) return;
         if(_interactBlock != null)
         {

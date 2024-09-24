@@ -32,8 +32,6 @@ public class InputManager : NetworkBehaviour
 
     void Init()
     {
-        //_camera = FindAnyObjectByType<GameManager>().ThirdPersonCamera;
-        //_cameraController = _camera.GetComponent<CinemachineInputAxisController>();
 
     }
 
@@ -99,18 +97,6 @@ public class InputManager : NetworkBehaviour
     }
     public void InsertInventoryInputData(InventoryInputData data)
     {
-        if(_accumulatedInput.inventoryCount == 0) 
-            _accumulatedInput.inventoryInputData = data;
-        if (_accumulatedInput.inventoryCount == 1)
-            _accumulatedInput.inventoryInputData2 = data;
-        if (_accumulatedInput.inventoryCount == 2)
-            _accumulatedInput.inventoryInputData3 = data;
-        if (_accumulatedInput.inventoryCount == 3)
-            _accumulatedInput.inventoryInputData4 = data;
-        if (_accumulatedInput.inventoryCount == 4)
-            _accumulatedInput.inventoryInputData5 = data;
-
-        Debug.Log(data.isAddItem);
-        _accumulatedInput.inventoryCount++;
+        _accumulatedInput.inventoryInputData = data;
     }
 }

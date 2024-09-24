@@ -47,13 +47,13 @@ namespace NetworkPractice
         }
         public override void FixedUpdateNetwork()
         {
-            if (GetInput(out PlayerInputData networkInputData))
-            {
-                //if(networkInputData.isFireButtonPressed)
-                //{
-                //    Fire(networkInputData.aimForwardVector);
-                //}
-            }
+            //if (GetInput(out PlayerInputData networkInputData))
+            //{
+            //    //if(networkInputData.isFireButtonPressed)
+            //    //{
+            //    //    Fire(networkInputData.aimForwardVector);
+            //    //}
+            //}
         }
 
         void OnPlayerSpawned()

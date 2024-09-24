@@ -20,7 +20,7 @@ public class NetworkPlayerController : NetworkBehaviour, IBeforeTick
     public NetworkWeapon Weapon;
     bool _isFinishAniationProcess = false;
     bool _isThrow;
-
+    
 
     void Awake()
     {
@@ -84,7 +84,7 @@ public class NetworkPlayerController : NetworkBehaviour, IBeforeTick
             // Jump
             if (_character.IsGrounded && playerInputData.buttons.WasPressed(_previousButtons, InputButton.Jump))
             {
-                _character.Jump(5);
+                _character.Jump(Vector3.up, 5);
             }
 
             if (playerInputData.buttons.WasPressed(_previousButtons, InputButton.MouseButton0))

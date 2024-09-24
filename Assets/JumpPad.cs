@@ -29,7 +29,7 @@ public class JumpPad : NetworkBehaviour
 
                 if (character != null)
                 {
-                    character.Jump(_jumpPadPower, _jumpDirection);
+                    character.Jump(_jumpDirection,_jumpPadPower);
                 }
             }
         }

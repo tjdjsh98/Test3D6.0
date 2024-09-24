@@ -32,11 +32,9 @@ public class DataManager : MonoBehaviour
     public void LoadData<T>(string path) where T : MonoBehaviour, IData
     {
         T[] list = Resources.LoadAll<T>(path);
-        Debug.Log(list.Length);
 
         foreach (T item in list)
         {
-            Debug.Log(item as Item);
             _itemDictionary.Add(item.DataName, item as Item);
         }
     }

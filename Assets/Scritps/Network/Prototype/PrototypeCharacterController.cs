@@ -1,5 +1,7 @@
 using Fusion;
+using Fusion.Addons.KCC;
 using System;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -12,13 +14,10 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
     PlayerInputData _previousPlayerInputData;
 
     InventoryInputData _currentInventoryInputData;
-    InventoryInputData _currentInventoryInputData2;
-    InventoryInputData _currentInventoryInputData3;
-    InventoryInputData _currentInventoryInputData4;
-    InventoryInputData _currentInventoryInputData5;
 
     // Component
     PrototypeCharacter _character;
+    PlayerInputHandler _playerInputHandler;
     Camera _camera;
 
 
@@ -28,6 +27,12 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
     [Networked] public int QuickSlotSelectIndex { get; set; } = -1;
     [Networked, OnChangedRender(nameof(OnQuickSlotChanged))] NetworkBool QuickSlotChanaged { get; set; } = false;
     public Action QuickSlotIndexChanged { get; set; }
+
+    // 밧줄타고 올라가기
+    Rope _holdRope;
+    [Networked][field: SerializeField]public NetworkBool IsHoldRope { get; set; }
+
+    
 
     // 들고 다닐 수 있는 아이템 위치
     [SerializeField] Transform _smallItemPos;
@@ -41,10 +46,15 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
     void Awake()
     {
         _character = GetComponent<PrototypeCharacter>();
+        _playerInputHandler = GetComponent<PlayerInputHandler>();
         _camera = Camera.main;
+        QuickSlotInventory.ItemChanged += OnQuickSlotItemChanged;
     }
 
-
+    void OnQuickSlotItemChanged()
+    {
+        QuickSlotChanaged  = !QuickSlotChanaged;
+    }
     public override void Spawned()
     {
         // 자신의 캐릭터 UI 연결
@@ -74,7 +84,6 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
         }
   
     }
-
     void OnQuickSlotChanged()
     {
         ItemSlot slot = QuickSlotInventory.GetSlot(QuickSlotSelectIndex);
@@ -85,13 +94,13 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
              NetworkObject networkObj = Runner.FindObject(QuickSlotInventory.GetSlot(_leftItemSlotIndex).itemId);
             if (networkObj == null || networkObj.gameObject != _leftItem.gameObject)
             {
+                _leftItem.IsUseRigidbody = true;
                 _leftItem.transform.SetParent(null);
                 _leftItem = null;
             }
             // 퀵슬롯의 위치만 바뀌었다면
             else
-            {
-                 
+            {    
                 _leftItem.IsHide = true;
                 // 선제적으로 감춰져야지 블록이 순간이동한 것 처럼 보이지 않음.
                 _leftItem.Show(!_leftItem.IsHide);
@@ -101,50 +110,95 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
         }
 
         NetworkObject networkObject = Runner.FindObject(slot.itemId);
+        Debug.Log(slot.itemId+ " " +networkObject);
         if (networkObject != null)
         {
             networkObject.transform.SetParent(_largeItemPos,false);
             networkObject.transform.position = _largeItemPos.transform.position;
             _leftItem = networkObject.gameObject.GetComponent<Item>();
             _leftItem.IsHide = false;
+            _leftItem.IsUseRigidbody = false;
             _leftItemSlotIndex = QuickSlotSelectIndex;
         }
         QuickSlotIndexChanged?.Invoke();
     }
 
-
+    public override void Render()
+    {
+        if (HasStateAuthority)
+        {
+            if (_character.Stamina <= 0)
+            {
+                PlayerInputData inputData = _playerInputHandler.AccumulatedInput;
+                inputData.buttons.Set(InputButton.ReleaseRope, true);
+                _playerInputHandler.AccumulatedInput = inputData;
+            }
+            if (IsHoldRope)
+            {
+                _character.Stamina -= Time.deltaTime * 3;
+            }
+        }
+    }
     public override void FixedUpdateNetwork()
     {
         InventoryFixedUpdate(_currentInventoryInputData);
-        InventoryFixedUpdate(_currentInventoryInputData2);
-        InventoryFixedUpdate(_currentInventoryInputData3);
-        InventoryFixedUpdate(_currentInventoryInputData4);
-        InventoryFixedUpdate(_currentInventoryInputData5);
 
         Vector3 forward = _currentPlayerInputData.aimForwardVector;
         Vector3 right = Vector3.Cross(Vector3.up, forward);
         Vector3 moveDirection = forward * _currentPlayerInputData.movementInput.y +
                 right * _currentPlayerInputData.movementInput.x;
 
+        // HoldRope
+        if(_currentPlayerInputData.buttons.WasPressed(_previousButtons, InputButton.HoldRope))
+        {
+            if (!IsHoldRope)
+                HoldRope(_currentPlayerInputData.holdRopeID);
+            else
+                ReleaseRope();
+        }
 
-        // Move
-        _character.AddLookAngle(_currentPlayerInputData.lookRotationDelta.y);
+        // ReleaseRope
+        if (_currentPlayerInputData.buttons.WasPressed(_previousButtons, InputButton.ReleaseRope))
+        {
+            ReleaseRope();
+        }
         float speed = 2;
-        if(_character.IsGrounded && _currentPlayerInputData.buttons.WasPressed(_previousButtons, InputButton.Jump))
+        // Move
+        if (!IsHoldRope)
         {
-            _character.Jump(5,Vector3.up);
+            _character.AddLookAngle(_currentPlayerInputData.lookRotationDelta.y);
+            if (_character.IsGrounded && _currentPlayerInputData.buttons.WasPressed(_previousButtons, InputButton.Jump))
+            {
+                _character.Jump(Vector3.up, 5);
+            }
+            if (_currentPlayerInputData.buttons.IsSet(InputButton.Run))
+            {
+                _character.IsUseStamina = true;
+                speed = 8;
+            }
+            else
+            {
+                _character.IsUseStamina = false;
+            }
         }
-        if (_currentPlayerInputData.buttons.IsSet(InputButton.Run))
-        {
-            _character.IsUseStamina = true;
-            speed = 8;
-        }
+        // RopeMove
         else
         {
-            _character.IsUseStamina = false;
+            if(_currentPlayerInputData.movementInput.y > 0)
+            {
+                moveDirection = (_holdRope.StartPos.position - _holdRope.EndPos.position).normalized;
+            }
+            else if (_currentPlayerInputData.movementInput.y < 0)
+            {
+                moveDirection = (_holdRope.EndPos.position - _holdRope.StartPos.position).normalized;
+            }
+            else 
+            { 
+                moveDirection = Vector3.zero;
+            }
         }
-        _character.Move(moveDirection * speed);
 
+        _character.Move(moveDirection * speed);
 
         //QuickSlots
         if (_currentPlayerInputData.buttons.WasPressed(_previousButtons, InputButton.Num1))
@@ -181,17 +235,50 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
         _previousButtons = _currentPlayerInputData.buttons;
 
         if (_leftItem)
+        {
+            _leftItem.transform.localRotation = Quaternion.identity;
             _leftItem.transform.localPosition = Vector3.zero;
+        }
     }
 
+    void HoldRope(NetworkId ropeId )
+    {
+        NetworkObject networkObject = Runner.FindObject(ropeId);
+        if(networkObject != null )
+        {
+            _holdRope = networkObject.GetComponentInParent<Rope>();
+            if(_holdRope != null )
+            {
+                IsHoldRope = true;
+                _character.IsEnableMoveYAxis = true;
+
+                Vector3 lVec = _holdRope.EndPos.position - _holdRope.StartPos.position;
+                Vector3 vec = transform.position - _holdRope.StartPos.position;
+                float t = Vector3.Dot(lVec, vec) / Vector3.Dot(lVec, lVec);
+                t = Mathf.Clamp01(t);
+                _character.Teleport(_holdRope.StartPos.position + lVec * t);
+            }
+        }
+    }
+
+    void ReleaseRope()
+    {
+        IsHoldRope = false;
+        _character.IsEnableMoveYAxis = false;
+        _holdRope = null;
+    }
+
+    // 메인 클라이언트만 판정해줍니다.
     void InventoryFixedUpdate(InventoryInputData data)
     {
+        if (!HasStateAuthority) return;
+
         if (data.isDropItem)
         {
-            var inventorys = Runner.FindObject(data.ObjectId).GetComponentsInChildren<Inventory>();
+            var inventorys = Runner.FindObject(data.myInventoryObjectId).GetComponentsInChildren<Inventory>();
             foreach ( var inventory in inventorys )
             {
-                if (inventory.Id == data.inventoryId)
+                if (inventory.Id == data.myInventoryId)
                 {
                     inventory.DropItem(data.myInventoryIndex);
                     QuickSlotChanaged = !QuickSlotChanaged;
@@ -200,11 +287,52 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
         }
         if (data.isAddItem)
         {
-            QuickSlotInventory.InsertItem(Runner.FindObject(data.addItemID).gameObject);
-            QuickSlotChanaged = !QuickSlotChanaged;
+            NetworkObject networkObject = Runner.FindObject(data.addItemID);
+            Item item = networkObject.GetComponent<Item>();
+
+            // 상호작용이 가능한지 최종적으로 메인클라이언트가 확인한다.
+            if (!item.IsInteractable) return;           
+            if (networkObject != null)
+            {
+                Inventory.InsertItem(networkObject.gameObject);
+            }
+        }
+        if(data.isExchangeItem)
+        {
+            var inventorys = Runner.FindObject(data.myInventoryObjectId).GetComponentsInChildren<Inventory>();
+            Inventory myInventory = null;
+            foreach (var inventory in inventorys)
+            {
+                if (inventory.Id == data.myInventoryId)
+                {
+                    myInventory = inventory;
+                    break;
+                }
+            }
+            if (myInventory == null) return;
+            inventorys = Runner.FindObject(data.encounterInventoryObjectId).GetComponentsInChildren<Inventory>();
+            Inventory encounterInventory = null;
+            foreach (var inventory in inventorys)
+            {
+                if (inventory.Id == data.encounterInventoryId)
+                {
+                    encounterInventory = inventory;
+                    break;
+                }
+            }
+            if (encounterInventory == null) return;
+
+            ItemSlot itemSlot = myInventory.GetSlot(data.myInventoryIndex);
+            if (itemSlot.itemName == "") return;
+
+
+            if (myInventory.RemoveItem(data.myInventoryIndex))
+            {
+                encounterInventory.SetSlot(itemSlot, data.encounterInventoryIndex);
+            }
+
         }
     }
-
     public void BeforeTick()
     {
         _previousPlayerInputData = _currentPlayerInputData; 
@@ -216,32 +344,10 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
             InventoryInputData inventoryInputData = _currentInventoryInputData;
             inventoryInputData.isAddItem = default;
             inventoryInputData.isDropItem = default;
+            inventoryInputData.isExchangeItem= default;
             _currentInventoryInputData = inventoryInputData;
         }
-        {
-            InventoryInputData inventoryInputData = _currentInventoryInputData2;
-            inventoryInputData.isAddItem = default;
-            inventoryInputData.isDropItem = default;
-            _currentInventoryInputData2 = inventoryInputData;
-        }
-        {
-            InventoryInputData inventoryInputData = _currentInventoryInputData3;
-            inventoryInputData.isAddItem = default;
-            inventoryInputData.isDropItem = default;
-            _currentInventoryInputData3 = inventoryInputData;
-        }
-        {
-            InventoryInputData inventoryInputData = _currentInventoryInputData4;
-            inventoryInputData.isAddItem = default;
-            inventoryInputData.isDropItem = default;
-            _currentInventoryInputData4 = inventoryInputData;
-        }
-         {
-            InventoryInputData inventoryInputData = _currentInventoryInputData5;
-            inventoryInputData.isAddItem = default;
-            inventoryInputData.isDropItem = default;
-            _currentInventoryInputData5 = inventoryInputData;
-        }
+       
 
 
         if (Object.InputAuthority != PlayerRef.None)
@@ -251,14 +357,10 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
                 // New input received, we can store it as current.
                 _currentPlayerInputData = input.playerInputData;
                 _currentInventoryInputData = input.inventoryInputData;
-                _currentInventoryInputData2 = input.inventoryInputData2;
-                _currentInventoryInputData3 = input.inventoryInputData3;
-                _currentInventoryInputData4 = input.inventoryInputData4;
-                _currentInventoryInputData5 = input.inventoryInputData5;
+            
             }
         }
     }
-
     void LateUpdate()
     {
         if (!HasInputAuthority) return;

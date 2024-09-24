@@ -156,7 +156,7 @@ public class NetworkCharacter : NetworkBehaviour, IDamageable, IRigidbody
 
         Velocity = direction * Speed * ratio;
     }
-    public void Jump(float power)
+    public void Jump( Vector3 direction, float power)
     {
         _jumpImpulse = power;
     }

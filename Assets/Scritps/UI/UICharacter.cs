@@ -115,4 +115,48 @@ public class UICharacter : UIBase
             }
         }
     }
+    public void OnItemSlotPointerDrag(GameObject itemImage)
+    {
+        for (int i = 0; i < _quickSlotList.Count; i++)
+        {
+            if (_quickSlotList[i].itemImage.gameObject == itemImage)
+            {
+                ItemSlot slot = _quickSlotInventory.GetSlot(i);
+                if (slot.itemName == "") return;
+
+                UIManager.Instance.DragItemSlotIndex = i;
+                UIManager.Instance.StartedDragInventory = _quickSlotInventory;
+                UIManager.Instance.DragIItem(_quickSlotList[i].itemImage.sprite);
+                return;
+            }
+        }
+    }
+    public void OnItemSlotPointerDrop(GameObject itemImage)
+    {
+        Inventory startedDragInventory = UIManager.Instance.StartedDragInventory;
+        int dragItemSlotIndex = UIManager.Instance.DragItemSlotIndex;
+
+        if (startedDragInventory == null || dragItemSlotIndex < 0) return;
+
+        for (int i = 0; i < _quickSlotList.Count; i++)
+        {
+            if (itemImage.gameObject != _quickSlotList[i].itemImage.gameObject) continue;
+
+            // 아이템 이동
+            if (_quickSlotInventory != startedDragInventory || i != dragItemSlotIndex)
+            {
+                var data = startedDragInventory.AccumulateInputData;
+                data.isExchangeItem = true;
+                data.myInventoryObjectId = startedDragInventory.Object.Id;
+                data.myInventoryId = startedDragInventory.Id;
+                data.myInventoryIndex = dragItemSlotIndex;
+
+                data.encounterInventoryObjectId = _quickSlotInventory.Object.Id;
+                data.encounterInventoryId = _quickSlotInventory.Id;
+                data.encounterInventoryIndex = i;
+
+                _quickSlotInventory.AccumulateInputData = data;
+            }
+        }
+    }
 }

@@ -295,7 +295,7 @@ Rigidbody:
     m_Bits: 0
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
-  m_UseGravity: 1
+  m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 112
@@ -321,7 +321,7 @@ MonoBehaviour:
     ColliderLayer: 7
     CollisionLayerMask:
       serializedVersion: 2
-      m_Bits: 384
+      m_Bits: 448
     Features: -1
     InputAuthorityBehavior: 0
     StateAuthorityBehavior: 0
@@ -329,9 +329,9 @@ MonoBehaviour:
     ForcePredictedLookRotation: 0
     AllowClientTeleports: 0
     Processors:
+    - {fileID: 4219866145273439913, guid: 1ab62523487a65745ab7ee9663ad9025, type: 3}
     - {fileID: 8306782452827789390, guid: 6d976f9777012db4aa55e7e6b1991afe, type: 3}
     - {fileID: 561824206424634091, guid: 68c4081a63f1dfd469da9c95bea22158, type: 3}
-    - {fileID: 4219866145273439913, guid: 1ab62523487a65745ab7ee9663ad9025, type: 3}
     MaxPenetrationSteps: 8
     CCDRadiusMultiplier: 0.75
     AntiJitterDistance: {x: 0.025, y: 0.01}
@@ -415,9 +415,10 @@ MonoBehaviour:
   _Hp: 10
   _MaxStamina: 10
   _Stamina: 10
+  _IsEnableMoveYAxis: 0
   _velocity: {x: 0, y: 0, z: 0}
   _IsGrounded: 0
-  _IsRun: 0
+  _IsUseStamina: 0
   _IsExhaust: 0
 --- !u!114 &8685971482309519971
 MonoBehaviour:
@@ -433,6 +434,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <QuickSlotInventory>k__BackingField: {fileID: 6881369164517107483}
   _QuickSlotSelectIndex: -1
+  _IsHoldRope:
+    _value: 0
   _smallItemPos: {fileID: 5527436870779068543}
   _largeItemPos: {fileID: 8547965688668481192}
   <Inventory>k__BackingField: {fileID: 9026326367071277578}

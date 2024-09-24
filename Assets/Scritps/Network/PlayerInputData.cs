@@ -1,4 +1,6 @@
 using Fusion;
+using System;
+using Unity.Collections;
 using UnityEngine;
 
 public enum InputButton
@@ -12,20 +14,17 @@ public enum InputButton
     Num2,
     Num3,
     Num4,
+    HoldRope,
+    ReleaseRope,
 }
 
 public struct NetworkInputData : INetworkInput
 {
     public PlayerInputData playerInputData;
 
-    public int inventoryCount;
     public InventoryInputData inventoryInputData;
-    public InventoryInputData inventoryInputData2;
-    public InventoryInputData inventoryInputData3;
-    public InventoryInputData inventoryInputData4;
-    public InventoryInputData inventoryInputData5;
 }
-public struct PlayerInputData : INetworkInput
+public struct PlayerInputData : INetworkStruct
 {
     public const byte MOUSEBUTTON0 = 1;
     
@@ -36,19 +35,31 @@ public struct PlayerInputData : INetworkInput
     public Vector2 lookRotationDelta;
     public Vector3 moveDelta;
     public Vector3 velocity;
+
+    public NetworkId holdRopeID;
 }
 
-public struct InventoryInputData : INetworkInput
+public struct InventoryInputData : INetworkStruct
 {
     // 아이템줍기 관련
     public NetworkBool isAddItem;
     public NetworkId addItemID;
 
     // 인벤토리 관련
-    public NetworkId ObjectId;
-    public NetworkBehaviourId inventoryId;
-    public NetworkId encounterId;
     public NetworkBool isDropItem;
+    public NetworkBool isExchangeItem;
+
+    public NetworkId myInventoryObjectId;
+    public NetworkBehaviourId myInventoryId;
+
+    public NetworkId encounterInventoryObjectId;
+    public NetworkBehaviourId encounterInventoryId;
+
     public int myInventoryIndex;
-    public int encounterIndex;
+    public int encounterInventoryIndex;
+
+    private void Serialize_TryWriteBytes(byte[] buffer, int offset, ushort data)
+    {
+        BitConverter.TryWriteBytes(new Span<byte>(buffer, offset, sizeof(ushort)), data);
+    }
 }

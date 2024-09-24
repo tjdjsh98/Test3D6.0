@@ -1,10 +1,14 @@
 using Fusion;
+using Fusion.Addons.Physics;
 using UnityEngine;
 
 public class Item : NetworkBehaviour, IInteractable, IData
 {
-    BoxCollider _collider;
+    Collider _collider;
     Rigidbody _rigidbody;
+    NetworkRigidbody3D _networkRigidbody;
+
+
     [field:SerializeField] public string DataName { get; set; }
     [field:SerializeField]public InteractType InteractType { get; set; }
     [Networked] public NetworkBool IsInteractable { get; set; } = true;
@@ -14,17 +18,18 @@ public class Item : NetworkBehaviour, IInteractable, IData
     [field: SerializeField]public EquipmentType EquipmentType { get; set; }
     [Networked, OnChangedRender(nameof(OnIsHideChanged))]
     public bool IsHide { get; set; }
+    [Networked, OnChangedRender(nameof(OnIsUseRigidbodyChanaged))] public bool IsUseRigidbody { get; set; } = true;
 
 private void Awake()
     {
-        _collider = GetComponent<BoxCollider>();
+        _collider = GetComponentInChildren<BoxCollider>();
         _rigidbody= GetComponent<Rigidbody>();
+        _networkRigidbody = GetComponent<NetworkRigidbody3D>();
     }
 
     public void Equip()
     {
-        _rigidbody.isKinematic = true;
-        _rigidbody.useGravity= false;
+        IsUseRigidbody = false;
         _collider.isTrigger = true;
         gameObject.layer = 0;
     }
@@ -32,8 +37,7 @@ private void Awake()
     public void Unequip()
     {
         gameObject.layer = LayerMask.NameToLayer("Item");
-        _rigidbody.isKinematic = false;
-        _rigidbody.useGravity = true;
+        IsUseRigidbody = true;
         _collider.isTrigger = false;
     }
 
@@ -65,6 +69,21 @@ private void Awake()
     void OnIsHideChanged()
     {
         Show(!IsHide);
+    }
+
+    void OnIsUseRigidbodyChanaged()
+    {
+        if(_rigidbody)
+        {
+            if (!IsUseRigidbody)
+            {
+                _networkRigidbody.InterpolationTarget.transform.localPosition = Vector3.zero;
+                _networkRigidbody.InterpolationTarget.transform.localRotation = Quaternion.identity;
+            }
+            _rigidbody.useGravity = IsUseRigidbody;
+            _rigidbody.isKinematic = !IsUseRigidbody;
+            _networkRigidbody.enabled = IsUseRigidbody;
+        }
     }
 }
 
