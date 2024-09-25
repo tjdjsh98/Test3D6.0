@@ -23,6 +23,7 @@ public struct NetworkInputData : INetworkInput
     public PlayerInputData playerInputData;
     public InventoryInputData inventoryInputData;
     public InteractInputData interactInputData;
+    public WorkingInputData workingInputData;
 }
 public struct PlayerInputData : INetworkStruct
 {
@@ -63,4 +64,11 @@ public struct InteractInputData : INetworkStruct
 {
     public NetworkBool isInteract;
     public NetworkId interactTargetID;
+}
+
+public struct WorkingInputData : INetworkStruct
+{
+    public NetworkBool isWorking;
+    public NetworkBool isCancelWorking;
+    public NetworkId workingTargetID;
 }

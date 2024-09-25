@@ -61,7 +61,8 @@ public class PrototypeCharacter : NetworkBehaviour, IDamageable, IRigidbody
 
     public override void Render()
     {
-        _kcc.SetDynamicVelocity(_velocity);
+        _desiredVelocity = Vector3.zero;
+
     }
 
     public int Damage(DamageInfo damageInfo)

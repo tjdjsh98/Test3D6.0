@@ -21,6 +21,9 @@ public class UICharacter : UIBase
     [SerializeField] Transform _quickSlotParent;
     List<UIInventorySlot> _quickSlotList = new List<UIInventorySlot>();
 
+    // Working
+    [SerializeField]Image _workingProcessImage;
+
     public override void Init() 
     { 
         for(int i = 0; i <  _quickSlotParent.childCount; i++)
@@ -33,10 +36,6 @@ public class UICharacter : UIBase
         }
     }
 
-    private void FixedUpdate()
-    {
-        
-    }
     public void ConnectCharacter(PrototypeCharacter character)
     {
         _character = character;
@@ -70,6 +69,29 @@ public class UICharacter : UIBase
     {
         ShowHp();
         ShowStamina();
+        ShowWorkingProcess();
+    }
+
+    void ShowWorkingProcess()
+    {
+        if (_characterController)
+        {
+            if (_characterController.IsWorking)
+            {
+                float? remainTime = _characterController.WorkingTimer.RemainingTime(_characterController.Runner);
+                if (remainTime.HasValue)
+                {
+                    _workingProcessImage.transform.parent.gameObject.SetActive(true);
+                    float ratio = remainTime.Value/ _characterController.WorkingTime;
+
+                    Debug.Log(_characterController.WorkingTime + " " + remainTime.Value);
+                    _workingProcessImage.fillAmount = ratio;
+                    return;
+                }
+            }
+
+        }
+        _workingProcessImage.transform.parent.gameObject.SetActive(false);
     }
 
     void ShowHp()

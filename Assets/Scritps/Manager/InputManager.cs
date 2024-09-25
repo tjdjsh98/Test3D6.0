@@ -103,4 +103,8 @@ public class InputManager : NetworkBehaviour
     {
         _accumulatedInput.interactInputData = data;
     }
+    public void InsertWorkingInputData(WorkingInputData data)
+    {
+        _accumulatedInput.workingInputData = data;
+    }
 }
