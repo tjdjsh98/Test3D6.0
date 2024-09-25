@@ -21,8 +21,8 @@ public enum InputButton
 public struct NetworkInputData : INetworkInput
 {
     public PlayerInputData playerInputData;
-
     public InventoryInputData inventoryInputData;
+    public InteractInputData interactInputData;
 }
 public struct PlayerInputData : INetworkStruct
 {
@@ -57,9 +57,10 @@ public struct InventoryInputData : INetworkStruct
 
     public int myInventoryIndex;
     public int encounterInventoryIndex;
+}
 
-    private void Serialize_TryWriteBytes(byte[] buffer, int offset, ushort data)
-    {
-        BitConverter.TryWriteBytes(new Span<byte>(buffer, offset, sizeof(ushort)), data);
-    }
+public struct InteractInputData : INetworkStruct
+{
+    public NetworkBool isInteract;
+    public NetworkId interactTargetID;
 }

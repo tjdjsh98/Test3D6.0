@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -10,6 +11,8 @@ public class DataManager : MonoBehaviour
     { get { InitSingleton(); return _instance; } }
 
     public Dictionary<string, Item> _itemDictionary = new Dictionary<string, Item>();
+    public Dictionary<string, NetworkBlock> _networkBlockDictionary = new Dictionary<string, NetworkBlock>();
+
 
     static void InitSingleton()
     {
@@ -26,28 +29,45 @@ public class DataManager : MonoBehaviour
     void Init()
     {
         LoadData<Item>("Prefabs/Item");
+        LoadData<NetworkBlock>("Prefabs/Block");
     }
 
 
     public void LoadData<T>(string path) where T : MonoBehaviour, IData
     {
         T[] list = Resources.LoadAll<T>(path);
+        Type type = typeof(T);
+
+        Debug.Log(type + " " + list.Length);
 
         foreach (T item in list)
         {
-            _itemDictionary.Add(item.DataName, item as Item);
+            if (type.Equals(typeof(Item)))
+                _itemDictionary.Add(item.DataName.ToLower(), item as Item);
+            if (type.Equals(typeof(NetworkBlock)))
+                _networkBlockDictionary.Add(item.DataName.ToLower(), item as NetworkBlock);
+
         }
     }
 
     public T GetData<T>(string dataName)  where T : MonoBehaviour, IData
     {
-        if(typeof(T) == typeof(Item))
+        Type type = typeof(T);
+        string name = dataName.ToLower();
+
+        if (type.Equals(typeof(Item)))
         {
-            Debug.Log(dataName);
-            _itemDictionary.TryGetValue(dataName, out var item);
-            if (item != null) return item as T;
+            _itemDictionary.TryGetValue(name, out Item value);
+
+            return value as T;
+        }
+        if (type.Equals(typeof(NetworkBlock)))
+        {
+            _networkBlockDictionary.TryGetValue(name, out NetworkBlock value);
+
+            return value as T;
         }
 
-        return null;
+        return default(T);
     }
 }

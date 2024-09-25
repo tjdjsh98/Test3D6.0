@@ -99,4 +99,8 @@ public class InputManager : NetworkBehaviour
     {
         _accumulatedInput.inventoryInputData = data;
     }
+    public void InsertInteractInputData(InteractInputData data)
+    {
+        _accumulatedInput.interactInputData = data;
+    }
 }

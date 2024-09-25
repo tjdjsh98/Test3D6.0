@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 9101946656502381431}
   - component: {fileID: 1847513400404207748}
   - component: {fileID: 6203096960000336167}
+  - component: {fileID: 598539503916770094}
   m_Layer: 6
   m_Name: Torch
   m_TagString: Untagged
@@ -128,6 +129,9 @@ MonoBehaviour:
   _switchObject:
   - {fileID: 6699802747796992457}
   - {fileID: 2696326662151233525}
+  <InteractType>k__BackingField: 0
+  _IsInteractable:
+    _value: 1
 --- !u!114 &6203096960000336167
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -146,6 +150,22 @@ MonoBehaviour:
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 1847513400404207748}
+  - {fileID: 598539503916770094}
+--- !u!114 &598539503916770094
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 579597898417493334}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4414dd7922b1df54ba785a7022364651, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <DataName>k__BackingField: Torch
+  _MaxHp: 5
+  _Hp: 5
 --- !u!1 &6699802747796992457
 GameObject:
   m_ObjectHideFlags: 0
@@ -197,7 +217,7 @@ Light:
   m_CookieSize: 10
   m_Shadows:
     m_Type: 1
-    m_Resolution: -1
+    m_Resolution: 128
     m_CustomResolution: -1
     m_Strength: 1
     m_Bias: 0.05
@@ -235,7 +255,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 0.2, y: NaN, z: 0, w: NaN}
+  m_BoundingSphereOverride: {x: 0, y: 1.228645e-38, z: 6.47e-43, w: -4.512201e-23}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ForceVisible: 0
@@ -258,7 +278,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Version: 3
   m_UsePipelineSettings: 1
-  m_AdditionalLightsShadowResolutionTier: 0
+  m_AdditionalLightsShadowResolutionTier: -1
   m_LightLayerMask: 1
   m_RenderingLayers: 1
   m_CustomShadowLayers: 0

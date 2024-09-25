@@ -2,15 +2,17 @@ using Fusion;
 using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Rendering;
 
-public class InteractOtherObject : NetworkBehaviour
+public class InteractOtherObject : NetworkBehaviour, IBeforeTick
 {
-
     // Components
     NetworkCharacter _networkCharacter;
 
-
     NetworkButtons _previousButtons;
+
+    InteractInputData _accumulateInteractInputData;
+    InteractInputData _currentInteractInputData;
 
     GameObject _target;
 
@@ -30,36 +32,70 @@ public class InteractOtherObject : NetworkBehaviour
     private void OnDrawGizmosSelected()
     {
         Matrix4x4 rot = Matrix4x4.Rotate(transform.rotation);
-        Matrix4x4 pos = Matrix4x4.Translate(transform.position + transform.forward + transform.up *0.5f);
-        Gizmos.matrix =  pos * rot;
+        Matrix4x4 pos = Matrix4x4.Translate(transform.position + transform.forward + transform.up * 0.5f);
+        Gizmos.matrix = pos * rot;
 
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireCube(Vector3.zero, Vector3.one);
 
         Gizmos.matrix = Matrix4x4.identity;
+    }
+    public override void Spawned()
+    {
+        if (HasInputAuthority)
+        {
+            InputManager.Instance.BeforeInputDataSent += OnBeforeInputDataSent;
+            InputManager.Instance.InputDataReset += OnInputDataReset;
+        }
+    }
 
+    void OnBeforeInputDataSent()
+    {
+        InputManager.Instance.InsertInteractInputData(_accumulateInteractInputData);
+    }
+
+    void OnInputDataReset()
+    {
+        _accumulateInteractInputData = default;
+    }
+    public void BeforeTick()
+    {
+        InteractInputData data = _currentInteractInputData;
+        data.isInteract = default;
+        _currentInteractInputData = data;
+
+        if (GetInput(out NetworkInputData networkInputData))
+        {
+            _currentInteractInputData = networkInputData.interactInputData;
+        }
+    }
+
+    // 상호작용은 각 클라이언트에서 판정하여
+    // 메인클라이언트에게 누구와 상호작용하고 싶은지에 대한 데이터만 전송합니다.
+    public override void Render()
+    {
+        if (!HasInputAuthority) return;
+
+        DetectInteractableObject();
+
+        if(Input.GetKeyDown(KeyCode.E))
+        {
+            Interact();
+        }
     }
     public override void FixedUpdateNetwork()
     {
-        if (GetInput(out NetworkInputData networkInputData))
-        {
-            if(networkInputData.playerInputData.buttons.WasPressed(_previousButtons, InputButton.Interact))
-            {
-                InteractOther();
-            }
-            _previousButtons = networkInputData.playerInputData.buttons;
-        }
-        DetectInteractableObject();
-        if ((_isInteracting && _interactGameObject == null))
-        {
-            _interactBlock.Interact(gameObject);
-            _interactBlock = null;
-            _isInteracting = false;
-            _interactGameObject = null;
-            GetComponent<PlayerInputHandler>().IsEnableInputMove = true;
-            GetComponent<PlayerInputHandler>().IsEnableInputRotation = true;
-            _networkCharacter.SetAnimatorBoolean("Working", false);
-        }
+        ProcessInteractData();
+        //if ((_isInteracting && _interactGameObject == null))
+        //{
+        //    _interactBlock.Interact(gameObject);
+        //    _interactBlock = null;
+        //    _isInteracting = false;
+        //    _interactGameObject = null;
+        //    GetComponent<PlayerInputHandler>().IsEnableInputMove = true;
+        //    GetComponent<PlayerInputHandler>().IsEnableInputRotation = true;
+        //    _networkCharacter.SetAnimatorBoolean("Working", false);
+        //}
     }
     void DetectInteractableObject()
     {
@@ -67,8 +103,9 @@ public class InteractOtherObject : NetworkBehaviour
 
         Vector3 center = transform.position;
 
-        Collider[] hits = Physics.OverlapBox(center + transform.forward + transform.up * 0.5f
-            , Vector3.one, transform.rotation, Define.INTERACTABLE_LAYERMASK);
+
+        Collider[] hits = Physics.OverlapBox(center
+            , Vector3.one * 0.7f, transform.rotation, Define.INTERACTABLE_LAYERMASK);
 
 
         if (hits.Length == 0)
@@ -87,6 +124,7 @@ public class InteractOtherObject : NetworkBehaviour
         {
             IInteractable interactable = hit.GetComponentInParent<IInteractable>();
 
+
             // Despawn이 먼저 호출되어 확인을 안해주면 interactable.IsInteractable 에서
             // 오류가 발생하여 이 줄이 필요합니다.
             if (!hit.GetComponentInParent<NetworkObject>().IsValid) continue;
@@ -100,9 +138,9 @@ public class InteractOtherObject : NetworkBehaviour
         }
 
         UIManager.Instance.GetUI<UIInteract>().HideAll();
-        if(isNone) return;
-        
-        if(_target != null )
+        if (isNone) return;
+
+        if (_target != null)
         {
             string name = "";
             IData data = _target.GetComponentInParent<IData>();
@@ -112,11 +150,10 @@ public class InteractOtherObject : NetworkBehaviour
             UIManager.Instance.GetUI<UIInteract>().ShowText(_target, name);
         }
     }
-    void InteractOther()
+    void Interact()
     {
-        if (!Runner.IsFirstTick) return;
         if (_target == null) return;
-        if(_interactBlock != null)
+        if (_interactBlock != null)
         {
             _interactBlock.Interact(gameObject);
             _interactBlock = null;
@@ -130,25 +167,45 @@ public class InteractOtherObject : NetworkBehaviour
 
         if (interactBlock != null)
         {
-            if (interactBlock.Interact(gameObject))
-            {
-                // 일을 진행하는 블록이면 저장합니다.
-                // 한 번더 상호작용키를 누르면 취소 가능하게 합니다.
-                // 일 진행 중 움직이지 못하게 합니다.
-                if (interactBlock.InteractType == InteractType.Work)
-                {
-                    _interactBlock = interactBlock;
-                    _isInteracting = true;
-                    _interactGameObject = _target;
-                    GetComponent<PlayerInputHandler>().IsEnableInputMove = false;
-                    GetComponent<PlayerInputHandler>().IsEnableInputRotation = false;
-                    _networkCharacter.SetAnimatorBoolean("Working", true);
-                    float angle = Vector3.SignedAngle(transform.forward, _target.transform.position - transform.position, Vector3.up);
-                    _networkCharacter.AddAngle(angle);
-                }
+            _accumulateInteractInputData.isInteract = true;
+            _accumulateInteractInputData.interactTargetID = _target.GetComponentInParent<NetworkObject>().Id;
 
-                _target = null;
-            }
         }
     }
+
+
+    void ProcessInteractData()
+    {
+        if (_currentInteractInputData.isInteract)
+        {
+            NetworkObject networkObject = Runner.FindObject(_currentInteractInputData.interactTargetID);
+
+            Debug.Log(networkObject);
+            if (networkObject == null) return;
+            IInteractable interactable = networkObject.GetComponent<IInteractable>();
+            if (interactable == null || !interactable.IsInteractable) return;
+
+            interactable.Interact(gameObject);
+            //if (interactBlock.Interact(gameObject))
+            //{
+            //    // 일을 진행하는 블록이면 저장합니다.
+            //    // 한 번더 상호작용키를 누르면 취소 가능하게 합니다.
+            //    // 일 진행 중 움직이지 못하게 합니다.
+            //    if (interactBlock.InteractType == InteractType.Work)
+            //    {
+            //        _interactBlock = interactBlock;
+            //        _isInteracting = true;
+            //        _interactGameObject = _target;
+            //        GetComponent<PlayerInputHandler>().IsEnableInputMove = false;
+            //        GetComponent<PlayerInputHandler>().IsEnableInputRotation = false;
+            //        _networkCharacter.SetAnimatorBoolean("Working", true);
+            //        float angle = Vector3.SignedAngle(transform.forward, _target.transform.position - transform.position, Vector3.up);
+            //        _networkCharacter.AddAngle(angle);
+            //    }
+
+            //    _target = null;
+            //}
+        }
+    }
+
 }

@@ -51,7 +51,7 @@ public class UIDebug : UIBase
             int index = 0;
             if (command.Length == 5) 
             {
-                if (command[0].Equals("Item"))
+                if (command[0].ToLower().Equals("item"))
                 {
                     string name = command[1];
                     bool result = int.TryParse(command[2], out int x);
@@ -60,12 +60,44 @@ public class UIDebug : UIBase
 
                     if (result)
                     {
-                        NetworkObject networkObject = DataManager.Instance.GetData<Item>(name).GetComponent<NetworkObject>();
-
+                        Item item = DataManager.Instance.GetData<Item>(name);
+                        if(item == null)
+                        {
+                            _inputField.text = string.Empty;
+                            _historyText.text += $"{name}에 해당하는 아이템은 없습니다.";
+                            return;
+                        }
+                        NetworkObject networkObject = item.GetComponent<NetworkObject>();
                         Debug.Log(networkObject);
+
                         if (networkObject != null)
                         {
                             networkRunner.Spawn(networkObject, new Vector3(x, y, z), Quaternion.identity);
+                        }
+                    }
+                }
+                if (command[0].ToLower().Equals("block"))
+                {
+                    string name = command[1];
+                    bool result = int.TryParse(command[2], out int x);
+                    result |= int.TryParse(command[3], out int y);
+                    result |= int.TryParse(command[4], out int z);
+
+                    if (result)
+                    {
+                        NetworkBlock block = DataManager.Instance.GetData<NetworkBlock>(name);
+                        if (block == null)
+                        {
+                            _inputField.text = string.Empty;
+                            _historyText.text += $"{name}에 해당하는 블록은 없습니다.";
+                            return;
+                        }
+
+                        NetworkObject networkObject = block.GetComponent<NetworkObject>();
+                        Debug.Log(networkObject);
+                        if (networkObject != null)
+                        {
+                            var obj = networkRunner.Spawn(networkObject, new Vector3(x, y, z), Quaternion.identity);
                         }
                     }
                 }

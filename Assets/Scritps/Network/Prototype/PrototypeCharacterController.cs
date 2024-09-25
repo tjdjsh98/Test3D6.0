@@ -129,9 +129,7 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
         {
             if (_character.Stamina <= 0)
             {
-                PlayerInputData inputData = _playerInputHandler.AccumulatedInput;
-                inputData.buttons.Set(InputButton.ReleaseRope, true);
-                _playerInputHandler.AccumulatedInput = inputData;
+                ReleaseRope();
             }
             if (IsHoldRope)
             {
@@ -151,6 +149,7 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
         // HoldRope
         if(_currentPlayerInputData.buttons.WasPressed(_previousButtons, InputButton.HoldRope))
         {
+            Debug.Log("Hold");
             if (!IsHoldRope)
                 HoldRope(_currentPlayerInputData.holdRopeID);
             else
@@ -166,23 +165,25 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
         // Move
         if (!IsHoldRope)
         {
-            _character.AddLookAngle(_currentPlayerInputData.lookRotationDelta.y);
-            if (_character.IsGrounded && _currentPlayerInputData.buttons.WasPressed(_previousButtons, InputButton.Jump))
-            {
-                _character.Jump(Vector3.up, 5);
-            }
-            if (_currentPlayerInputData.buttons.IsSet(InputButton.Run))
-            {
-                _character.IsUseStamina = true;
-                speed = 8;
-            }
-            else
-            {
-                _character.IsUseStamina = false;
+                _character.AddLookAngle(_currentPlayerInputData.lookRotationDelta.y);
+
+                // Jump
+                if (_character.IsGrounded && _currentPlayerInputData.buttons.WasPressed(_previousButtons, InputButton.Jump))
+                {
+                    _character.Jump(Vector3.up, 10);
+                }
+                if (_currentPlayerInputData.buttons.IsSet(InputButton.Run))
+                {
+                    _character.IsUseStamina = true;
+                    speed = 8;
+                }
+                else
+                {
+                    _character.IsUseStamina = false;
             }
         }
         // RopeMove
-        else
+        else 
         {
             if(_currentPlayerInputData.movementInput.y > 0)
             {
@@ -198,6 +199,7 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
             }
         }
 
+        // ResultMove
         _character.Move(moveDirection * speed);
 
         //QuickSlots
@@ -241,7 +243,7 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
         }
     }
 
-    void HoldRope(NetworkId ropeId )
+    void HoldRope(NetworkId ropeId)
     {
         NetworkObject networkObject = Runner.FindObject(ropeId);
         if(networkObject != null )
@@ -349,7 +351,6 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
         }
        
 
-
         if (Object.InputAuthority != PlayerRef.None)
         {
             if (GetInput(out NetworkInputData input) == true)
@@ -357,7 +358,6 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
                 // New input received, we can store it as current.
                 _currentPlayerInputData = input.playerInputData;
                 _currentInventoryInputData = input.inventoryInputData;
-            
             }
         }
     }

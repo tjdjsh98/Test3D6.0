@@ -8,7 +8,6 @@ public class Item : NetworkBehaviour, IInteractable, IData
     Rigidbody _rigidbody;
     NetworkRigidbody3D _networkRigidbody;
 
-
     [field:SerializeField] public string DataName { get; set; }
     [field:SerializeField]public InteractType InteractType { get; set; }
     [Networked] public NetworkBool IsInteractable { get; set; } = true;
@@ -20,13 +19,25 @@ public class Item : NetworkBehaviour, IInteractable, IData
     public bool IsHide { get; set; }
     [Networked, OnChangedRender(nameof(OnIsUseRigidbodyChanaged))] public bool IsUseRigidbody { get; set; } = true;
 
-private void Awake()
+    Vector3 _prePosition;
+
+    private void Awake()
     {
-        _collider = GetComponentInChildren<BoxCollider>();
+        _collider = GetComponentInChildren<Collider>();
         _rigidbody= GetComponent<Rigidbody>();
         _networkRigidbody = GetComponent<NetworkRigidbody3D>();
     }
 
+    // 오브젝트가 움직이면 위치 동기화를 해준다.
+    // 메인클라이언트가 아닌 클라이언트는 메인에서 오브젝트가 움직이면 Collider가 맞지 않아 동기화가 필요하다.
+    public override void Render()
+    {
+        if (_prePosition != transform.position)
+        {
+            Physics.SyncTransforms();
+            _prePosition = transform.position;
+        }
+    }
     public void Equip()
     {
         IsUseRigidbody = false;
@@ -80,6 +91,7 @@ private void Awake()
                 _networkRigidbody.InterpolationTarget.transform.localPosition = Vector3.zero;
                 _networkRigidbody.InterpolationTarget.transform.localRotation = Quaternion.identity;
             }
+            _collider.enabled = IsUseRigidbody;
             _rigidbody.useGravity = IsUseRigidbody;
             _rigidbody.isKinematic = !IsUseRigidbody;
             _networkRigidbody.enabled = IsUseRigidbody;

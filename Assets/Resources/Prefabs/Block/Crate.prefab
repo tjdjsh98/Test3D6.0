@@ -86,6 +86,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4414dd7922b1df54ba785a7022364651, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <DataName>k__BackingField: Crate
   _MaxHp: 1
   _Hp: 1
 --- !u!114 &738308475078787889

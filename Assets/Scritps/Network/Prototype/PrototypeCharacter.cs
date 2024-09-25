@@ -148,7 +148,7 @@ public class PrototypeCharacter : NetworkBehaviour, IDamageable, IRigidbody
         }
 
 
-        if (_jumpImpulse != Vector3.zero)
+        if (IsGrounded &&_jumpImpulse != Vector3.zero)
         {
             _kcc.Jump(_jumpImpulse);
         }
@@ -158,11 +158,11 @@ public class PrototypeCharacter : NetworkBehaviour, IDamageable, IRigidbody
         {
             if (_kcc.Data.RealVelocity.y > 0)
             {
-                _environmentProcessor.Gravity = Vector3.down * 3f;
+                _environmentProcessor.Gravity = Vector3.down * 8f;
             }
             else
             {
-                _environmentProcessor.Gravity = Vector3.down * 4f;
+                _environmentProcessor.Gravity = Vector3.down * 9.8f;
             }
         }
         else

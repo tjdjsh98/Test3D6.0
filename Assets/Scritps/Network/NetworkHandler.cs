@@ -29,7 +29,12 @@ public class NetworkHandler : MonoBehaviour, INetworkRunnerCallbacks
         if (runner.IsServer)
         {
             Debug.Log("OnPlayerJoinedJoined we are server. Spawning player");
-            NetworkObject character = runner.Spawn(playerPrefabs, Vector3.up *4, Quaternion.identity, player);
+            Vector3 spawnPosition = Vector3.up * 4;
+            GameManager gameManager = FindAnyObjectByType<GameManager>();
+            if (gameManager && gameManager.SpawnPosition)
+                spawnPosition = gameManager.SpawnPosition.position;
+
+            NetworkObject character = runner.Spawn(playerPrefabs, spawnPosition, Quaternion.identity, player);
 
             _spawnedCharacters.Add(player, character);
 
