@@ -1,10 +1,8 @@
 using Fusion;
 using Fusion.Addons.KCC;
 using System;
-using System.Text;
-using UnityEditor;
+using UnityEditor.Searcher;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 [DefaultExecutionOrder(-5)]
 public class PrototypeCharacter : NetworkBehaviour, IDamageable, IRigidbody
@@ -17,6 +15,8 @@ public class PrototypeCharacter : NetworkBehaviour, IDamageable, IRigidbody
 
     [field: SerializeField][Networked] public float MaxStamina{ get; set; }
     [field: SerializeField][Networked] public float Stamina { get; set; }
+    [field: SerializeField][Networked] public float StaminaRecover { get; set; } = 1;
+    [field: SerializeField][Networked] public float StaminaRecoverMultifly { get; set; } = 1;
     [field: SerializeField][Networked] public bool IsEnableMoveYAxis { get; set; } = false;
 
 
@@ -27,16 +27,16 @@ public class PrototypeCharacter : NetworkBehaviour, IDamageable, IRigidbody
     // Component
     KCC _kcc;
     EnvironmentProcessor _environmentProcessor;
+    Animator _animator;
+    NetworkMecanimAnimator _networkAnimator;
+
     // Velocity
-    [SerializeField]Vector3 _velocity;
     Vector3 _desiredVelocity;
     float _lookAngle;
     Vector3 _jumpImpulse;
     [Networked]public bool IsGrounded { get; set; }
     [Networked]public bool IsUseStamina { get; set; }
     [Networked]public bool IsExhaust { get; set; }
-    public Vector3 Velocity => _velocity;
-
 
     bool _isTeleport;
     Vector3 _teleportPos;
@@ -44,6 +44,8 @@ public class PrototypeCharacter : NetworkBehaviour, IDamageable, IRigidbody
     private void Awake()
     {
         _kcc = GetComponent<KCC>();
+        _animator = GetComponentInChildren<Animator>();
+        _networkAnimator = GetComponent<NetworkMecanimAnimator>();
     }
 
     public override void Spawned()
@@ -52,8 +54,6 @@ public class PrototypeCharacter : NetworkBehaviour, IDamageable, IRigidbody
         Hp = MaxHp;
         Stamina = MaxStamina;
     }
-
-
     public override void FixedUpdateNetwork()
     {
         HandleVelocity();
@@ -62,11 +62,12 @@ public class PrototypeCharacter : NetworkBehaviour, IDamageable, IRigidbody
     public override void Render()
     {
         _desiredVelocity = Vector3.zero;
-
     }
 
     public int Damage(DamageInfo damageInfo)
     {
+        Hp -= damageInfo.damage;
+
         return 0;   
     }
 
@@ -77,14 +78,13 @@ public class PrototypeCharacter : NetworkBehaviour, IDamageable, IRigidbody
 
     public void AddForce(Vector3 force)
     {
-        _velocity += force;
+        _desiredVelocity += force;
     }
 
     public void AddLookAngle(float angle)
     {
         _lookAngle += angle;
     }
-
     public void HandleVelocity()
     {
         if(_isTeleport)
@@ -95,13 +95,13 @@ public class PrototypeCharacter : NetworkBehaviour, IDamageable, IRigidbody
 
         IsGrounded = _kcc.Data.IsGrounded;
 
-        float accelPower = 50;
+        float accelPower = 100;
 
         if (!IsGrounded && !IsEnableMoveYAxis)
         {
             accelPower = 0f;
         }
-        Vector3 desiredVelocity = _velocity;
+        Vector3 desiredVelocity = _desiredVelocity;
         desiredVelocity = Vector3.Lerp(_kcc.Data.DynamicVelocity, _desiredVelocity, accelPower * Runner.DeltaTime);
 
         if (!IsEnableMoveYAxis)
@@ -122,7 +122,7 @@ public class PrototypeCharacter : NetworkBehaviour, IDamageable, IRigidbody
         {
             if (Runner.IsFirstTick)
             {
-                Stamina -= Runner.DeltaTime * 2;
+                Stamina -= Runner.DeltaTime;
                 if (Stamina < 0)
                 {
                     IsExhaust = true;
@@ -135,7 +135,7 @@ public class PrototypeCharacter : NetworkBehaviour, IDamageable, IRigidbody
             {
                 if (Stamina < MaxStamina)
                 {
-                    Stamina += Runner.DeltaTime;
+                    Stamina += Runner.DeltaTime * StaminaRecover * StaminaRecoverMultifly;
                 }
                 if (Stamina >= MaxStamina)
                 {
@@ -149,7 +149,7 @@ public class PrototypeCharacter : NetworkBehaviour, IDamageable, IRigidbody
         }
 
 
-        if (IsGrounded &&_jumpImpulse != Vector3.zero)
+        if (_jumpImpulse != Vector3.zero)
         {
             _kcc.Jump(_jumpImpulse);
         }
@@ -173,33 +173,34 @@ public class PrototypeCharacter : NetworkBehaviour, IDamageable, IRigidbody
 
         _kcc.SetDynamicVelocity(desiredVelocity);
 
-
-        _velocity = desiredVelocity;
+        _desiredVelocity = desiredVelocity;
         _lookAngle = 0;
         _jumpImpulse = Vector3.zero;
     }
-
-
     public void Move(Vector3 velocity, float ratio = 1)
     {
         _desiredVelocity = velocity * ratio;
     }
-
     public void AddForce(Vector3 power, ForceMode forceMode = ForceMode.Impulse)
     {
         if(forceMode== ForceMode.Impulse)
         {
-            _velocity = power;
+            _desiredVelocity = power;
         }
         else if(forceMode == ForceMode.Force)
         {
-            _velocity += power;
+            _desiredVelocity += power;
         }
     }
-
     public void Teleport(Vector3 position)
     {
         _isTeleport = true;
         _teleportPos = position;
+    }
+    public void AnimatorSetTrigget(string name)
+    {
+        _animator?.SetTrigger(name);
+        if (HasStateAuthority)
+            _networkAnimator?.SetTrigger(name);
     }
 }

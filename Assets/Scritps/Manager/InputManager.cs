@@ -107,4 +107,8 @@ public class InputManager : NetworkBehaviour
     {
         _accumulatedInput.workingInputData = data;
     }
+    public void InsertReceiptInputData(ReceiptInputData data)
+    {
+        _accumulatedInput.receiptInputData= data;
+    }
 }

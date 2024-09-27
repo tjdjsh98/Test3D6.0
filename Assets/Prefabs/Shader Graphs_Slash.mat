@@ -61,14 +61,14 @@ Material:
     m_Floats:
     - _AlphaThreadhold: 0.907
     - _Dissolve: 0
-    - _Distortion: 0.0434
+    - _Distortion: 0.031
     - _FlipX: 1
     - _QueueControl: 0
     - _QueueOffset: 0
     - _SlashHeight: 8.13
-    - _SlashWidth: 0.054
+    - _SlashWidth: 0.23
     m_Colors:
     - _Color: {r: 1, g: 0, b: 0, a: 0}
-    - _EmissionColor: {r: 32, g: 17.791203, b: 6.7924542, a: 0}
+    - _EmissionColor: {r: 32, g: 17.791203, b: 6.7924542, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

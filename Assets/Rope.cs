@@ -13,7 +13,6 @@ public class Rope : NetworkBehaviour, IInteractable
     {
         PlayerInputHandler playerInputHandler = interactor.GetComponentInParent<PlayerInputHandler>();
 
-        Debug.Log("Send");
         if (playerInputHandler == null) return false;
 
         PlayerInputData inputData = playerInputHandler.AccumulatedInput;

@@ -1,9 +1,11 @@
 using Fusion;
+using System.Data.SqlTypes;
 using UnityEngine;
 
-public class CameraController : NetworkBehaviour
+public class CameraController : MonoBehaviour
 {
     Camera _camera;
+    NetworkObject _networkObject;
     [SerializeField] GameObject _pivot;
     [SerializeField] float _distance;
 
@@ -18,12 +20,25 @@ public class CameraController : NetworkBehaviour
 
     private void Awake()
     {
+        _networkObject= GetComponent<NetworkObject>();
         _camera = Camera.main;
     }
 
     private void LateUpdate()
     {
-        if (!HasInputAuthority) return;
+        if (_networkObject != null && !_networkObject.HasInputAuthority) return;
+
+        if (Input.GetMouseButtonDown(0))
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false; 
+        }
+        if(Input.GetKeyDown(KeyCode.Escape))
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
+
         if(Cursor.lockState != CursorLockMode.Locked) return;
 
         CalcRealDistacnce();

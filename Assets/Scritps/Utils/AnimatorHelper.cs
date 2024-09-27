@@ -10,6 +10,9 @@ public class AnimatorHelper : MonoBehaviour
     public List<UnityEvent> events;
     public Action AnimatorMoved;
 
+    [field: SerializeField][field:Range(0,1)] public float UseLeftHandRatio {get;set;}
+    [field: SerializeField][field:Range(0, 1)] public float UseRightHandRatio {get;set;}
+
     [SerializeField] float _rot;
     private void Awake()
     {

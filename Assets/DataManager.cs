@@ -12,6 +12,7 @@ public class DataManager : MonoBehaviour
 
     public Dictionary<string, Item> _itemDictionary = new Dictionary<string, Item>();
     public Dictionary<string, NetworkBlock> _networkBlockDictionary = new Dictionary<string, NetworkBlock>();
+    public Dictionary<string, ReceiptData> _receiptDictionary = new Dictionary<string, ReceiptData>();
 
 
     static void InitSingleton()
@@ -30,10 +31,11 @@ public class DataManager : MonoBehaviour
     {
         LoadData<Item>("Prefabs/Item");
         LoadData<NetworkBlock>("Prefabs/Block");
+        LoadData<ReceiptData>("Datas/Receipt");
     }
 
 
-    public void LoadData<T>(string path) where T : MonoBehaviour, IData
+    public void LoadData<T>(string path) where T : UnityEngine.Object, IData 
     {
         T[] list = Resources.LoadAll<T>(path);
         Type type = typeof(T);
@@ -46,11 +48,13 @@ public class DataManager : MonoBehaviour
                 _itemDictionary.Add(item.DataName.ToLower(), item as Item);
             if (type.Equals(typeof(NetworkBlock)))
                 _networkBlockDictionary.Add(item.DataName.ToLower(), item as NetworkBlock);
+            if (type.Equals(typeof(ReceiptData)))
+                _receiptDictionary.Add(item.DataName.ToLower(), item as ReceiptData);
 
         }
     }
 
-    public T GetData<T>(string dataName)  where T : MonoBehaviour, IData
+    public T GetData<T>(string dataName)  where T : UnityEngine.Object, IData
     {
         Type type = typeof(T);
         string name = dataName.ToLower();
@@ -64,6 +68,12 @@ public class DataManager : MonoBehaviour
         if (type.Equals(typeof(NetworkBlock)))
         {
             _networkBlockDictionary.TryGetValue(name, out NetworkBlock value);
+
+            return value as T;
+        }
+        if (type.Equals(typeof(ReceiptData)))
+        {
+            _receiptDictionary.TryGetValue(name, out ReceiptData value);
 
             return value as T;
         }

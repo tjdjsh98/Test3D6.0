@@ -24,6 +24,22 @@ PrefabInstance:
       propertyPath: SortKey
       value: 3187052886
       objectReference: {fileID: 0}
+    - target: {fileID: 1447635949113315994, guid: 386d4b71cf8c21347b655cef802e60e0, type: 3}
+      propertyPath: NetworkedBehaviours.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1447635949113315994, guid: 386d4b71cf8c21347b655cef802e60e0, type: 3}
+      propertyPath: 'NetworkedBehaviours.Array.data[0]'
+      value: 
+      objectReference: {fileID: 4852036119955674716}
+    - target: {fileID: 1447635949113315994, guid: 386d4b71cf8c21347b655cef802e60e0, type: 3}
+      propertyPath: 'NetworkedBehaviours.Array.data[1]'
+      value: 
+      objectReference: {fileID: 3027125824211061163}
+    - target: {fileID: 1447635949113315994, guid: 386d4b71cf8c21347b655cef802e60e0, type: 3}
+      propertyPath: 'NetworkedBehaviours.Array.data[2]'
+      value: 
+      objectReference: {fileID: 3027125824211061163}
     - target: {fileID: 3488958839648247817, guid: 386d4b71cf8c21347b655cef802e60e0, type: 3}
       propertyPath: m_Name
       value: Apple
@@ -68,7 +84,8 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 1291273025880931740, guid: 386d4b71cf8c21347b655cef802e60e0, type: 3}
     m_RemovedGameObjects:
     - {fileID: 5735337014805000956, guid: 386d4b71cf8c21347b655cef802e60e0, type: 3}
     m_AddedGameObjects:
@@ -76,10 +93,53 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 3975959119147740943}
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 3488958839648247817, guid: 386d4b71cf8c21347b655cef802e60e0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3027125824211061163}
     - targetCorrespondingSourceObject: {fileID: 8970194965731503703, guid: 386d4b71cf8c21347b655cef802e60e0, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6665419436165836141}
   m_SourcePrefab: {fileID: 100100000, guid: 386d4b71cf8c21347b655cef802e60e0, type: 3}
+--- !u!1 &3808714662014286511 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3488958839648247817, guid: 386d4b71cf8c21347b655cef802e60e0, type: 3}
+  m_PrefabInstance: {fileID: 337770358887127718}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &3027125824211061163
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3808714662014286511}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45b15fc16c378584b9bc98665477778e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <DataName>k__BackingField: Apple
+  <InteractType>k__BackingField: 0
+  _IsInteractable:
+    _value: 1
+  <IsStackable>k__BackingField: 0
+  <ItemType>k__BackingField: 2
+  <ItemSize>k__BackingField: 0
+  <EquipmentType>k__BackingField: 0
+  <IsDestroyWhenUse>k__BackingField: 1
+  _IsHide: 0
+  _IsUseRigidbody: 1
+  _fullness: 10
+--- !u!114 &4852036119955674716 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5180799279015202042, guid: 386d4b71cf8c21347b655cef802e60e0, type: 3}
+  m_PrefabInstance: {fileID: 337770358887127718}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3808714662014286511}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a591d221a634417e9827eb58e17de84, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!4 &5441905967597455882 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5707618732409753772, guid: 386d4b71cf8c21347b655cef802e60e0, type: 3}

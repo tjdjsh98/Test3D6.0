@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 8806386282752173318}
   - component: {fileID: 738308475078787889}
   - component: {fileID: 2396144490085182030}
-  m_Layer: 8
+  m_Layer: 6
   m_Name: Crate
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -134,9 +134,8 @@ GameObject:
   - component: {fileID: 3327732686860847849}
   - component: {fileID: 4333449460938652705}
   - component: {fileID: 7381769186074790547}
-  - component: {fileID: 5035207332493537485}
   - component: {fileID: 6534955263941389194}
-  m_Layer: 8
+  m_Layer: 6
   m_Name: SM_Prop_Crate_01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -211,27 +210,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!65 &5035207332493537485
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2526404993252482355}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.98185754, y: 1.0106556, z: 0.9990036}
-  m_Center: {x: -0.00000025331974, y: 0.00000008940697, z: 0}
 --- !u!114 &6534955263941389194
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -261,7 +239,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5510993266368416600}
-  m_Layer: 8
+  - component: {fileID: 7626095811905304078}
+  m_Layer: 6
   m_Name: Model
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -284,3 +263,24 @@ Transform:
   - {fileID: 3327732686860847849}
   m_Father: {fileID: 3939329177844078547}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &7626095811905304078
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3025707199185090919}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.98185754, y: 1.0106556, z: 0.9990036}
+  m_Center: {x: -0.00000025331974, y: 0.505328, z: 0}

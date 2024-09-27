@@ -4,6 +4,8 @@ public enum ItemType
 {
     Mics = 0,
     Equipment,
+    Food,
+    Build,
     End,
 }
 

@@ -180,7 +180,6 @@ public class InteractOtherObject : NetworkBehaviour, IBeforeTick
         {
             NetworkObject networkObject = Runner.FindObject(_currentInteractInputData.interactTargetID);
 
-            Debug.Log(networkObject);
             if (networkObject == null) return;
             IInteractable interactable = networkObject.GetComponent<IInteractable>();
             if (interactable == null || !interactable.IsInteractable) return;

@@ -24,18 +24,28 @@ public struct NetworkInputData : INetworkInput
     public InventoryInputData inventoryInputData;
     public InteractInputData interactInputData;
     public WorkingInputData workingInputData;
+    public ReceiptInputData receiptInputData;
 }
+
 public struct PlayerInputData : INetworkStruct
 {
     public const byte MOUSEBUTTON0 = 1;
-    
+
+    public Vector3 cameraPosition;
     public Vector3 aimForwardVector;
     public Vector3 bodyForwardVector;
     public Vector2 movementInput;
     public NetworkButtons buttons;
     public Vector2 lookRotationDelta;
+    public Vector3 animatorDeltaAngle;
+    public Vector3 animatorVelocity;
     public Vector3 moveDelta;
     public Vector3 velocity;
+
+    public NetworkBool IsEnableInputMove;
+    public NetworkBool IsEnableInputRotate;
+    public NetworkBool IsEnableAnimationMove;
+    public NetworkBool IsEnableAnimationRotate;
 
     public NetworkId holdRopeID;
 }
@@ -71,4 +81,10 @@ public struct WorkingInputData : INetworkStruct
     public NetworkBool isWorking;
     public NetworkBool isCancelWorking;
     public NetworkId workingTargetID;
+}
+
+public struct ReceiptInputData : INetworkStruct
+{
+    public NetworkBool isReceipt;
+    public NetworkString<_32> receptName;
 }

@@ -364,7 +364,6 @@ MonoBehaviour:
   - {fileID: 8685971482309519971}
   - {fileID: 7162295192408305763}
   - {fileID: 3888767791671892451}
-  - {fileID: 8321107032693159025}
   - {fileID: 9026326367071277578}
   - {fileID: 6881369164517107483}
 --- !u!114 &4629767289049234195
@@ -415,6 +414,8 @@ MonoBehaviour:
   _Hp: 10
   _MaxStamina: 10
   _Stamina: 10
+  _StaminaRecover: 1
+  _StaminaRecoverMultifly: 1
   _IsEnableMoveYAxis: 0
   _velocity: {x: 0, y: 0, z: 0}
   _IsGrounded: 0
@@ -432,9 +433,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f24b4acf1d51752439ad6b7f2826e1f4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _IsEnableMove: 1
+  _IsEnableRotate: 1
+  _HungryPoint: 100
+  _MaxHungryPoint: 100
   <QuickSlotInventory>k__BackingField: {fileID: 6881369164517107483}
   _QuickSlotSelectIndex: -1
   _IsHoldRope:
+    _value: 0
+  _IsWorking:
     _value: 0
   _smallItemPos: {fileID: 5527436870779068543}
   _largeItemPos: {fileID: 8547965688668481192}

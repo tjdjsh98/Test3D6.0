@@ -16,6 +16,10 @@ public class UICharacter : UIBase
     [SerializeField] TextMeshProUGUI _staminaTextMesh;
     Vector2 _initStaminabarSize;
 
+    [SerializeField] RectTransform _hungryBarTr;
+    [SerializeField] TextMeshProUGUI _hungryTextMesh;
+    Vector2 _initHungrybarSize;
+
     // QuickSlot
     Inventory _quickSlotInventory;
     [SerializeField] Transform _quickSlotParent;
@@ -42,6 +46,7 @@ public class UICharacter : UIBase
         _characterController = character.GetComponent<PrototypeCharacterController>();
         _initHpbarSize = _hpBarTr.sizeDelta;
         _initStaminabarSize = _staminaBarTr.sizeDelta;
+        _initHungrybarSize = _hungryBarTr.sizeDelta;
         _quickSlotInventory = _characterController.QuickSlotInventory;
         _quickSlotInventory.ItemChanged += RefreshQuickSlot;
         _characterController.QuickSlotIndexChanged += RefreshQuickSlotIndex;
@@ -49,8 +54,10 @@ public class UICharacter : UIBase
         RefreshQuickSlot();
     }
 
-    public void DisconnectCharacter()
+    public void DisconnectCharacter(PrototypeCharacter character)
     {
+        if (character != _character) return;
+
         if(_quickSlotInventory != null)
         {
             _quickSlotInventory.ItemChanged -= RefreshQuickSlot;
@@ -69,6 +76,7 @@ public class UICharacter : UIBase
     {
         ShowHp();
         ShowStamina();
+        ShowHungry();
         ShowWorkingProcess();
     }
 
@@ -82,9 +90,8 @@ public class UICharacter : UIBase
                 if (remainTime.HasValue)
                 {
                     _workingProcessImage.transform.parent.gameObject.SetActive(true);
-                    float ratio = remainTime.Value/ _characterController.WorkingTime;
+                    float ratio = (1-remainTime.Value/ _characterController.WorkingTime);
 
-                    Debug.Log(_characterController.WorkingTime + " " + remainTime.Value);
                     _workingProcessImage.fillAmount = ratio;
                     return;
                 }
@@ -110,7 +117,16 @@ public class UICharacter : UIBase
         float ratio = (float)_character.Stamina / _character.MaxStamina;
 
         _staminaBarTr.sizeDelta = new Vector2(_initStaminabarSize.x * ratio, _initStaminabarSize.y);
-        _staminaTextMesh.text = _character.Stamina.ToString();
+        _staminaTextMesh.text = ((int)_character.Stamina).ToString();
+    }
+    void ShowHungry()
+    {
+        if (_characterController == null) return;
+
+        float ratio = (float)_characterController.HungryPoint / _characterController.MaxHungryPoint;
+
+        _hungryBarTr.sizeDelta = new Vector2(_initHungrybarSize.x * ratio, _initHungrybarSize.y);
+        _hungryTextMesh.text = ((int)_characterController.HungryPoint).ToString();
     }
     void RefreshQuickSlot()
     {

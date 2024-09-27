@@ -15,9 +15,6 @@ public class PlayerInputHandler : NetworkBehaviour,IBeforeUpdate
 
     // Components
     Camera _camera;
-    Animator _animator;
-    AnimatorHelper _animatoHelper;
-    NetworkCharacter _character;
     KCC _kcc;
 
     public bool IsEnableInputMove { get; set; } = true;
@@ -29,13 +26,7 @@ public class PlayerInputHandler : NetworkBehaviour,IBeforeUpdate
 
     private void Awake()
     {
-        _character = GetComponent<NetworkCharacter>();
         _kcc = GetComponent<KCC>(); 
-        _animator = GetComponentInChildren<Animator>();
-        _animatoHelper = GetComponentInChildren<AnimatorHelper>();
-        if(_animatoHelper)
-            _animatoHelper.AnimatorMoved += OnAnimatorMoved;
-
     }
     public override void Spawned()
     {
@@ -54,24 +45,6 @@ public class PlayerInputHandler : NetworkBehaviour,IBeforeUpdate
         {
             InputManager.Instance.BeforeInputDataSent -= OnBeforeInputDataSent;
             InputManager.Instance.InputDataReset -= OnReset;
-        }
-    }
-    void OnAnimatorMoved()
-    {
-        if (!_character.IsGrounded) return;
-        if (HasInputAuthority)
-        {
-            PlayerInputData accumulatedInput = AccumulatedInput;
-            accumulatedInput.moveDelta += _animator.deltaPosition;
-            accumulatedInput.velocity += _animator.deltaPosition/ Runner.DeltaTime;
-
-            Vector2 deltaAngle = (Vector2)_animator.deltaRotation.eulerAngles;
-            deltaAngle.x = deltaAngle.x > 180 ? deltaAngle.x - 360 : deltaAngle.x;
-            deltaAngle.y = deltaAngle.y > 180 ? deltaAngle.y - 360 : deltaAngle.y;
-            accumulatedInput.lookRotationDelta += deltaAngle;
-
-            AccumulatedInput = accumulatedInput;
-            
         }
     }
 
@@ -100,10 +73,11 @@ public class PlayerInputHandler : NetworkBehaviour,IBeforeUpdate
 
         PlayerInputData accumulatedInput = AccumulatedInput;
 
+        // cameraPosition
+        accumulatedInput.cameraPosition = _camera.transform.position;
+
         // aimForward
         accumulatedInput.aimForwardVector = _camera.transform.forward;
-        accumulatedInput.aimForwardVector.y = 0;
-        accumulatedInput.aimForwardVector.Normalize();
 
         Vector2 movementInput = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
         Vector3 cameraForward = accumulatedInput.aimForwardVector;
@@ -162,8 +136,11 @@ public class PlayerInputHandler : NetworkBehaviour,IBeforeUpdate
                 {
                     characterMoveDirection.Normalize();
                     float angle = Mathf.Atan2(characterMoveDirection.x, characterMoveDirection.z) * Mathf.Rad2Deg;
-
                     float deltaAngle = angle - _kcc.FixedData.GetLookRotation().y;
+                    if (deltaAngle > 180)
+                        deltaAngle = -360 + deltaAngle;
+                    else if(deltaAngle < -180)
+                        deltaAngle = 360 + deltaAngle;
 
                     accumulatedInput.lookRotationDelta.y = deltaAngle;
                 }

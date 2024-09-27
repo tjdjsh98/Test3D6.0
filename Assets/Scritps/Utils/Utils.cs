@@ -21,9 +21,9 @@ public static class Utils
             yield return new WaitForFixedUpdate();
         }
 
-        yield return new WaitForSeconds(duration);
-
-        yield return new WaitForSeconds(animator.GetAnimatorTransitionInfo(0).duration);
+        yield return new WaitForSeconds(duration * endRatio);
+        if(endRatio == 1)
+            yield return new WaitForSeconds(animator.GetAnimatorTransitionInfo(0).duration);
 
         action?.Invoke();
     }
@@ -54,8 +54,9 @@ public static class Utils
             if (duration != 0) break;
             yield return new WaitForFixedUpdate();
         }
-        yield return new WaitForSeconds(duration);
-         yield return new WaitForSeconds(animator.GetAnimatorTransitionInfo(0).duration);
+        yield return new WaitForSeconds(duration * endRatio);
+        if(endRatio == 1)
+            yield return new WaitForSeconds(animator.GetAnimatorTransitionInfo(0).duration);
 
         action?.Invoke();
     }

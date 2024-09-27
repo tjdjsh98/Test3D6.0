@@ -1,44 +1,58 @@
 using Fusion;
 using Fusion.Addons.KCC;
+using NUnit.Framework.Api;
 using System;
 using TMPro;
+using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.Assertions.Must;
+using UnityEngine.EventSystems;
 using UnityEngine.Rendering;
 
 [DefaultExecutionOrder(-6)]
 public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
 {
-    // Input
-    NetworkButtons _previousButtons;
-    PlayerInputData _currentPlayerInputData;
-    PlayerInputData _previousPlayerInputData;
+    // Component
+    protected PrototypeCharacter _character;
+    protected PlayerInputHandler _playerInputHandler;
+    protected Camera _camera;
+    protected GameObject _model;
 
-    InventoryInputData _currentInventoryInputData;
+    // Input
+    bool _receiveNewData = false;
+    protected NetworkButtons _previousButtons;
+    protected PlayerInputData _currentPlayerInputData;
+    protected PlayerInputData _previousPlayerInputData;
+
+    protected InventoryInputData _currentInventoryInputData;
 
     public WorkingInputData AccumulateWorkingInputData { get; set; }
-    WorkingInputData _currentWorkingInputData;
+    protected WorkingInputData _currentWorkingInputData;
+
+    public ReceiptInputData AccumulateReceiptInputData { get; set; }
+    protected ReceiptInputData _currentReceiptInputData;
+
+    // Move
+    protected Vector3 _moveDirection;
 
     // 행동제어
-    [Networked] public bool IsEnableMove { get; set; } = true;
-    [Networked] public bool IsEnableRotate { get; set; } = true;
+    public bool IsEnableInputMove { get; set; } = true;
+    public bool IsEnableInputRotate { get; set; } = true;
 
-
-    // Component
-    PrototypeCharacter _character;
-    PlayerInputHandler _playerInputHandler;
-    Camera _camera;
-
+    // 배고픔 수치
+    [Networked] public float HungryPoint { get; set; } = 100;   
+    [Networked] public float MaxHungryPoint { get; set; } = 100;
+    float _hungryZeroElased = 0;
 
     // 퀵슬롯
     [field: SerializeField] public Inventory QuickSlotInventory { get; set; }
 
     [Networked] public int QuickSlotSelectIndex { get; set; } = -1;
-    [Networked, OnChangedRender(nameof(OnQuickSlotChanged))] NetworkBool QuickSlotChanaged { get; set; } = false;
+    [Networked, OnChangedRender(nameof(OnQuickSlotChanged))] protected NetworkBool QuickSlotChanaged { get; set; } = false;
     public Action QuickSlotIndexChanged { get; set; }
 
     // 밧줄타고 올라가기
-    Rope _holdRope;
+    protected Rope _holdRope;
     [Networked][field: SerializeField] public NetworkBool IsHoldRope { get; set; }
 
     // Working
@@ -48,7 +62,12 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
     [Networked]public TickTimer WorkingTimer { get; set; }
     WorkingBlock _workingBlock;
 
-
+    // 아이템
+    // 빌드
+    protected NetworkObject _builing;
+    protected GameObject _buildingModel;
+    protected Collider _buildingModelCollider;
+    public Vector3 BuildPoint { get; set; }
 
     // 들고 다닐 수 있는 아이템 위치
     [SerializeField] Transform _smallItemPos;
@@ -59,15 +78,23 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
 
     [field: SerializeField] public Inventory Inventory { get; set; }
 
-    void Awake()
+    protected virtual void Awake()
     {
         _character = GetComponent<PrototypeCharacter>();
         _playerInputHandler = GetComponent<PlayerInputHandler>();
+        _model = transform.Find("Model").gameObject;
         _camera = Camera.main;
-        QuickSlotInventory.ItemChanged += OnQuickSlotItemChanged;
+    }
+    private void OnEnable()
+    {
+        QuickSlotInventory.ItemChanged += OnQuickSlotInventoryChanged;
     }
 
-    void OnQuickSlotItemChanged()
+    private void OnDisable()
+    {
+        QuickSlotInventory.ItemChanged -= OnQuickSlotInventoryChanged;
+    }
+    void OnQuickSlotInventoryChanged()
     {
         QuickSlotChanaged = !QuickSlotChanaged;
     }
@@ -81,13 +108,12 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
             InputManager.Instance.InputDataReset += OnInputDataReset;
         }
     }
-
     public override void Despawned(NetworkRunner runner, bool hasState)
     {
         // 자신의 캐릭터 UI 연결
         if (HasInputAuthority)
         {
-            UIManager.Instance.GetUI<UICharacter>().ConnectCharacter(null);
+            UIManager.Instance.GetUI<UICharacter>().DisconnectCharacter(_character);
             InputManager.Instance.BeforeInputDataSent -= OnBeforeInputDataSent;
             InputManager.Instance.InputDataReset -= OnInputDataReset;
         }
@@ -96,13 +122,62 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
     void OnBeforeInputDataSent()
     {
         InputManager.Instance.InsertWorkingInputData(AccumulateWorkingInputData);
+        InputManager.Instance.InsertReceiptInputData(AccumulateReceiptInputData);
     }
-
     void OnInputDataReset()
     {
         AccumulateWorkingInputData = default;
+        AccumulateReceiptInputData = default;
+    }
+    public void BeforeTick()
+    {
+        ResetOnceData();
+
+        if (Object.InputAuthority != PlayerRef.None)
+        {
+            if (GetInput(out NetworkInputData input) == true)
+            {
+                // New input received, we can store it as current.
+                _currentPlayerInputData = input.playerInputData;
+                _currentInventoryInputData = input.inventoryInputData;
+                _currentWorkingInputData = input.workingInputData;
+                _currentReceiptInputData = input.receiptInputData;
+                _receiveNewData= true;
+            }
+        }
     }
 
+    // 한 번만 적용하는 데이터만 제거해준다.
+    void ResetOnceData()
+    {
+        if (_receiveNewData == false) return;
+        _receiveNewData = false;
+        _previousPlayerInputData = _currentPlayerInputData;
+        {
+            PlayerInputData inputData = _currentPlayerInputData;
+            inputData.moveDelta = default;
+            inputData.lookRotationDelta = default;
+            inputData.animatorDeltaAngle = default;
+            _currentPlayerInputData = inputData;
+        }
+        {
+            InventoryInputData inventoryInputData = _currentInventoryInputData;
+            inventoryInputData.isAddItem = default;
+            inventoryInputData.isDropItem = default;
+            inventoryInputData.isExchangeItem = default;
+            _currentInventoryInputData = inventoryInputData;
+        }
+        {
+            WorkingInputData workingInputData = _currentWorkingInputData;
+            workingInputData.isWorking = default;
+            _currentWorkingInputData = workingInputData;
+        }
+        {
+            ReceiptInputData receiptData = _currentReceiptInputData;
+            receiptData.isReceipt = default;
+            _currentReceiptInputData = receiptData;
+        }
+    }
     public void Update()
     {
         if (HasInputAuthority)
@@ -120,6 +195,15 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
                     ui.Open();
                 }
             }
+            // Test
+            if (Input.GetKeyDown(KeyCode.P))
+            {
+                ReceiptInputData data = AccumulateReceiptInputData;
+                data.isReceipt = true;
+                data.receptName.Set("Crate");
+                AccumulateReceiptInputData = data;
+            }
+            PreviewBuilding();
         }
 
     }
@@ -127,12 +211,20 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
     {
         ItemSlot slot = QuickSlotInventory.GetSlot(QuickSlotSelectIndex);
 
-        if (_leftItem != null)
+
+        _builing = null;
+        if (HasInputAuthority && _buildingModel)
+            Destroy(_buildingModel);
+
+        _buildingModel = null;
+
+        if (_leftItem != null && _leftItem.Object != null)
         {
             // 들고 있는 아이템이 퀵슬롯 자리에 없거나 다른 아이템이라면
             NetworkObject networkObj = Runner.FindObject(QuickSlotInventory.GetSlot(_leftItemSlotIndex).itemId);
             if (networkObj == null || networkObj.gameObject != _leftItem.gameObject)
             {
+                Debug.Log(1);
                 _leftItem.IsUseRigidbody = true;
                 _leftItem.transform.SetParent(null);
                 _leftItem = null;
@@ -149,7 +241,6 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
         }
 
         NetworkObject networkObject = Runner.FindObject(slot.itemId);
-        Debug.Log(slot.itemId + " " + networkObject);
         if (networkObject != null)
         {
             networkObject.transform.SetParent(_largeItemPos, false);
@@ -158,11 +249,65 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
             _leftItem.IsHide = false;
             _leftItem.IsUseRigidbody = false;
             _leftItemSlotIndex = QuickSlotSelectIndex;
+
+
+            if(_leftItem.ItemType == ItemType.Build)
+            {
+                _builing = ((BuildItem)_leftItem).Building;
+                Transform tr = _builing.transform.Find("Model");
+                if(tr)
+                {
+                    // 로컬만 위치를 미리 보여주기 위해 프리뷰 모델 생성
+                    if (HasInputAuthority)
+                    {
+                        _buildingModel = Instantiate(tr.gameObject);
+                        _buildingModel.layer = 0;
+                        _buildingModelCollider = _buildingModel.GetComponentInChildren<Collider>();
+                        _buildingModelCollider.isTrigger = true;
+                    }
+                    else if(HasStateAuthority)
+                    {
+                        _buildingModel = tr.gameObject;
+                        _buildingModelCollider = _buildingModel.GetComponentInChildren<Collider>();
+                    }
+                }
+            }
         }
         QuickSlotIndexChanged?.Invoke();
     }
     public override void Render()
     {
+        if (HasStateAuthority)
+        {
+            if((float)HungryPoint/ MaxHungryPoint < 0.3f)
+            {
+                _character.StaminaRecoverMultifly = 0.5f;
+            }
+            else
+            {
+                _character.StaminaRecoverMultifly = 1;
+            }
+
+            if (HungryPoint > 0)
+            {
+                HungryPoint -= Runner.DeltaTime;
+            }
+            else
+            {
+                _hungryZeroElased += Runner.DeltaTime;
+
+                if(_hungryZeroElased > 3f)
+                {
+                    DamageInfo info = new DamageInfo();
+                    info.attacker = _character;
+                    info.target = _character;
+                    info.damage = 1;
+                    info.knockbackPower = 0;
+                    _character.Damage(info);
+                    _hungryZeroElased = 0;
+                }
+            }
+        }
         if (HasStateAuthority)
         {
             if (_character.Stamina <= 0)
@@ -183,27 +328,35 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
     }
     public override void FixedUpdateNetwork()
     {
-        InventoryFixedUpdate(_currentInventoryInputData);
+        ProcessInputData();
 
+        _previousButtons = _currentPlayerInputData.buttons;
+    }
+
+    protected virtual void ProcessInputData()
+    {
+        InventoryFixedUpdate(_currentInventoryInputData);
         Vector3 forward = _currentPlayerInputData.aimForwardVector;
         Vector3 right = Vector3.Cross(Vector3.up, forward);
-        Vector3 moveDirection = forward * _currentPlayerInputData.movementInput.y +
+        _moveDirection = forward * _currentPlayerInputData.movementInput.y +
                 right * _currentPlayerInputData.movementInput.x;
 
-        // HoldRope
-        if (_currentPlayerInputData.buttons.WasPressed(_previousButtons, InputButton.HoldRope))
-        {
-            if (!IsHoldRope)
-                HoldRope(_currentPlayerInputData.holdRopeID);
-            else
-                ReleaseRope();
-        }
+        ProcessRope();
+        ProcessMove();
+        ProcessRotate();
+        ProcessThrow();
+        ProcessQuickSlot();
+        // Working
+        ProcessWorking();
+        //Recipt
+        ProcessReceipt();
+        // UseItem
+        ProcessItem();
+    }
 
-        // ReleaseRope
-        if (_currentPlayerInputData.buttons.WasPressed(_previousButtons, InputButton.ReleaseRope))
-        {
-            ReleaseRope();
-        }
+    // Move
+    protected virtual void ProcessMove()
+    {
         float speed = 2;
         // Move
         if (!IsHoldRope)
@@ -229,73 +382,36 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
         {
             if (_currentPlayerInputData.movementInput.y > 0)
             {
-                moveDirection = (_holdRope.StartPos.position - _holdRope.EndPos.position).normalized;
+                _moveDirection = (_holdRope.StartPos.position - _holdRope.EndPos.position).normalized;
             }
             else if (_currentPlayerInputData.movementInput.y < 0)
             {
-                moveDirection = (_holdRope.EndPos.position - _holdRope.StartPos.position).normalized;
+                _moveDirection = (_holdRope.EndPos.position - _holdRope.StartPos.position).normalized;
             }
             else
             {
-                moveDirection = Vector3.zero;
+                _moveDirection = Vector3.zero;
             }
         }
 
         // ResultMove
-        if (IsEnableMove)
-            _character.Move(moveDirection * speed);
-
-        // Rotate
-        if (IsEnableRotate)
-            _character.AddLookAngle(_currentPlayerInputData.lookRotationDelta.y);
-
-        //QuickSlots
-        if (_currentPlayerInputData.buttons.WasPressed(_previousButtons, InputButton.Num1))
-        {
-            QuickSlotSelectIndex = QuickSlotSelectIndex == 0 ? -1 : 0;
-            QuickSlotChanaged = !QuickSlotChanaged;
-        }
-        if (_currentPlayerInputData.buttons.WasPressed(_previousButtons, InputButton.Num2))
-        {
-            QuickSlotSelectIndex = QuickSlotSelectIndex == 1 ? -1 : 1;
-            QuickSlotChanaged = !QuickSlotChanaged;
-        }
-        if (_currentPlayerInputData.buttons.WasPressed(_previousButtons, InputButton.Num3))
-        {
-            QuickSlotSelectIndex = QuickSlotSelectIndex == 2 ? -1 : 2;
-            QuickSlotChanaged = !QuickSlotChanaged;
-        }
-        if (_currentPlayerInputData.buttons.WasPressed(_previousButtons, InputButton.Num4))
-        {
-            QuickSlotSelectIndex = QuickSlotSelectIndex == 3 ? -1 : 3;
-            QuickSlotChanaged = !QuickSlotChanaged;
-        }
-
-        // Throw
-        if (_currentPlayerInputData.buttons.WasPressed(_previousButtons, InputButton.Throw))
-        {
-            if (QuickSlotSelectIndex != -1)
-            {
-                QuickSlotInventory.DropItem(QuickSlotSelectIndex);
-                QuickSlotChanaged = !QuickSlotChanaged;
-            }
-        }
-
-        // Working
-
-        StartWorking();
-        Working();
-        CancelWorking();
-
-        _previousButtons = _currentPlayerInputData.buttons;
-
-        if (_leftItem)
-        {
-            _leftItem.transform.localRotation = Quaternion.identity;
-            _leftItem.transform.localPosition = Vector3.zero;
-        }
+        if (IsEnableInputMove)
+            _character.Move(_moveDirection * speed);
     }
 
+    protected virtual void ProcessRotate()
+    {
+        // Rotate
+        if (IsEnableInputRotate)
+            _character.AddLookAngle(_currentPlayerInputData.lookRotationDelta.y);
+    }
+    // Working
+    protected virtual void ProcessWorking()
+    {
+        StartWorking();
+        CancelWorking();
+        Working();
+    }
     void StartWorking()
     {
         if (_currentWorkingInputData.isWorking)
@@ -305,11 +421,10 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
             WorkingTime = _workingBlock.RequireTime;
             WorkingTimer = TickTimer.CreateFromSeconds(Runner, WorkingTime);
             IsWorking = true;
-            IsEnableRotate = false;
-            IsEnableMove = false;
+            IsEnableInputRotate = false;
+            IsEnableInputMove = false;
         }
     }
-
     void CancelWorking()
     {
         if (IsWorking)
@@ -317,13 +432,12 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
             if (_currentWorkingInputData.isCancelWorking)
             {
                 IsWorking = false;
-                IsEnableRotate = true;
-                IsEnableMove = true;
+                IsEnableInputRotate = true;
+                IsEnableInputMove = true;
                 CancelWorkingFrame = Time.frameCount;
             }
         }
     }
-
     void Working()
     {
         if (IsWorking)
@@ -337,14 +451,85 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
                     Runner.Despawn(_workingBlock.Object);
                 }
                 IsWorking = false;
-                IsEnableRotate = true;
-                IsEnableMove = true;
+                IsEnableInputRotate = true;
+                IsEnableInputMove = true;
                 CancelWorkingFrame = Time.frameCount;
             }
         }
     }
 
-    void HoldRope(NetworkId ropeId)
+    // Throw
+    protected virtual void ProcessThrow()
+    {
+        // Throw
+        if (_currentPlayerInputData.buttons.WasPressed(_previousButtons, InputButton.Throw))
+        {
+            if (QuickSlotSelectIndex != -1)
+            {
+                QuickSlotInventory.DropItem(QuickSlotSelectIndex);
+                QuickSlotChanaged = !QuickSlotChanaged;
+            }
+        }
+
+    }
+
+    // QuickSlot
+    protected virtual void ProcessQuickSlot()
+    {
+        //QuickSlots
+        if (_currentPlayerInputData.buttons.WasPressed(_previousButtons, InputButton.Num1))
+        {
+            Debug.Log(1);
+            QuickSlotSelectIndex = QuickSlotSelectIndex == 0 ? -1 : 0;
+            QuickSlotChanaged = !QuickSlotChanaged;
+        }
+        if (_currentPlayerInputData.buttons.WasPressed(_previousButtons, InputButton.Num2))
+        {
+            Debug.Log(2);
+            QuickSlotSelectIndex = QuickSlotSelectIndex == 1 ? -1 : 1;
+            QuickSlotChanaged = !QuickSlotChanaged;
+        }
+        if (_currentPlayerInputData.buttons.WasPressed(_previousButtons, InputButton.Num3))
+        {
+            Debug.Log(3);
+            QuickSlotSelectIndex = QuickSlotSelectIndex == 2 ? -1 : 2;
+            QuickSlotChanaged = !QuickSlotChanaged;
+        }
+        if (_currentPlayerInputData.buttons.WasPressed(_previousButtons, InputButton.Num4))
+        {
+            Debug.Log(4);
+            QuickSlotSelectIndex = QuickSlotSelectIndex == 3 ? -1 : 3;
+            QuickSlotChanaged = !QuickSlotChanaged;
+        }
+
+        
+
+        if (_leftItem)
+        {
+            _leftItem.transform.localRotation = Quaternion.identity;
+            _leftItem.transform.localPosition = Vector3.zero;
+        }
+    }
+
+    // Rope
+    protected virtual void ProcessRope()
+    {
+        // HoldRope
+        if (_currentPlayerInputData.buttons.WasPressed(_previousButtons, InputButton.HoldRope))
+        {
+            if (!IsHoldRope)
+                HoldRope(_currentPlayerInputData.holdRopeID);
+            else
+                ReleaseRope();
+        }
+
+        // ReleaseRope
+        if (_currentPlayerInputData.buttons.WasPressed(_previousButtons, InputButton.ReleaseRope))
+        {
+            ReleaseRope();
+        }
+    }
+    protected virtual void HoldRope(NetworkId ropeId)
     {
         NetworkObject networkObject = Runner.FindObject(ropeId);
         if (networkObject != null)
@@ -363,12 +548,142 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
             }
         }
     }
-
-    void ReleaseRope()
+    protected virtual void ReleaseRope()
     {
         IsHoldRope = false;
         _character.IsEnableMoveYAxis = false;
         _holdRope = null;
+    }
+
+    // Item
+    // 아이템 사용은 서버에서 판정
+    protected virtual void ProcessItem()
+    {
+        if (_currentPlayerInputData.buttons.WasPressed(_previousButtons, InputButton.MouseButton0))
+        {
+            UseItem();
+        }
+
+    }
+    void UseItem()
+    {
+        if (!HasStateAuthority) return;
+
+        if(QuickSlotSelectIndex == -1) return;
+        ItemSlot slot = QuickSlotInventory.GetSlot(QuickSlotSelectIndex);
+        if(slot.itemId == default) return;
+
+        NetworkObject networkObject = Runner.FindObject(slot.itemId);
+        if (networkObject == null) return;
+        Item item = networkObject.GetComponent<Item>();
+        if (item == null) return;
+
+        if (_buildingModel)
+        {
+            Physics.Raycast(_currentPlayerInputData.cameraPosition, _currentPlayerInputData.aimForwardVector, out var hit, Mathf.Infinity, Define.GROUND_LAYERMASK);
+
+            if (hit.collider != null)
+            {
+                BuildPoint = hit.point;
+
+            }
+        }
+
+        if (item.UseItem(this))
+        {
+            if(item.IsDestroyWhenUse)
+            {
+                QuickSlotInventory.RemoveItem(_leftItemSlotIndex);
+                Runner.Despawn(item.Object);
+            }
+        }
+    }
+
+    // Building
+    void PreviewBuilding()
+    {
+        if(_buildingModel)
+        {
+            Physics.Raycast(_camera.transform.position, _camera.transform.forward, out var hit, Mathf.Infinity, Define.GROUND_LAYERMASK);
+
+            if(hit.collider == null)
+            {
+                _buildingModel.gameObject.SetActive(false);
+                return;
+            }
+
+            _buildingModel.gameObject.SetActive(true);
+            _buildingModel.transform.position = hit.point;
+        }
+    }
+
+    // Food
+    public void EatFood(float fullness)
+    {
+        if(MaxHungryPoint < HungryPoint + fullness)
+        {
+            HungryPoint = MaxHungryPoint;
+        }
+        else
+        {
+            HungryPoint += fullness;    
+        }
+    }
+
+    //Receipt
+    public void ProcessReceipt()
+    {
+        if(_currentReceiptInputData.isReceipt)
+        {
+            ReceiptData data = DataManager.Instance.GetData<ReceiptData>(_currentReceiptInputData.receptName.Value);
+            Debug.Log(data);
+            if(data != null)
+            {
+                bool enable = true;
+                for(int i = 0; i < data.ReceiptItemList.Count ; i++)
+                {
+                    string itemName = data.ReceiptItemList[i].itemName;
+                    int requireCount = data.ReceiptItemList[i].requireItemCount;
+
+                    requireCount -= Inventory.GetItemCount(itemName);
+                    
+                    if(requireCount > 0)
+                        requireCount -= QuickSlotInventory.GetItemCount(itemName);
+
+                    if (requireCount > 0)
+                    {
+                        Debug.Log(itemName);
+                        enable = false;
+                        break;
+                    }
+                }
+
+                if(enable)
+                {
+                    for (int i = 0; i < data.ReceiptItemList.Count; i++)
+                    {
+                        string itemName = data.ReceiptItemList[i].itemName;
+                        int requireCount = data.ReceiptItemList[i].requireItemCount;
+                        
+                        requireCount = Inventory.DestroyItem(itemName, requireCount);
+
+                        if(requireCount >0)
+                        {
+                            Debug.Log(itemName + " " + requireCount);
+                            QuickSlotInventory.DestroyItem(itemName, requireCount);
+                        }
+                    }
+                    Debug.Log(data.resultItem);
+                    if(!QuickSlotInventory.InsertItem(data.resultItem))
+                    {
+                        Debug.Log(data.resultItem);
+
+                        Inventory.InsertItem(data.resultItem);
+                    }
+                }
+            }
+
+        }
     }
 
     // 메인 클라이언트만 판정해줍니다.
@@ -394,10 +709,14 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
             Item item = networkObject.GetComponent<Item>();
 
             // 상호작용이 가능한지 최종적으로 메인클라이언트가 확인한다.
+            // 퀵슬롯에 넣을수 있는지 확인하고 안되면 인벤토리에 넣는다.
             if (!item.IsInteractable) return;
             if (networkObject != null)
             {
-                Inventory.InsertItem(networkObject.gameObject);
+                if (!QuickSlotInventory.InsertItem(networkObject.gameObject))
+                {
+                    Inventory.InsertItem(networkObject.gameObject);
+                }
             }
         }
         if (data.isExchangeItem)
@@ -436,42 +755,12 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
 
         }
     }
-    public void BeforeTick()
-    {
-        _previousPlayerInputData = _currentPlayerInputData;
-        PlayerInputData inputData = _currentPlayerInputData;
-        inputData.moveDelta = default;
-        inputData.lookRotationDelta = default;
-        _currentPlayerInputData = inputData;
-        {
-            InventoryInputData inventoryInputData = _currentInventoryInputData;
-            inventoryInputData.isAddItem = default;
-            inventoryInputData.isDropItem = default;
-            inventoryInputData.isExchangeItem = default;
-            _currentInventoryInputData = inventoryInputData;
-        }
-        {
-            WorkingInputData workingInputData = _currentWorkingInputData;
-            workingInputData.isWorking = default;
-            _currentWorkingInputData = workingInputData;
-        }
-
-
-        if (Object.InputAuthority != PlayerRef.None)
-        {
-            if (GetInput(out NetworkInputData input) == true)
-            {
-                // New input received, we can store it as current.
-                _currentPlayerInputData = input.playerInputData;
-                _currentInventoryInputData = input.inventoryInputData;
-                _currentWorkingInputData = input.workingInputData;
-            }
-        }
-    }
     void LateUpdate()
     {
         if (!HasInputAuthority) return;
 
 
     }
+
+ 
 }
