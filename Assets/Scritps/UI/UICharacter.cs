@@ -23,7 +23,7 @@ public class UICharacter : UIBase
     // QuickSlot
     Inventory _quickSlotInventory;
     [SerializeField] Transform _quickSlotParent;
-    List<UIInventorySlot> _quickSlotList = new List<UIInventorySlot>();
+    List<UIItemSlot> _quickSlotList = new List<UIItemSlot>();
 
     // Working
     [SerializeField]Image _workingProcessImage;
@@ -32,9 +32,9 @@ public class UICharacter : UIBase
     { 
         for(int i = 0; i <  _quickSlotParent.childCount; i++)
         {
-            UIInventorySlot slot = new UIInventorySlot();
+            UIItemSlot slot = new UIItemSlot();
             slot.parent = _quickSlotParent.GetChild(i).gameObject;
-            slot.itemTextmesh = slot.parent.transform.Find("Text").GetComponent<TextMeshProUGUI>();
+            slot.itemNameTextmesh = slot.parent.transform.Find("Text").GetComponent<TextMeshProUGUI>();
             slot.itemImage = slot.parent.GetComponent<Image>();
             _quickSlotList.Add(slot);
         }
@@ -133,7 +133,7 @@ public class UICharacter : UIBase
         for(int i = 0; i < _quickSlotInventory.SlotCount; i++)
         {
             ItemSlot itemSlot = _quickSlotInventory.GetSlot(i);
-            _quickSlotList[i].itemTextmesh.text = itemSlot.itemName.ToString();
+            _quickSlotList[i].itemNameTextmesh.text = itemSlot.itemName.ToString();
 
        
         }

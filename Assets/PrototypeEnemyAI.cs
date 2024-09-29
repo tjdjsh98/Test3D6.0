@@ -23,6 +23,8 @@ public class PrototypeEnemyAI : NetworkBehaviour
     {
         _navMeshAgent = GetComponent<NavMeshAgent>();
         _character = GetComponent<PrototypeCharacter>();
+
+        _navMeshAgent.isStopped = true;
     }
 
     private void OnDrawGizmosSelected()
@@ -54,7 +56,6 @@ public class PrototypeEnemyAI : NetworkBehaviour
             > Vector3.Distance(transform.position, item2.gameObject.transform.position) ? 1 : -1;
         });
 
-        Debug.Log(hits.Length);
         for(int i = 0; i < hits.Length; i++)
         {
             _navMeshAgent.SetDestination(hits[i].gameObject.transform.position);
@@ -73,14 +74,22 @@ public class PrototypeEnemyAI : NetworkBehaviour
 
     void ChaseTarget()
     {
-        if (_target == null) return;
+        if (_target == null)
+        {
+            _character.Move(Vector3.zero);
+            return;
+        }
 
         _navMeshAgent.SetDestination(_target.transform.position);
         if (_navMeshAgent.path.corners.Length >= 2)
         {
-            Vector3 direction = (_navMeshAgent.path.corners[1] - transform.position).normalized;
+            Vector3 direction = (_navMeshAgent.path.corners[1] - transform.position);
             float deltaAngle = Vector3.SignedAngle(transform.forward, direction,Vector3.up);
-            _character.Move(direction * 3);
+
+            if (Vector3.Distance(_target.transform.position , transform.position) > 2)
+            {
+                _character.Move(direction.normalized * 3);
+            }
             if (Runner.IsFirstTick)
             {
                 _character.AddLookAngle(deltaAngle);

@@ -16,6 +16,7 @@ public class InteractOtherObject : NetworkBehaviour, IBeforeTick
 
     GameObject _target;
 
+    [SerializeField] Range _interactRange;
 
     // InteractType이 Work인 오브젝트 관리
     bool _isInteracting;
@@ -31,14 +32,7 @@ public class InteractOtherObject : NetworkBehaviour, IBeforeTick
 
     private void OnDrawGizmosSelected()
     {
-        Matrix4x4 rot = Matrix4x4.Rotate(transform.rotation);
-        Matrix4x4 pos = Matrix4x4.Translate(transform.position + transform.forward + transform.up * 0.5f);
-        Gizmos.matrix = pos * rot;
-
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireCube(Vector3.zero, Vector3.one);
-
-        Gizmos.matrix = Matrix4x4.identity;
+        Utils.DrawRange(gameObject, _interactRange, Color.yellow);
     }
     public override void Spawned()
     {
@@ -102,11 +96,8 @@ public class InteractOtherObject : NetworkBehaviour, IBeforeTick
         if (!HasInputAuthority) return;
 
         Vector3 center = transform.position;
-
-
-        Collider[] hits = Physics.OverlapBox(center
-            , Vector3.one * 0.7f, transform.rotation, Define.INTERACTABLE_LAYERMASK);
-
+        
+        Collider[] hits = Utils.RangeOverlapAll(gameObject, _interactRange, Define.INTERACTABLE_LAYERMASK);
 
         if (hits.Length == 0)
         {

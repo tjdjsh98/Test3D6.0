@@ -147,6 +147,18 @@ PrefabInstance:
       propertyPath: _interpolationTarget
       value: 
       objectReference: {fileID: 4367632243015026616}
+    - target: {fileID: 5707618732409753772, guid: 386d4b71cf8c21347b655cef802e60e0, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5707618732409753772, guid: 386d4b71cf8c21347b655cef802e60e0, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5707618732409753772, guid: 386d4b71cf8c21347b655cef802e60e0, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.2
+      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 1291273025880931740, guid: 386d4b71cf8c21347b655cef802e60e0, type: 3}
     m_RemovedGameObjects:

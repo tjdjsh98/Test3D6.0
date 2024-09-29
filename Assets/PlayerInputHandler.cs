@@ -100,36 +100,39 @@ public class PlayerInputHandler : NetworkBehaviour,IBeforeUpdate
 
             NetworkButtons buttons = default;
 
-            // Jump
-            if (Input.GetButtonDown("Jump"))
-                buttons.Set(InputButton.Jump, true);
+            if (InputManager.Instance.IsEnableInput)
+            {
+                // Jump
+                if (Input.GetButtonDown("Jump"))
+                    buttons.Set(InputButton.Jump, true);
 
-            // Fire
-            if (Input.GetButtonDown("Fire1"))
-                buttons.Set(InputButton.MouseButton0, true);
+                // Fire
+                if (Input.GetButtonDown("Fire1"))
+                    buttons.Set(InputButton.MouseButton0, true);
 
-            // Interact
-            if (Input.GetKey(KeyCode.LeftShift))
-                buttons.Set(InputButton.Run, true);
+                // Interact
+                if (Input.GetKey(KeyCode.LeftShift))
+                    buttons.Set(InputButton.Run, true);
 
-            // Interact
-            if (Input.GetKeyDown(KeyCode.E))
-                buttons.Set(InputButton.Interact, true);
+                // Interact
+                if (Input.GetKeyDown(KeyCode.E))
+                    buttons.Set(InputButton.Interact, true);
 
-            // Throw
-            if (Input.GetKeyDown(KeyCode.Q))
-                buttons.Set(InputButton.Throw, true);
+                // Throw
+                if (Input.GetKeyDown(KeyCode.Q))
+                    buttons.Set(InputButton.Throw, true);
 
-            // QuickSlot
-            if (Input.GetKeyDown(KeyCode.Alpha1))
-                buttons.Set(InputButton.Num1, true);
-            if (Input.GetKeyDown(KeyCode.Alpha2))
-                buttons.Set(InputButton.Num2, true);
-            if (Input.GetKeyDown(KeyCode.Alpha3))
-                buttons.Set(InputButton.Num3, true);
-            if (Input.GetKeyDown(KeyCode.Alpha4))
-                buttons.Set(InputButton.Num4, true);
+                // QuickSlot
+                if (Input.GetKeyDown(KeyCode.Alpha1))
+                    buttons.Set(InputButton.Num1, true);
+                if (Input.GetKeyDown(KeyCode.Alpha2))
+                    buttons.Set(InputButton.Num2, true);
+                if (Input.GetKeyDown(KeyCode.Alpha3))
+                    buttons.Set(InputButton.Num3, true);
+                if (Input.GetKeyDown(KeyCode.Alpha4))
+                    buttons.Set(InputButton.Num4, true);
 
+            }
             if (IsEnableInputRotation)
             {
                 if (characterMoveDirection != Vector3.zero)

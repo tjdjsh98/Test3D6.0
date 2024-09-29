@@ -1,14 +1,19 @@
 using Fusion;
-using System.Data.SqlTypes;
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
     Camera _camera;
     NetworkObject _networkObject;
-    [SerializeField] GameObject _pivot;
-    [SerializeField] float _distance;
 
+    int _currentCameraIndex = 0;
+    int _nextCameraIndex = -1;
+    [SerializeField]List<CameraData> _cameraDatas;
+    Coroutine _cameraChangeCoroutine;
+   
     Vector3 _realDistance;
 
     [SerializeField] float _minRoll;
@@ -19,9 +24,11 @@ public class CameraController : MonoBehaviour
     [SerializeField] bool _flipX;
     [SerializeField] bool _flipY;
 
-    [SerializeField] float _sphereSize =0.1f;
 
-    [SerializeField] Vector3 _offset;
+    Vector3 pivot;
+    Vector3 offset;
+    float distance;
+    float sphereSize;
 
     Vector3 _cameraDirection;
 
@@ -35,7 +42,13 @@ public class CameraController : MonoBehaviour
     {
         if (_networkObject != null && !_networkObject.HasInputAuthority) return;
 
-        if (Input.GetMouseButtonDown(0))
+        if (!InputManager.Instance.IsEnableFocus)
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+            return;
+        }
+        if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1))
         {
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false; 
@@ -48,12 +61,20 @@ public class CameraController : MonoBehaviour
 
         if(Cursor.lockState != CursorLockMode.Locked) return;
 
+        if (_cameraChangeCoroutine == null)
+        {
+            pivot = _cameraDatas[_currentCameraIndex].pivot.transform.position;
+            offset = _cameraDatas[_currentCameraIndex].offset;
+            distance = _cameraDatas[_currentCameraIndex].distance;
+            sphereSize = _cameraDatas[_currentCameraIndex].sphereSize;
+        }
+
         CalcRealDistacnce();
 
-        _camera.transform.position = _pivot.transform.position + _realDistance;
+        _camera.transform.position = pivot + _realDistance;
 
         //_camera.transform.LookAt(_pivot.transform.position + _cameraDirection);
-        _camera.transform.LookAt(_pivot.transform.position+ _offset.x * transform.right + _offset.y * transform.up);
+        _camera.transform.LookAt(pivot + offset.x * transform.right + offset.y * transform.up);
     }
 
     void CalcRealDistacnce()
@@ -66,14 +87,47 @@ public class CameraController : MonoBehaviour
         Vector3 direction = new Vector3(Mathf.Cos(_pitch * Mathf.Deg2Rad), Mathf.Sin(_roll * Mathf.Deg2Rad), Mathf.Sin(_pitch * Mathf.Deg2Rad)).normalized;
 
         _cameraDirection = direction;
-        _realDistance = direction * _distance;
-        if (_pivot != null)
+        _realDistance = direction * distance;
+        if(Physics.SphereCast(pivot, sphereSize,direction, out var hit, distance, Define.GROUND_LAYERMASK))
         {
-            if(Physics.SphereCast(_pivot.transform.position, _sphereSize,direction, out var hit, _distance, Define.GROUND_LAYERMASK))
-            {
-                _realDistance = direction * (hit.point - _pivot.transform.position).magnitude;
-
-            }
+            _realDistance = direction * (hit.point - pivot).magnitude;
         }
     }
+
+    void ChangeCamera(int indexs)
+    {
+        _nextCameraIndex = indexs;
+        if(_cameraChangeCoroutine != null) StopCoroutine( _cameraChangeCoroutine);
+        _cameraChangeCoroutine = StartCoroutine(LerpCamera());
+
+    
+    }
+
+
+    IEnumerator LerpCamera()
+    {
+        int curretIndex = 0;
+        int nextIndex = 1;
+        for(int i = 1; i <= 60; i++)
+        {
+            pivot = Vector3.Lerp(_cameraDatas[curretIndex].pivot.transform.position, _cameraDatas[nextIndex].pivot.transform.position, i/60);
+            offset= Vector3.Lerp(_cameraDatas[curretIndex].offset, _cameraDatas[nextIndex].offset, i/60);
+            distance = Mathf.Lerp(_cameraDatas[curretIndex].distance, _cameraDatas[nextIndex].distance, i / 60);
+            sphereSize = Mathf.Lerp(_cameraDatas[curretIndex].sphereSize, _cameraDatas[nextIndex].sphereSize, i / 60);
+            yield return null;
+
+        }
+        _currentCameraIndex = _nextCameraIndex;
+        _cameraChangeCoroutine = null;
+    }
+}
+
+[Serializable]
+public struct CameraData
+{
+    public GameObject pivot;
+    public float distance;
+    public float sphereSize;
+    public Vector3 offset;
+
 }

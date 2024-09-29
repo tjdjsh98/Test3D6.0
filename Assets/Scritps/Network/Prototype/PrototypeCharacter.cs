@@ -1,7 +1,6 @@
 using Fusion;
 using Fusion.Addons.KCC;
 using System;
-using UnityEditor.Searcher;
 using UnityEngine;
 
 [DefaultExecutionOrder(-5)]
@@ -37,6 +36,7 @@ public class PrototypeCharacter : NetworkBehaviour, IDamageable, IRigidbody
     [Networked]public bool IsGrounded { get; set; }
     [Networked]public bool IsUseStamina { get; set; }
     [Networked]public bool IsExhaust { get; set; }
+    [Networked] public bool IsEnableMove { get; set; } = true;
 
     bool _isTeleport;
     Vector3 _teleportPos;
@@ -61,14 +61,23 @@ public class PrototypeCharacter : NetworkBehaviour, IDamageable, IRigidbody
 
     public override void Render()
     {
-        _desiredVelocity = Vector3.zero;
+        _desiredVelocity = Vector3.Lerp(_desiredVelocity, Vector3.zero, Runner.DeltaTime * 10f);
     }
 
     public int Damage(DamageInfo damageInfo)
     {
         Hp -= damageInfo.damage;
 
+        AddForce(damageInfo.knockbackPower * damageInfo.knockbackDirection);
+        IsEnableMove = false;
+
+        Invoke("ActiveEnableMove", 1);
         return 0;   
+    }
+
+    void ActiveEnableMove()
+    {
+        IsEnableMove = true;
     }
 
     public void Jump( Vector3 direction, float power)
@@ -87,7 +96,7 @@ public class PrototypeCharacter : NetworkBehaviour, IDamageable, IRigidbody
     }
     public void HandleVelocity()
     {
-        _animator.SetFloat("FallSpeed", _kcc.Data.DynamicVelocity.y);
+        _animator?.SetFloat("FallSpeed", _kcc.Data.DynamicVelocity.y);
         if(_isTeleport)
         {
             _kcc.SetPosition(_teleportPos);
@@ -172,14 +181,16 @@ public class PrototypeCharacter : NetworkBehaviour, IDamageable, IRigidbody
             _environmentProcessor.Gravity = Vector3.up * 0.2f;
         }
 
+      
+
         _kcc.SetDynamicVelocity(desiredVelocity);
 
-        _desiredVelocity = desiredVelocity;
         _lookAngle = 0;
         _jumpImpulse = Vector3.zero;
     }
     public void Move(Vector3 velocity, float ratio = 1)
     {
+        if (!IsEnableMove) return;
         _desiredVelocity = velocity * ratio;
     }
     public void AddForce(Vector3 power, ForceMode forceMode = ForceMode.Impulse)

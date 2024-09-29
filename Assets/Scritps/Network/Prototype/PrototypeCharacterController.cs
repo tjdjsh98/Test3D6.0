@@ -2,6 +2,7 @@ using Fusion;
 using Fusion.Addons.KCC;
 using NUnit.Framework.Api;
 using System;
+using System.Collections.Generic;
 using TMPro;
 using Unity.Cinemachine;
 using UnityEngine;
@@ -69,11 +70,18 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
     protected Collider _buildingModelCollider;
     public Vector3 BuildPoint { get; set; }
 
+    // 조합 가능한
+    [Header("Crafting")]
+    public List<ReceiptData> CraftingDataList = new List<ReceiptData>();
+
     // 들고 다닐 수 있는 아이템 위치
     [SerializeField] Transform _smallItemPos;
     [SerializeField] Transform _largeItemPos;
     int _leftItemSlotIndex;
     Item _leftItem;
+
+    // Weapon
+    [SerializeField]NetworkWeapon _networkWeapon;
 
 
     [field: SerializeField] public Inventory Inventory { get; set; }
@@ -195,14 +203,20 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
                     ui.Open();
                 }
             }
-            // Test
-            if (Input.GetKeyDown(KeyCode.P))
+            if (Input.GetKeyDown(KeyCode.K))
             {
-                ReceiptInputData data = AccumulateReceiptInputData;
-                data.isReceipt = true;
-                data.receptName.Set("Crate");
-                AccumulateReceiptInputData = data;
+                UICrafting ui = UIManager.Instance.GetUI<UICrafting>();
+                if (ui.gameObject.activeSelf)
+                {
+                    ui.Close();
+                }
+                else
+                {
+                    ui.ConnectCrafting(this);
+                    ui.Open();
+                }
             }
+          
             PreviewBuilding();
         }
 
@@ -349,7 +363,7 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
         // Working
         ProcessWorking();
         //Recipt
-        ProcessReceipt();
+        ProcessCrafting();
         // UseItem
         ProcessItem();
     }
@@ -630,13 +644,12 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
         }
     }
 
-    //Receipt
-    public void ProcessReceipt()
+    //Crafting
+    public void ProcessCrafting()
     {
         if(_currentReceiptInputData.isReceipt)
         {
             ReceiptData data = DataManager.Instance.GetData<ReceiptData>(_currentReceiptInputData.receptName.Value);
-            Debug.Log(data);
             if(data != null)
             {
                 bool enable = true;
@@ -684,6 +697,17 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
             }
 
         }
+    }
+
+    // Attack
+    public void StartAttack()
+    {
+        _networkWeapon.StartAttack();
+    }
+
+    public void StopAttack()
+    {
+        _networkWeapon.EndAttack();
     }
 
     // 메인 클라이언트만 판정해줍니다.

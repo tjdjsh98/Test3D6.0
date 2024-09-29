@@ -46,38 +46,6 @@ public class InputManager : NetworkBehaviour
         InitSingleton();
     }
 
-    public void Update()
-    {
-        if (IsEnableFocus)
-        {
-            if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1))
-            {
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
-            }
-
-            if (Input.GetKeyDown(KeyCode.Escape))
-            {
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
-            }
-        }
-        else if (Cursor.lockState == CursorLockMode.Locked)
-        {
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
-        }
-
-        //if (_cameraController.enabled == true && !IsEnableInput)
-        //{
-        //    _cameraController.enabled = false;
-        //}
-        //if (_cameraController.enabled == false && IsEnableInput)
-        //{
-        //    _cameraController.enabled = true;
-        //}
-    }
-
     public void OnPlayerInput(NetworkRunner runner, NetworkInput input)
     {
         if (_lastFrame == Time.frameCount) return;

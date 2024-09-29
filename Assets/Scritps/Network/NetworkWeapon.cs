@@ -11,12 +11,12 @@ public class NetworkWeapon : NetworkBehaviour
     List<GameObject> _attackedList = new List<GameObject>();
     bool _isAttack;
 
-    NetworkPlayerController _playerController;
+    PrototypeCharacterController _playerController;
 
     private void Awake()
     {
-        _playerController = transform.root.GetComponent<NetworkPlayerController>();
-        _playerController.Weapon = this;
+        _playerController = transform.root.GetComponent<PrototypeCharacterController>();
+        
     }
 
     private void OnDrawGizmosSelected()

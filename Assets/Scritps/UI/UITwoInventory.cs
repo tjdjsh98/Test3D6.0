@@ -17,10 +17,10 @@ public class UITwoInventory : UIBase
     Inventory _chestInventory;
 
     [SerializeField] GameObject _characterInventoryParent;
-    List<UIInventorySlot> _uicharacterInventorySlotList = new List<UIInventorySlot>();
+    List<UIItemSlot> _uicharacterInventorySlotList = new List<UIItemSlot>();
 
     [SerializeField] GameObject _chestInventoryParent;
-    List<UIInventorySlot> _uiChestInventorySlotList = new List<UIInventorySlot>();
+    List<UIItemSlot> _uiChestInventorySlotList = new List<UIItemSlot>();
 
 
     // 아이템 드래그 드롭
@@ -41,13 +41,13 @@ public class UITwoInventory : UIBase
 
         for (int i = 0; i < _characterInventoryParent.transform.childCount; i++)
         {
-            UIInventorySlot slot = new UIInventorySlot();
+            UIItemSlot slot = new UIItemSlot();
             FillInventorySlot(out slot, _characterInventoryParent.transform.GetChild(i));
             _uicharacterInventorySlotList.Add(slot);
         }
         for (int i = 0; i < _chestInventoryParent.transform.childCount; i++)
         {
-            UIInventorySlot slot = new UIInventorySlot();
+            UIItemSlot slot = new UIItemSlot();
             FillInventorySlot(out slot, _chestInventoryParent.transform.GetChild(i));
             _uiChestInventorySlotList.Add(slot);
         }
@@ -55,12 +55,12 @@ public class UITwoInventory : UIBase
         Refresh();
         gameObject.SetActive(false);
     }
-    void FillInventorySlot(out UIInventorySlot slot, Transform parent)
+    void FillInventorySlot(out UIItemSlot slot, Transform parent)
     {
-        slot = new UIInventorySlot();
+        slot = new UIItemSlot();
         slot.parent = parent.gameObject;
         slot.itemImage = slot.parent.transform.Find("ItemImage").GetComponent<Image>();
-        slot.itemTextmesh = slot.parent.transform.Find("ItemTextMesh").GetComponent<TextMeshProUGUI>();
+        slot.itemNameTextmesh = slot.parent.transform.Find("ItemTextMesh").GetComponent<TextMeshProUGUI>();
     }
 
     private void Update()
@@ -149,7 +149,7 @@ public class UITwoInventory : UIBase
         }
     }
 
-    void DragIItem(UIInventorySlot slot)
+    void DragIItem(UIItemSlot slot)
     {
         _dragItemImage.sprite = slot.itemImage.sprite;
         _dragItemImage.gameObject.SetActive(true);
@@ -220,7 +220,7 @@ public class UITwoInventory : UIBase
         RefreshInventory(_uicharacterInventorySlotList,_characterInventory);
         RefreshInventory(_uiChestInventorySlotList,_chestInventory);
     }
-    void RefreshInventory(List<UIInventorySlot> uiSlotList,Inventory inventory)
+    void RefreshInventory(List<UIItemSlot> uiSlotList,Inventory inventory)
     {
         if (inventory != null)
         {
@@ -231,7 +231,7 @@ public class UITwoInventory : UIBase
                 if (i >= slotCount)
                 {
                     uiSlotList[i].itemImage.color = Color.red;
-                    uiSlotList[i].itemTextmesh.text = "";
+                    uiSlotList[i].itemNameTextmesh.text = "";
                     continue;
                 }
 
@@ -239,12 +239,12 @@ public class UITwoInventory : UIBase
                 if (itemSlot.itemName != "")
                 {
                     uiSlotList[i].itemImage.color = Color.white;
-                    uiSlotList[i].itemTextmesh.text = $"{itemSlot.itemName} x {itemSlot.count}";
+                    uiSlotList[i].itemNameTextmesh.text = $"{itemSlot.itemName} x {itemSlot.count}";
                 }
                 else
                 {
                     uiSlotList[i].itemImage.color = Color.red;
-                    uiSlotList[i].itemTextmesh.text = "";
+                    uiSlotList[i].itemNameTextmesh.text = "";
                 }
             }
         }
@@ -253,7 +253,7 @@ public class UITwoInventory : UIBase
             for (int i = 0; i < uiSlotList.Count; i++)
             {
                 uiSlotList[i].itemImage.color = Color.red;
-                uiSlotList[i].itemTextmesh.text = "";
+                uiSlotList[i].itemNameTextmesh.text = "";
             }
         }
     }

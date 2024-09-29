@@ -16,15 +16,15 @@ public class UIInventory : UIBase
     CharacterEquipment _connectedCharacterEquipment;
 
     [SerializeField] GameObject _itemSlotParent;
-    List<UIInventorySlot> _uiInventorySlotList = new List<UIInventorySlot>();
+    List<UIItemSlot> _uiInventorySlotList = new List<UIItemSlot>();
    
 
     [Header("Equipment")]
     [SerializeField] GameObject _equipmentParent;
-    UIInventorySlot _heatSlot;
-    UIInventorySlot _bodySlot;
-    UIInventorySlot _weaponSlot;
-    UIInventorySlot _shoesSlot;
+    UIItemSlot _heatSlot;
+    UIItemSlot _bodySlot;
+    UIItemSlot _weaponSlot;
+    UIItemSlot _shoesSlot;
 
     [SerializeField] GameObject _trash;
 
@@ -39,10 +39,10 @@ public class UIInventory : UIBase
 
         for (int i = 0; i < _itemSlotParent.transform.childCount; i++)
         {
-            UIInventorySlot slot = new UIInventorySlot();
+            UIItemSlot slot = new UIItemSlot();
             slot.parent = _itemSlotParent.transform.GetChild(i).gameObject;
             slot.itemImage = slot.parent.transform.Find("ItemImage").GetComponent<Image>();
-            slot.itemTextmesh = slot.parent.transform.Find("ItemTextMesh").GetComponent<TextMeshProUGUI>();
+            slot.itemNameTextmesh = slot.parent.transform.Find("ItemTextMesh").GetComponent<TextMeshProUGUI>();
 
             _uiInventorySlotList.Add(slot);
 
@@ -57,12 +57,12 @@ public class UIInventory : UIBase
     }
    
 
-    void FillInventorySlot(out UIInventorySlot slot, Transform parent)
+    void FillInventorySlot(out UIItemSlot slot, Transform parent)
     {
-        slot = new UIInventorySlot();
+        slot = new UIItemSlot();
         slot.parent = parent.gameObject;
         slot.itemImage = slot.parent.transform.Find("ItemImage").GetComponent<Image>();
-        slot.itemTextmesh = slot.parent.transform.Find("ItemTextMesh").GetComponent<TextMeshProUGUI>();
+        slot.itemNameTextmesh = slot.parent.transform.Find("ItemTextMesh").GetComponent<TextMeshProUGUI>();
     }
 
     public void ConnectInventory(Inventory inventory)
@@ -194,7 +194,7 @@ public class UIInventory : UIBase
                 if (i >= slotCount)
                 {
                     _uiInventorySlotList[i].itemImage.color = Color.red;
-                    _uiInventorySlotList[i].itemTextmesh.text = "";
+                    _uiInventorySlotList[i].itemNameTextmesh.text = "";
                     continue;
                 }
 
@@ -203,12 +203,12 @@ public class UIInventory : UIBase
                 if (itemSlot.itemName != "")
                 {
                     _uiInventorySlotList[i].itemImage.color = Color.white;
-                    _uiInventorySlotList[i].itemTextmesh.text = $"{itemSlot.itemName} x {itemSlot.count}";
+                    _uiInventorySlotList[i].itemNameTextmesh.text = $"{itemSlot.itemName} x {itemSlot.count}";
                 }
                 else
                 {
                     _uiInventorySlotList[i].itemImage.color = Color.red;
-                    _uiInventorySlotList[i].itemTextmesh.text = "";
+                    _uiInventorySlotList[i].itemNameTextmesh.text = "";
                 }
             }
         }
@@ -217,7 +217,7 @@ public class UIInventory : UIBase
             for (int i = 0; i < _uiInventorySlotList.Count; i++)
             {
                 _uiInventorySlotList[i].itemImage.color = Color.red;
-                _uiInventorySlotList[i].itemTextmesh.text = "";
+                _uiInventorySlotList[i].itemNameTextmesh.text = "";
             }
 
         }
@@ -229,43 +229,44 @@ public class UIInventory : UIBase
         {
             GameObject hat = _connectedCharacterEquipment.GetEquipment(EquipmentType.Hat);
             if (hat) {
-                _heatSlot.itemTextmesh.text = hat.name;
+                _heatSlot.itemNameTextmesh.text = hat.name;
                 _heatSlot.itemImage.color = Color.white;
             }
             else
             {
-                _heatSlot.itemTextmesh.text = "";
+                _heatSlot.itemNameTextmesh.text = "";
                 _heatSlot.itemImage.color = Color.red;
             }
 
             GameObject weapon = _connectedCharacterEquipment.GetEquipment(EquipmentType.RightWeapon);
             if (weapon)
             {
-                _weaponSlot.itemTextmesh.text = weapon.name;
+                _weaponSlot.itemNameTextmesh.text = weapon.name;
                 _weaponSlot.itemImage.color = Color.white;
             }
             else
             {
-                _weaponSlot.itemTextmesh.text = "";
+                _weaponSlot.itemNameTextmesh.text = "";
                 _weaponSlot.itemImage.color = Color.red;
             }
         }
         else
         {
-            _heatSlot.itemTextmesh.text = "";
+            _heatSlot.itemNameTextmesh.text = "";
             _heatSlot.itemImage.color = Color.red;
-            _bodySlot.itemTextmesh.text = "";
+            _bodySlot.itemNameTextmesh.text = "";
             _bodySlot.itemImage.color = Color.red;
-            _weaponSlot.itemTextmesh.text = "";
+            _weaponSlot.itemNameTextmesh.text = "";
             _weaponSlot.itemImage.color = Color.red;
-            _shoesSlot.itemTextmesh.text = "";
+            _shoesSlot.itemNameTextmesh.text = "";
             _shoesSlot.itemImage.color = Color.red;
         }
     }
 }
-public struct UIInventorySlot
+public struct UIItemSlot
 {
     public GameObject parent;
     public Image itemImage;
-    public TextMeshProUGUI itemTextmesh;
+    public TextMeshProUGUI itemNameTextmesh;
+    public TextMeshProUGUI itemCountTextmesh;
 }

@@ -14,6 +14,9 @@ public class AnimationCharacterController : PrototypeCharacterController
     public bool IsEnableAnimationMove { get; private set; } = true;
     public bool IsEnableAnimationRotate { get; private set; } = true;
 
+    [Networked] NetworkBool _isPlayTurnAnimation { get; set; }
+    [Networked] NetworkBool _isPlayAttackAnimation { get; set; }
+
     [SerializeField] Transform _leftHandPos;
     [SerializeField] Transform _rightHandPos;
 
@@ -31,7 +34,7 @@ public class AnimationCharacterController : PrototypeCharacterController
         {
             PlayerInputData data = _playerInputHandler.AccumulatedInput;
             data.animatorDeltaAngle += _animator.deltaRotation.eulerAngles;
-            data.animatorVelocity+= _animator.deltaPosition / Runner.DeltaTime ;
+            data.animatorVelocity+= _animator.deltaPosition / Time.deltaTime;
             _playerInputHandler.AccumulatedInput = data;
         }
     }
@@ -41,11 +44,11 @@ public class AnimationCharacterController : PrototypeCharacterController
         base.Render();
         if(Input.GetKeyDown(KeyCode.F1))
         {
-            Application.targetFrameRate = 60;
+            Application.targetFrameRate = 10;
         }
         if (Input.GetKeyDown(KeyCode.F2))
         {
-            Application.targetFrameRate = 120;
+            Application.targetFrameRate = 60;
         }
         if (Input.GetKeyDown(KeyCode.F3))
         {
@@ -167,7 +170,7 @@ public class AnimationCharacterController : PrototypeCharacterController
         if (IsEnableInputRotate)
         {
             totalDeltaAngle += (Vector3)_currentPlayerInputData.lookRotationDelta;
-            if (_character.IsGrounded && Mathf.Abs(totalDeltaAngle.y) > 150)
+            if (!_isPlayTurnAnimation &&_character.IsGrounded && Mathf.Abs(totalDeltaAngle.y) > 150)
             {
                 if (Runner.IsForward)
                 {
@@ -175,9 +178,12 @@ public class AnimationCharacterController : PrototypeCharacterController
                     StartCoroutine(Utils.WaitAniationAndPlayCoroutine(_animator, new string[] { "Walking Turn 180", "Running Turn 180" }, () =>
                     {
                         IsEnableInputRotate = true;
+                        _isPlayTurnAnimation = false;
                         _model.transform.localPosition = Vector3.zero;
+                        _model.transform.localRotation = Quaternion.identity;
                     }));
                 }
+                _isPlayTurnAnimation = true;
                 IsEnableInputRotate = false;
                 
                 totalDeltaAngle = Vector3.zero;
@@ -186,7 +192,11 @@ public class AnimationCharacterController : PrototypeCharacterController
 
         if (IsEnableAnimationRotate)
         {
-            totalDeltaAngle += _currentPlayerInputData.animatorDeltaAngle;
+            // 실제적으로 몸을 움직일 때 EX) 뒤돌기
+            if(_isPlayTurnAnimation)
+                totalDeltaAngle += _currentPlayerInputData.animatorDeltaAngle;
+            else
+                _model.transform.localRotation = Quaternion.Euler(_model.transform.localRotation.eulerAngles + _currentPlayerInputData.animatorDeltaAngle);
         }
 
         _character.AddLookAngle(totalDeltaAngle.y);
@@ -197,16 +207,19 @@ public class AnimationCharacterController : PrototypeCharacterController
 
         if (_currentPlayerInputData.buttons.WasPressed(_previousButtons, InputButton.MouseButton0))
         {
-            if (Runner.IsForward)
+            if (Runner.IsForward && !_isPlayAttackAnimation)
             {
-                if(Runner.IsForward)
-                    _character.AnimatorSetTrigget("Attack");
+                _character.AnimatorSetTrigget("Attack");
                 IsEnableInputRotate = false;
                 IsEnableInputMove = false;
+                _isPlayAttackAnimation = true;
                 StartCoroutine(Utils.WaitAniationAndPlayCoroutine(_animator, "Attack", () =>
                 {
                     IsEnableInputMove = true;
                     IsEnableInputRotate = true;
+                    _isPlayAttackAnimation = false;
+                    _model.transform.localPosition = Vector3.zero;
+                    _model.transform.localRotation = Quaternion.identity;
                 }));
             }
         }

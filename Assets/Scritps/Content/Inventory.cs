@@ -120,7 +120,7 @@ public class Inventory : NetworkBehaviour
         return true;
     }
     // 기존에 있던 아이템이어서 수량을 누적할 때는 Despawn해줍니다.
-    // 새로운 아이템이라면 아이템을 비활성화해줍니다.
+    // 새로운 아이템이라면 아이템을 만들어낸 후 비활성화해줍니다.
     public bool InsertItem(string name, int count = 1, int index = -1)
     {
         Item item = DataManager.Instance.GetData<Item>(name);
@@ -152,11 +152,18 @@ public class Inventory : NetworkBehaviour
             if (emptySlot == -1) return false;
             // 빈 곳에 넣어준다.
             {
+                Item networkItem = Runner.Spawn(item);
+
                 ItemSlot tempSlot = _slots[emptySlot];
-                tempSlot.itemId = default;
+                tempSlot.itemId = networkItem.Object.Id;
                 tempSlot.itemName = itemName;
                 tempSlot.count = count;
                 _slots.Set(emptySlot, tempSlot);
+
+                networkItem.IsHide = true;
+                networkItem.IsUseRigidbody = false;
+                networkItem.IsInteractable = false;
+
             }
         }
         else
@@ -169,11 +176,15 @@ public class Inventory : NetworkBehaviour
             }
             else
             {
+                Item networkItem = Runner.Spawn(item);
                 ItemSlot tempSlot = _slots[index];
                 tempSlot.itemId =  default;
                 tempSlot.itemName = itemName;
                 tempSlot.count = count;
                 _slots.Set(index, tempSlot);
+                networkItem.IsHide = true;
+                networkItem.IsUseRigidbody = false;
+                networkItem.IsInteractable = false;
             }
         }
         ItemChanged?.Invoke();
