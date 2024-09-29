@@ -87,6 +87,7 @@ public class PrototypeCharacter : NetworkBehaviour, IDamageable, IRigidbody
     }
     public void HandleVelocity()
     {
+        _animator.SetFloat("FallSpeed", _kcc.Data.DynamicVelocity.y);
         if(_isTeleport)
         {
             _kcc.SetPosition(_teleportPos);

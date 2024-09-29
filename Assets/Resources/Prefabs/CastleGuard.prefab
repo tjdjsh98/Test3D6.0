@@ -307,10 +307,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _pivot: {fileID: 3050753937376906195}
-  _distance: 3
+  _distance: 5
   _minRoll: -45
   _maxRoll: 45
-  _sphereSize: 0.1
+  _flipX: 1
+  _flipY: 1
+  _sphereSize: 0
+  _offset: {x: 0, y: 0, z: 0}
 --- !u!114 &1745944300729626750
 MonoBehaviour:
   m_ObjectHideFlags: 0

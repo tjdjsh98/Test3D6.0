@@ -31,13 +31,26 @@ public class AnimationCharacterController : PrototypeCharacterController
         {
             PlayerInputData data = _playerInputHandler.AccumulatedInput;
             data.animatorDeltaAngle += _animator.deltaRotation.eulerAngles;
-            data.animatorVelocity+= _animator.deltaPosition / Time.deltaTime ;
+            data.animatorVelocity+= _animator.deltaPosition / Runner.DeltaTime ;
             _playerInputHandler.AccumulatedInput = data;
         }
     }
 
     public override void Render()
     {
+        base.Render();
+        if(Input.GetKeyDown(KeyCode.F1))
+        {
+            Application.targetFrameRate = 60;
+        }
+        if (Input.GetKeyDown(KeyCode.F2))
+        {
+            Application.targetFrameRate = 120;
+        }
+        if (Input.GetKeyDown(KeyCode.F3))
+        {
+            Application.targetFrameRate = 100000;
+        }
         PlayerInputData data = _playerInputHandler.AccumulatedInput;
         data.IsEnableInputMove = IsEnableInputMove;
         data.IsEnableInputRotate = IsEnableInputRotate;
@@ -57,6 +70,7 @@ public class AnimationCharacterController : PrototypeCharacterController
     {
         float speed = 0;
         _animator.SetBool("IsGrounded", _character.IsGrounded);
+        
 
         Vector3 totalVelocity = Vector3.zero;
 
@@ -197,7 +211,6 @@ public class AnimationCharacterController : PrototypeCharacterController
             }
         }
     }
-
     protected override void ProcessRope()
     {
         base.ProcessRope();

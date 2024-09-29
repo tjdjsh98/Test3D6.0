@@ -207,6 +207,63 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
         }
 
     }
+    public override void Render()
+    {
+        if (HasStateAuthority)
+        {
+            if((float)HungryPoint/ MaxHungryPoint < 0.3f)
+            {
+                _character.StaminaRecoverMultifly = 0.5f;
+            }
+            else
+            {
+                _character.StaminaRecoverMultifly = 1;
+            }
+
+            if (HungryPoint > 0)
+            {
+                HungryPoint -= Runner.DeltaTime;
+            }
+            else
+            {
+                _hungryZeroElased += Runner.DeltaTime;
+
+                if(_hungryZeroElased > 3f)
+                {
+                    DamageInfo info = new DamageInfo();
+                    info.attacker = _character;
+                    info.target = _character;
+                    info.damage = 1;
+                    info.knockbackPower = 0;
+                    _character.Damage(info);
+                    _hungryZeroElased = 0;
+                }
+            }
+        }
+        if (HasStateAuthority)
+        {
+            if (_character.Stamina <= 0)
+            {
+                ReleaseRope();
+            }
+            if (IsHoldRope)
+            {
+                _character.Stamina -= Time.deltaTime ;
+            }
+            if (IsWorking && Input.GetKeyDown(KeyCode.E))
+            {
+                var data = AccumulateWorkingInputData;
+                data.isCancelWorking = true;
+                AccumulateWorkingInputData = data;
+            }
+        }
+    }
+    public override void FixedUpdateNetwork()
+    {
+        ProcessInputData();
+
+        _previousButtons = _currentPlayerInputData.buttons;
+    }
     void OnQuickSlotChanged()
     {
         ItemSlot slot = QuickSlotInventory.GetSlot(QuickSlotSelectIndex);
@@ -251,11 +308,11 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
             _leftItemSlotIndex = QuickSlotSelectIndex;
 
 
-            if(_leftItem.ItemType == ItemType.Build)
+            if (_leftItem.ItemType == ItemType.Build)
             {
                 _builing = ((BuildItem)_leftItem).Building;
                 Transform tr = _builing.transform.Find("Model");
-                if(tr)
+                if (tr)
                 {
                     // 로컬만 위치를 미리 보여주기 위해 프리뷰 모델 생성
                     if (HasInputAuthority)
@@ -265,7 +322,7 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
                         _buildingModelCollider = _buildingModel.GetComponentInChildren<Collider>();
                         _buildingModelCollider.isTrigger = true;
                     }
-                    else if(HasStateAuthority)
+                    else if (HasStateAuthority)
                     {
                         _buildingModel = tr.gameObject;
                         _buildingModelCollider = _buildingModel.GetComponentInChildren<Collider>();
@@ -274,63 +331,6 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
             }
         }
         QuickSlotIndexChanged?.Invoke();
-    }
-    public override void Render()
-    {
-        if (HasStateAuthority)
-        {
-            if((float)HungryPoint/ MaxHungryPoint < 0.3f)
-            {
-                _character.StaminaRecoverMultifly = 0.5f;
-            }
-            else
-            {
-                _character.StaminaRecoverMultifly = 1;
-            }
-
-            if (HungryPoint > 0)
-            {
-                HungryPoint -= Runner.DeltaTime;
-            }
-            else
-            {
-                _hungryZeroElased += Runner.DeltaTime;
-
-                if(_hungryZeroElased > 3f)
-                {
-                    DamageInfo info = new DamageInfo();
-                    info.attacker = _character;
-                    info.target = _character;
-                    info.damage = 1;
-                    info.knockbackPower = 0;
-                    _character.Damage(info);
-                    _hungryZeroElased = 0;
-                }
-            }
-        }
-        if (HasStateAuthority)
-        {
-            if (_character.Stamina <= 0)
-            {
-                ReleaseRope();
-            }
-            if (IsHoldRope)
-            {
-                _character.Stamina -= Time.deltaTime * 3;
-            }
-            if (IsWorking && Input.GetKeyDown(KeyCode.E))
-            {
-                var data = AccumulateWorkingInputData;
-                data.isCancelWorking = true;
-                AccumulateWorkingInputData = data;
-            }
-        }
-    }
-    public override void FixedUpdateNetwork()
-    {
-        ProcessInputData();
-
-        _previousButtons = _currentPlayerInputData.buttons;
     }
 
     protected virtual void ProcessInputData()
