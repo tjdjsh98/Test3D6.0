@@ -17,7 +17,7 @@ public class NetworkPlayerController : NetworkBehaviour, IBeforeTick
 
     // Misc
     static string[] TurnStateNames = new string[] { "Walk Turn 180", "Running Turn 180" };
-    public NetworkWeapon Weapon;
+    public WeaponItem Weapon;
     bool _isFinishAniationProcess = false;
     bool _isThrow;
     

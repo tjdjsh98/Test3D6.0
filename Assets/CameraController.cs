@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements.Experimental;
 
 public class CameraController : MonoBehaviour
 {
@@ -16,8 +17,6 @@ public class CameraController : MonoBehaviour
    
     Vector3 _realDistance;
 
-    [SerializeField] float _minRoll;
-    [SerializeField] float _maxRoll;
     float _pitch = 0;
     float _roll = 0;
 
@@ -30,6 +29,8 @@ public class CameraController : MonoBehaviour
     float distance;
     float sphereSize;
 
+    float minRoll;
+    float maxRoll;
     Vector3 _cameraDirection;
 
     private void Awake()
@@ -83,7 +84,7 @@ public class CameraController : MonoBehaviour
         _pitch += mouseDelta.x * (_flipX? -1 : 1);
         _roll += mouseDelta.y * (_flipY ? -1: 1);
 
-        _roll = Mathf.Clamp(_roll, _minRoll, _maxRoll);
+        _roll = Mathf.Clamp(_roll, minRoll, maxRoll);
         Vector3 direction = new Vector3(Mathf.Cos(_pitch * Mathf.Deg2Rad), Mathf.Sin(_roll * Mathf.Deg2Rad), Mathf.Sin(_pitch * Mathf.Deg2Rad)).normalized;
 
         _cameraDirection = direction;
@@ -94,28 +95,28 @@ public class CameraController : MonoBehaviour
         }
     }
 
-    void ChangeCamera(int indexs)
+    public void ChangeCamera(int indexs,float changeTime)
     {
         _nextCameraIndex = indexs;
         if(_cameraChangeCoroutine != null) StopCoroutine( _cameraChangeCoroutine);
-        _cameraChangeCoroutine = StartCoroutine(LerpCamera());
-
-    
+        _cameraChangeCoroutine = StartCoroutine(LerpCamera(changeTime));
     }
 
 
-    IEnumerator LerpCamera()
+    IEnumerator LerpCamera(float changeTime)
     {
-        int curretIndex = 0;
-        int nextIndex = 1;
-        for(int i = 1; i <= 60; i++)
+        int curretIndex = _currentCameraIndex;
+        int nextIndex = _nextCameraIndex;
+        for(int i = 1; i <= changeTime* 60; i++)
         {
-            pivot = Vector3.Lerp(_cameraDatas[curretIndex].pivot.transform.position, _cameraDatas[nextIndex].pivot.transform.position, i/60);
-            offset= Vector3.Lerp(_cameraDatas[curretIndex].offset, _cameraDatas[nextIndex].offset, i/60);
-            distance = Mathf.Lerp(_cameraDatas[curretIndex].distance, _cameraDatas[nextIndex].distance, i / 60);
-            sphereSize = Mathf.Lerp(_cameraDatas[curretIndex].sphereSize, _cameraDatas[nextIndex].sphereSize, i / 60);
-            yield return null;
+            pivot = Vector3.Lerp(_cameraDatas[curretIndex].pivot.transform.position, _cameraDatas[nextIndex].pivot.transform.position, i/ changeTime * 60);
+            offset= Vector3.Lerp(_cameraDatas[curretIndex].offset, _cameraDatas[nextIndex].offset, i/ changeTime * 60);
+            distance = Mathf.Lerp(_cameraDatas[curretIndex].distance, _cameraDatas[nextIndex].distance, i / changeTime * 60);
+            sphereSize = Mathf.Lerp(_cameraDatas[curretIndex].sphereSize, _cameraDatas[nextIndex].sphereSize, i / changeTime * 60);
+            minRoll = Mathf.Lerp(_cameraDatas[curretIndex].minRoll, _cameraDatas[nextIndex].minRoll, i / changeTime * 60);
+            maxRoll = Mathf.Lerp(_cameraDatas[curretIndex].maxRoll, _cameraDatas[nextIndex].maxRoll, i / changeTime * 60);
 
+            yield return null;
         }
         _currentCameraIndex = _nextCameraIndex;
         _cameraChangeCoroutine = null;
@@ -130,4 +131,6 @@ public struct CameraData
     public float sphereSize;
     public Vector3 offset;
 
+    public float minRoll;
+    public float maxRoll;
 }

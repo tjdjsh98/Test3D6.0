@@ -1,7 +1,9 @@
 using ExitGames.Client.Photon;
 using Fusion;
 using System;
+using System.Collections.Generic;
 using Unity.Cinemachine;
+using Unity.Loading;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.TextCore;
@@ -18,6 +20,9 @@ public class PrototypeEnemyAI : NetworkBehaviour
     [SerializeField] protected Range _detectRange;
     [SerializeField] protected Range _chaseRange;
 
+
+    float _attackTerm = 2;
+    float _attackElaspedTime = 0;
 
     private void Awake()
     {
@@ -42,6 +47,7 @@ public class PrototypeEnemyAI : NetworkBehaviour
     public override void FixedUpdateNetwork()
     {
         ChaseTarget();
+        AttackTarget();
     }
 
 
@@ -100,6 +106,47 @@ public class PrototypeEnemyAI : NetworkBehaviour
         {
             _target = null;
         }
+    }
 
+    void AttackTarget()
+    {
+        if (_target == null) return;
+         if (Vector3.Distance(_target.transform.position, transform.position) > 2) return;
+
+        Range range = new Range() { center = Vector3.forward * 0.5f, relativeTransform = true, shape = RangeShape.Box, size = new Vector3(3, 2, 3) };
+
+        _attackElaspedTime += Time.deltaTime;
+        if (_attackElaspedTime > _attackTerm)
+        {
+            Debug.Log("Attack");
+            _attackElaspedTime = 0;
+            List<LagCompensatedHit> hits = new List<LagCompensatedHit>();
+
+            Runner.LagCompensation.OverlapBox(transform.position + range.center, range.size / 2, transform.rotation,
+                Object.StateAuthority, hits, -1, HitOptions.None);
+
+            foreach (var hit in hits)
+            {
+                if (hit.Hitbox == null) continue;
+
+                GameObject hitObject = hit.Hitbox.gameObject.transform.root.gameObject;
+                if (hitObject == gameObject) continue;
+
+                IDamageable damageable = hitObject.GetComponent<IDamageable>();
+
+                if (damageable != null)
+                {
+                    damageable.Damage(new DamageInfo()
+                    {
+                        attacker = _character,
+                        damage = 1,
+                        knockbackDirection =
+                        transform.forward,
+                        knockbackPower = 10,
+                        target = damageable
+                    });
+                }
+            }
+        }
     }
 }

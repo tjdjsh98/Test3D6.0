@@ -35,6 +35,7 @@ public class NetworkHandler : MonoBehaviour, INetworkRunnerCallbacks
                 spawnPosition = gameManager.SpawnPosition.position;
 
             NetworkObject character = runner.Spawn(playerPrefabs, spawnPosition, Quaternion.identity, player);
+            Debug.Log(character);
 
             _spawnedCharacters.Add(player, character);
 

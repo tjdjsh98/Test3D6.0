@@ -38,7 +38,9 @@ public struct PlayerInputData : INetworkStruct
     public NetworkButtons buttons;
     public Vector2 lookRotationDelta;
     public Vector3 animatorDeltaAngle;
+    public Vector3 animatorDeltaMove;
     public Vector3 animatorVelocity;
+    public float animatorDeltaTime;
     public Vector3 moveDelta;
     public Vector3 velocity;
 

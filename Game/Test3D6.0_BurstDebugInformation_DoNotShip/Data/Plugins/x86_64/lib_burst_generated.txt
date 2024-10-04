@@ -1,4 +1,4 @@
-Library: D:\Git\Test3D6.0\Temp\BurstOutput\Data\Plugins\x86_64\lib_burst_generated
+Library: D:\UnityProject\Test3D6.0\Temp\BurstOutput\Data\Plugins\x86_64\lib_burst_generated
 --platform=Windows
 --backend=burst-llvm-16
 --target=X64_SSE2
@@ -9,10 +9,10 @@ Library: D:\Git\Test3D6.0\Temp\BurstOutput\Data\Plugins\x86_64\lib_burst_generat
 --target-framework=NetFramework
 --linker-options=PdbAltPath="Test3D6.0_Data/Plugins/x86_64/lib_burst_generated.pdb"
 --generate-link-xml=Temp\burst.link.xml
---temp-folder=D:\Git\Test3D6.0\Temp\Burst
---key-folder=D:/Unity/Hub/Editor/6000.0.2f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport
---decode-folder=D:\Git\Test3D6.0\Library\Burst
---output=D:\Git\Test3D6.0\Temp\BurstOutput\Data\Plugins\x86_64\lib_burst_generated
+--temp-folder=D:\UnityProject\Test3D6.0\Temp\Burst
+--key-folder=D:/Unity/6000.0.2f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport
+--decode-folder=D:\UnityProject\Test3D6.0\Library\Burst
+--output=D:\UnityProject\Test3D6.0\Temp\BurstOutput\Data\Plugins\x86_64\lib_burst_generated
 --pdb-search-paths=Temp/ManagedSymbols/
 
 --method=Unity.Burst.BurstCompiler+BurstCompilerHelper, Unity.Burst, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null::IsBurstEnabled()--8c2be93e18276203cbd918daa2748a10
@@ -125,10 +125,10 @@ Library: D:\Git\Test3D6.0\Temp\BurstOutput\Data\Plugins\x86_64\lib_burst_generat
 --target-framework=NetFramework
 --linker-options=PdbAltPath="Test3D6.0_Data/Plugins/x86_64/lib_burst_generated.pdb"
 --generate-link-xml=Temp\burst.link.xml
---temp-folder=D:\Git\Test3D6.0\Temp\Burst
---key-folder=D:/Unity/Hub/Editor/6000.0.2f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport
---decode-folder=D:\Git\Test3D6.0\Library\Burst
---output=D:\Git\Test3D6.0\Temp\BurstOutput\Data\Plugins\x86_64\lib_burst_generated
+--temp-folder=D:\UnityProject\Test3D6.0\Temp\Burst
+--key-folder=D:/Unity/6000.0.2f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport
+--decode-folder=D:\UnityProject\Test3D6.0\Library\Burst
+--output=D:\UnityProject\Test3D6.0\Temp\BurstOutput\Data\Plugins\x86_64\lib_burst_generated
 --pdb-search-paths=Temp/ManagedSymbols/
 
 --method=Unity.Burst.BurstCompiler+BurstCompilerHelper, Unity.Burst, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null::IsBurstEnabled()--8c2be93e18276203cbd918daa2748a10
@@ -241,10 +241,10 @@ Library: D:\Git\Test3D6.0\Temp\BurstOutput\Data\Plugins\x86_64\lib_burst_generat
 --target-framework=NetFramework
 --linker-options=PdbAltPath="Test3D6.0_Data/Plugins/x86_64/lib_burst_generated.pdb"
 --generate-link-xml=Temp\burst.link.xml
---temp-folder=D:\Git\Test3D6.0\Temp\Burst
---key-folder=D:/Unity/Hub/Editor/6000.0.2f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport
---decode-folder=D:\Git\Test3D6.0\Library\Burst
---output=D:\Git\Test3D6.0\Temp\BurstOutput\Data\Plugins\x86_64\lib_burst_generated
+--temp-folder=D:\UnityProject\Test3D6.0\Temp\Burst
+--key-folder=D:/Unity/6000.0.2f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport
+--decode-folder=D:\UnityProject\Test3D6.0\Library\Burst
+--output=D:\UnityProject\Test3D6.0\Temp\BurstOutput\Data\Plugins\x86_64\lib_burst_generated
 --pdb-search-paths=Temp/ManagedSymbols/
 
 --method=Unity.Jobs.IJobParallelForExtensions+ParallelForJobStruct`1[[UnityEngine.Splines.GetPosition, Unity.Splines, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]], UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Splines.GetPosition&, Unity.Splines, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|System.IntPtr, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089|System.IntPtr, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089)--742b9ab1bc1447267d47d3f600d7ff7e
@@ -262,10 +262,10 @@ Library: D:\Git\Test3D6.0\Temp\BurstOutput\Data\Plugins\x86_64\lib_burst_generat
 --target-framework=NetFramework
 --linker-options=PdbAltPath="Test3D6.0_Data/Plugins/x86_64/lib_burst_generated.pdb"
 --generate-link-xml=Temp\burst.link.xml
---temp-folder=D:\Git\Test3D6.0\Temp\Burst
---key-folder=D:/Unity/Hub/Editor/6000.0.2f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport
---decode-folder=D:\Git\Test3D6.0\Library\Burst
---output=D:\Git\Test3D6.0\Temp\BurstOutput\Data\Plugins\x86_64\lib_burst_generated
+--temp-folder=D:\UnityProject\Test3D6.0\Temp\Burst
+--key-folder=D:/Unity/6000.0.2f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport
+--decode-folder=D:\UnityProject\Test3D6.0\Library\Burst
+--output=D:\UnityProject\Test3D6.0\Temp\BurstOutput\Data\Plugins\x86_64\lib_burst_generated
 --pdb-search-paths=Temp/ManagedSymbols/
 
 --method=Unity.Jobs.IJobParallelForExtensions+ParallelForJobStruct`1[[UnityEngine.Splines.GetPosition, Unity.Splines, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]], UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Splines.GetPosition&, Unity.Splines, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|System.IntPtr, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089|System.IntPtr, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089)--742b9ab1bc1447267d47d3f600d7ff7e
@@ -285,10 +285,10 @@ Library: D:\Git\Test3D6.0\Temp\BurstOutput\Data\Plugins\x86_64\lib_burst_generat
 --float-mode=Fast
 --linker-options=PdbAltPath="Test3D6.0_Data/Plugins/x86_64/lib_burst_generated.pdb"
 --generate-link-xml=Temp\burst.link.xml
---temp-folder=D:\Git\Test3D6.0\Temp\Burst
---key-folder=D:/Unity/Hub/Editor/6000.0.2f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport
---decode-folder=D:\Git\Test3D6.0\Library\Burst
---output=D:\Git\Test3D6.0\Temp\BurstOutput\Data\Plugins\x86_64\lib_burst_generated
+--temp-folder=D:\UnityProject\Test3D6.0\Temp\Burst
+--key-folder=D:/Unity/6000.0.2f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport
+--decode-folder=D:\UnityProject\Test3D6.0\Library\Burst
+--output=D:\UnityProject\Test3D6.0\Temp\BurstOutput\Data\Plugins\x86_64\lib_burst_generated
 --pdb-search-paths=Temp/ManagedSymbols/
 
 --method=Unity.Jobs.IJobForExtensions+ForJobStruct`1[[UnityEngine.Rendering.Universal.ZBinningJob, Unity.RenderPipelines.Universal.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]], UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.Universal.ZBinningJob&, Unity.RenderPipelines.Universal.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|System.IntPtr, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089|System.IntPtr, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089)--77fc393cb521ac129b1392d4eb94d29a
@@ -305,10 +305,10 @@ Library: D:\Git\Test3D6.0\Temp\BurstOutput\Data\Plugins\x86_64\lib_burst_generat
 --float-mode=Fast
 --linker-options=PdbAltPath="Test3D6.0_Data/Plugins/x86_64/lib_burst_generated.pdb"
 --generate-link-xml=Temp\burst.link.xml
---temp-folder=D:\Git\Test3D6.0\Temp\Burst
---key-folder=D:/Unity/Hub/Editor/6000.0.2f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport
---decode-folder=D:\Git\Test3D6.0\Library\Burst
---output=D:\Git\Test3D6.0\Temp\BurstOutput\Data\Plugins\x86_64\lib_burst_generated
+--temp-folder=D:\UnityProject\Test3D6.0\Temp\Burst
+--key-folder=D:/Unity/6000.0.2f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport
+--decode-folder=D:\UnityProject\Test3D6.0\Library\Burst
+--output=D:\UnityProject\Test3D6.0\Temp\BurstOutput\Data\Plugins\x86_64\lib_burst_generated
 --pdb-search-paths=Temp/ManagedSymbols/
 
 --method=Unity.Jobs.IJobForExtensions+ForJobStruct`1[[UnityEngine.Rendering.Universal.ZBinningJob, Unity.RenderPipelines.Universal.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]], UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.Universal.ZBinningJob&, Unity.RenderPipelines.Universal.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|System.IntPtr, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089|System.IntPtr, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089)--77fc393cb521ac129b1392d4eb94d29a

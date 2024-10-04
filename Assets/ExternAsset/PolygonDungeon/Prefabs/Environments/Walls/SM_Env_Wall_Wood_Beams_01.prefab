@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 482504}
   - component: {fileID: 3399648}
   - component: {fileID: 2371826}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: SM_Env_Wall_Wood_Beams_01
   m_TagString: Untagged
   m_Icon: {fileID: 0}

@@ -68,10 +68,14 @@ public class PrototypeCharacter : NetworkBehaviour, IDamageable, IRigidbody
     {
         Hp -= damageInfo.damage;
 
-        AddForce(damageInfo.knockbackPower * damageInfo.knockbackDirection);
-        IsEnableMove = false;
+        if (damageInfo.knockbackPower != 0)
+        {
+            AddForce(damageInfo.knockbackPower * damageInfo.knockbackDirection);
+            IsEnableMove = false;
+            Invoke("ActiveEnableMove", 1);
+        }
+        Damaged?.Invoke(damageInfo);
 
-        Invoke("ActiveEnableMove", 1);
         return 0;   
     }
 
@@ -109,7 +113,7 @@ public class PrototypeCharacter : NetworkBehaviour, IDamageable, IRigidbody
 
         if (!IsGrounded && !IsEnableMoveYAxis)
         {
-            accelPower = 0f;
+            accelPower = 1f;
         }
         Vector3 desiredVelocity = _desiredVelocity;
         desiredVelocity = Vector3.Lerp(_kcc.Data.DynamicVelocity, _desiredVelocity, accelPower * Runner.DeltaTime);

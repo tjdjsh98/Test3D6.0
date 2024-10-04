@@ -25,13 +25,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 561824206424634090}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &8001530703003764150
 MonoBehaviour:
@@ -67,6 +67,6 @@ MonoBehaviour:
   _stepSpeed: 1
   _minPushBack: 0.5
   _groundCheckRadiusScale: 0.5
-  _clearDynamicVelocityOnEnd: 1
+  _clearDynamicVelocityOnEnd: 0
   _requireGroundTarget: 1
   _forceUpdateHits: 0

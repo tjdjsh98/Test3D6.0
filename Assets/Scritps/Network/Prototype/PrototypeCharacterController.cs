@@ -17,6 +17,7 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
     protected PrototypeCharacter _character;
     protected PlayerInputHandler _playerInputHandler;
     protected Camera _camera;
+    protected CameraController _cameraController;
     protected GameObject _model;
 
     // Input
@@ -24,6 +25,8 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
     protected NetworkButtons _previousButtons;
     protected PlayerInputData _currentPlayerInputData;
     protected PlayerInputData _previousPlayerInputData;
+
+    public PlayerInputData CurrentPlayerInputData => _currentPlayerInputData;
 
     protected InventoryInputData _currentInventoryInputData;
 
@@ -47,10 +50,16 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
 
     // 퀵슬롯
     [field: SerializeField] public Inventory QuickSlotInventory { get; set; }
-
     [Networked] public int QuickSlotSelectIndex { get; set; } = -1;
     [Networked, OnChangedRender(nameof(OnQuickSlotChanged))] protected NetworkBool QuickSlotChanaged { get; set; } = false;
     public Action QuickSlotIndexChanged { get; set; }
+
+    // 들고 다닐 수 있는 아이템 위치
+    [SerializeField] Transform _smallItemPos;
+    [SerializeField] Transform _largeItemPos;
+    [SerializeField] Transform _weaponPos;
+    protected int _leftItemSlotIndex;
+    protected Item _leftItem;
 
     // 밧줄타고 올라가기
     protected Rope _holdRope;
@@ -61,30 +70,21 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
     public int CancelWorkingFrame { get; set; }             // 취소하자마자 다시 상호작용하는 것을 방지
     public float WorkingTime { get; set; }
     [Networked]public TickTimer WorkingTimer { get; set; }
-    WorkingBlock _workingBlock;
+    protected WorkingBlock _workingBlock;
 
     // 아이템
     // 빌드
     protected NetworkObject _builing;
     protected GameObject _buildingModel;
     protected Collider _buildingModelCollider;
-    public Vector3 BuildPoint { get; set; }
+    public Vector3? BuildPoint { get; set; }
 
     // 조합 가능한
     [Header("Crafting")]
     public List<ReceiptData> CraftingDataList = new List<ReceiptData>();
 
-    // 들고 다닐 수 있는 아이템 위치
-    [SerializeField] Transform _smallItemPos;
-    [SerializeField] Transform _largeItemPos;
-    int _leftItemSlotIndex;
-    Item _leftItem;
-
-    // Weapon
-    [SerializeField]NetworkWeapon _networkWeapon;
-
-
     [field: SerializeField] public Inventory Inventory { get; set; }
+
 
     protected virtual void Awake()
     {
@@ -92,6 +92,7 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
         _playerInputHandler = GetComponent<PlayerInputHandler>();
         _model = transform.Find("Model").gameObject;
         _camera = Camera.main;
+        _cameraController = GetComponent<CameraController>();
     }
     private void OnEnable()
     {
@@ -217,6 +218,15 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
                 }
             }
           
+            if(Input.GetMouseButtonDown(1))
+            {
+                _cameraController.ChangeCamera(1,0.2f);
+            }
+            if (Input.GetMouseButtonUp(1))
+            {
+                _cameraController.ChangeCamera(0,0.2f);
+            }
+
             PreviewBuilding();
         }
 
@@ -236,7 +246,7 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
 
             if (HungryPoint > 0)
             {
-                HungryPoint -= Runner.DeltaTime;
+                HungryPoint -= Runner.DeltaTime*0.2f;
             }
             else
             {
@@ -314,9 +324,18 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
         NetworkObject networkObject = Runner.FindObject(slot.itemId);
         if (networkObject != null)
         {
-            networkObject.transform.SetParent(_largeItemPos, false);
-            networkObject.transform.position = _largeItemPos.transform.position;
             _leftItem = networkObject.gameObject.GetComponent<Item>();
+            if (_leftItem == null) return;
+
+            if(_leftItem as WeaponItem)
+            {
+                _leftItem.transform.SetParent(_weaponPos, false);
+            }
+            else
+            {
+                _leftItem.transform.SetParent(_largeItemPos, false);
+            }
+            _leftItem.transform.position = _largeItemPos.transform.position;
             _leftItem.IsHide = false;
             _leftItem.IsUseRigidbody = false;
             _leftItemSlotIndex = QuickSlotSelectIndex;
@@ -379,7 +398,7 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
             // Jump
             if (_character.IsGrounded && _currentPlayerInputData.buttons.WasPressed(_previousButtons, InputButton.Jump))
             {
-                _character.Jump(Vector3.up, 10);
+                _character.Jump(Vector3.up, 15);
             }
             if (_currentPlayerInputData.buttons.IsSet(InputButton.Run))
             {
@@ -426,7 +445,7 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
         CancelWorking();
         Working();
     }
-    void StartWorking()
+    protected virtual void StartWorking()
     {
         if (_currentWorkingInputData.isWorking)
         {
@@ -439,7 +458,7 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
             IsEnableInputMove = false;
         }
     }
-    void CancelWorking()
+    protected virtual void CancelWorking()
     {
         if (IsWorking)
         {
@@ -452,7 +471,7 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
             }
         }
     }
-    void Working()
+    protected virtual void Working()
     {
         if (IsWorking)
         {
@@ -460,9 +479,11 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
             {
                 if (_workingBlock)
                 {
-                    Debug.Log(_workingBlock.name + " " + _workingBlock.transform.position);
-                    Runner.Spawn(_workingBlock.SpawnObject, _workingBlock.transform.position);
-                    Runner.Despawn(_workingBlock.Object);
+                    if (Object.HasStateAuthority)
+                    {
+                        Runner.Spawn(_workingBlock.SpawnObject, _workingBlock.transform.position);
+                        Runner.Despawn(_workingBlock.Object);
+                    }
                 }
                 IsWorking = false;
                 IsEnableInputRotate = true;
@@ -493,25 +514,21 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
         //QuickSlots
         if (_currentPlayerInputData.buttons.WasPressed(_previousButtons, InputButton.Num1))
         {
-            Debug.Log(1);
             QuickSlotSelectIndex = QuickSlotSelectIndex == 0 ? -1 : 0;
             QuickSlotChanaged = !QuickSlotChanaged;
         }
         if (_currentPlayerInputData.buttons.WasPressed(_previousButtons, InputButton.Num2))
         {
-            Debug.Log(2);
             QuickSlotSelectIndex = QuickSlotSelectIndex == 1 ? -1 : 1;
             QuickSlotChanaged = !QuickSlotChanaged;
         }
         if (_currentPlayerInputData.buttons.WasPressed(_previousButtons, InputButton.Num3))
         {
-            Debug.Log(3);
             QuickSlotSelectIndex = QuickSlotSelectIndex == 2 ? -1 : 2;
             QuickSlotChanaged = !QuickSlotChanaged;
         }
         if (_currentPlayerInputData.buttons.WasPressed(_previousButtons, InputButton.Num4))
         {
-            Debug.Log(4);
             QuickSlotSelectIndex = QuickSlotSelectIndex == 3 ? -1 : 3;
             QuickSlotChanaged = !QuickSlotChanaged;
         }
@@ -581,9 +598,9 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
     }
     void UseItem()
     {
-        if (!HasStateAuthority) return;
-
         if(QuickSlotSelectIndex == -1) return;
+        if (!Runner.IsForward) return;
+
         ItemSlot slot = QuickSlotInventory.GetSlot(QuickSlotSelectIndex);
         if(slot.itemId == default) return;
 
@@ -594,12 +611,15 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
 
         if (_buildingModel)
         {
-            Physics.Raycast(_currentPlayerInputData.cameraPosition, _currentPlayerInputData.aimForwardVector, out var hit, Mathf.Infinity, Define.GROUND_LAYERMASK);
+            Physics.Raycast(_currentPlayerInputData.cameraPosition, _currentPlayerInputData.aimForwardVector, out var hit, 10, Define.GROUND_LAYERMASK);
 
             if (hit.collider != null)
             {
                 BuildPoint = hit.point;
-
+            }
+            else
+            {
+                BuildPoint = null;
             }
         }
 
@@ -618,16 +638,20 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
     {
         if(_buildingModel)
         {
-            Physics.Raycast(_camera.transform.position, _camera.transform.forward, out var hit, Mathf.Infinity, Define.GROUND_LAYERMASK);
+            Physics.Raycast(_camera.transform.position, _camera.transform.forward, out var hit, 10, Define.GROUND_LAYERMASK);
 
-            if(hit.collider == null)
+            if(hit.collider == null || Mathf.Abs(Vector3.Angle(Vector3.up,hit.normal)) > 10)
             {
                 _buildingModel.gameObject.SetActive(false);
                 return;
             }
 
+            Vector3 rotation = _currentPlayerInputData.aimForwardVector;
+            float angle = Mathf.Atan2(rotation.x, rotation.z) * Mathf.Rad2Deg;
+
             _buildingModel.gameObject.SetActive(true);
             _buildingModel.transform.position = hit.point;
+            _buildingModel.transform.rotation = Quaternion.Euler(0,angle,0);
         }
     }
 
@@ -700,14 +724,17 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
     }
 
     // Attack
-    public void StartAttack()
+    public virtual void PlayAttack()
     {
-        _networkWeapon.StartAttack();
+        
+    }
+    
+    public virtual void StartAttack()
+    {
     }
 
-    public void StopAttack()
+    public virtual void StopAttack()
     {
-        _networkWeapon.EndAttack();
     }
 
     // 메인 클라이언트만 판정해줍니다.
@@ -772,9 +799,9 @@ public class PrototypeCharacterController : NetworkBehaviour, IBeforeTick
             if (itemSlot.itemName == "") return;
 
 
-            if (myInventory.RemoveItem(data.myInventoryIndex))
+            if (encounterInventory.SetSlot(itemSlot, data.encounterInventoryIndex))
             {
-                encounterInventory.SetSlot(itemSlot, data.encounterInventoryIndex);
+                myInventory.RemoveItem(data.myInventoryIndex);
             }
 
         }

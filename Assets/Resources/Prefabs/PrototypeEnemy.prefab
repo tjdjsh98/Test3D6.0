@@ -64,7 +64,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2350329845771750014}
@@ -112,8 +112,8 @@ MonoBehaviour:
   _settings:
     Shape: 1
     IsTrigger: 0
-    Radius: 0.25
-    Height: 1
+    Radius: 0.5
+    Height: 2
     Extent: 0.025
     ColliderLayer: 7
     CollisionLayerMask:
@@ -191,10 +191,13 @@ MonoBehaviour:
   _Hp: 10
   _MaxStamina: 10
   _Stamina: 10
-  _velocity: {x: 0, y: 0, z: 0}
+  _StaminaRecover: 1
+  _StaminaRecoverMultifly: 1
+  _IsEnableMoveYAxis: 0
   _IsGrounded: 0
   _IsUseStamina: 0
   _IsExhaust: 0
+  _IsEnableMove: 1
 --- !u!114 &1264081079924576232
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -402,10 +405,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Type: 3
   SphereRadius: 0.2
-  CapsuleRadius: 0.25
+  CapsuleRadius: 0.5
   BoxExtents: {x: 0, y: 0, z: 0}
-  CapsuleExtents: 1
-  Offset: {x: 0, y: 0.5, z: 0}
+  CapsuleExtents: 2
+  Offset: {x: 0, y: 1, z: 0}
   Root: {fileID: 0}
   GizmosColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
 --- !u!1 &1376545980076716531

@@ -62,7 +62,7 @@ public class Inventory : NetworkBehaviour
         if (index == -1)
         {
             int emptySlot = -1;
-            for(int i = 0; i < _slots.Length; i++)  
+            for(int i = 0; i < _slotCount; i++)  
             {
                 if (_slots[i].itemId == default(NetworkId))
                 {
@@ -96,6 +96,8 @@ public class Inventory : NetworkBehaviour
         }
         else
         {
+            if(index < 0 || index >= _slotCount) return false;
+
             if (item.IsStackable && _slots[index].itemName == itemName )
             {
                 ItemSlot tempSlot = _slots[index];
@@ -130,7 +132,7 @@ public class Inventory : NetworkBehaviour
         if (index == -1)
         {
             int emptySlot = -1;
-            for (int i = 0; i < _slots.Length; i++)
+            for (int i = 0; i < _slotCount; i++)
             {
                 if (emptySlot == -1 && _slots[i].itemName == "")
                 {
@@ -168,6 +170,7 @@ public class Inventory : NetworkBehaviour
         }
         else
         {
+            if(index < 0 || index >= _slotCount) return false;
             if (item.IsStackable && _slots[index].itemName == itemName)
             {
                 ItemSlot tempSlot = _slots[index];
@@ -192,8 +195,8 @@ public class Inventory : NetworkBehaviour
     }
     public bool SetSlot(ItemSlot slot, int index)
     {
-        if(index < 0 || index >= _slots.Length) return false;
-
+        if(index < 0 || index >= _slotCount) return false;
+        if (_slots.Get(index).itemName != "") return false;
 
         _slots.Set(index, slot);
         ItemChanged?.Invoke();
@@ -201,7 +204,7 @@ public class Inventory : NetworkBehaviour
     }
     public bool DropItem(int index)
     {
-        if(index < 0 || index >= _slots.Length) return false;
+        if(index < 0 || index >= _slotCount) return false;
 
         NetworkObject obj = Runner.FindObject(_slots[index].itemId);
         // 저장된 아이템이 있다면 활성화

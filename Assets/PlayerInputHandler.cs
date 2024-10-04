@@ -150,6 +150,7 @@ public class PlayerInputHandler : NetworkBehaviour,IBeforeUpdate
             }
         accumulatedInput.buttons = new NetworkButtons(accumulatedInput.buttons.Bits | buttons.Bits);
         }
+       
 
         AccumulatedInput = accumulatedInput;
         InputManager.Instance.InsertPlayerInputData(AccumulatedInput);

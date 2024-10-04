@@ -40,8 +40,6 @@ public class DataManager : MonoBehaviour
         T[] list = Resources.LoadAll<T>(path);
         Type type = typeof(T);
 
-        Debug.Log(type + " " + list.Length);
-
         foreach (T item in list)
         {
             if (type.Equals(typeof(Item)))
