@@ -88,7 +88,7 @@ public class NetworkManager : MonoBehaviour
     }
     public void JoinGame(SessionInfo info)
     {
-        Debug.Log($"Create session {info.Name}");
+        Debug.Log($"Join Game{info.Name}");
 
         var clientTask = InitializeNetworkRunner(_networkRunnter, GameMode.Client, NetAddress.Any(), info.Name, SceneManager.GetActiveScene().buildIndex, null);
     }

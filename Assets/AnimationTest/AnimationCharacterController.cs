@@ -147,7 +147,7 @@ public class AnimationCharacterController : PrototypeCharacterController
             if (!IsHoldRope)
             {
                 // Jump
-                if (_character.IsGrounded && _currentPlayerInputData.buttons.WasPressed(_previousButtons, InputButton.Jump))
+                if (IsEnableJump && _character.IsGrounded && _currentPlayerInputData.buttons.WasPressed(_previousButtons, InputButton.Jump))
                 {
                     _character.Jump(Vector3.up, 10);
                     if(Runner.IsForward)
@@ -224,22 +224,24 @@ public class AnimationCharacterController : PrototypeCharacterController
         if (IsEnableInputRotate)
         {
             totalDeltaAngle += (Vector3)_currentPlayerInputData.lookRotationDelta;
-            if (!_isPlayTurnAnimation &&_character.IsGrounded && Mathf.Abs(totalDeltaAngle.y) > 150)
+            if (!_isPlayTurnAnimation&& _turnAnimationCoroutine == null &&_character.IsGrounded && Mathf.Abs(totalDeltaAngle.y) > 150)
             {
-                if (Runner.IsForward)
+                _character.AnimatorSetTrigget("Turn");
+                _turnAnimationCoroutine = StartCoroutine(Utils.WaitAniationAndPlayCoroutine(_animator, new string[] { "Walking Turn 180", "Running Turn 180" }, () =>
                 {
-                    _character.AnimatorSetTrigget("Turn");
-                    _turnAnimationCoroutine = StartCoroutine(Utils.WaitAniationAndPlayCoroutine(_animator, new string[] { "Walking Turn 180", "Running Turn 180" }, () =>
-                    {
-                        IsEnableInputRotate = true;
-                        _isPlayTurnAnimation = false;
-                        _model.transform.localPosition = Vector3.zero;
-                        _model.transform.localRotation = Quaternion.identity;
-                    }));
-                }
+                    Debug.Log("End Turn");
+                    IsEnableJump = true;
+                    IsEnableInputRotate = true;
+                    _isPlayTurnAnimation = false;
+                    _model.transform.localPosition = Vector3.zero;
+                    _model.transform.localRotation = Quaternion.identity;
+                    _turnAnimationCoroutine = null;
+                }));
+                Debug.Log($"Start Turn {_currentPlayerInputData.movementInput}");
                 _isPlayTurnAnimation = true;
                 IsEnableInputRotate = false;
-                
+                IsEnableJump = false;
+
                 totalDeltaAngle = Vector3.zero;
             }
         }

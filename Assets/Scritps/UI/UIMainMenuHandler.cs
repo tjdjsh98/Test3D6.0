@@ -55,13 +55,11 @@ public class UIMainMenuHandler : UIBase
         networkRunnerHandler.CreateGame(_sessionNameInputField.text, "InGame");
 
         HideAllPanels();
-        _statusPanel.gameObject.SetActive(true);
     }
 
     public void OnJoiningServer()
     {
         HideAllPanels();
 
-        _statusPanel.gameObject.SetActive(true);
     }
 }
